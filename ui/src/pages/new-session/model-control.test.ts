@@ -1,3 +1,4 @@
+import { DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS } from "@openclaw/gateway-client/browser";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GatewayAgentRow, ModelCatalogEntry } from "../../api/types.ts";
 import type { ApplicationContext } from "../../app/context.ts";
@@ -97,6 +98,39 @@ describe("new-session model runtime", () => {
     expect(control.devicePlacementUnsupportedReason()).toBe(
       devicePlacement ? undefined : "This runtime does not support paired devices",
     );
+  });
+
+  it("loads the normal configured catalog instead of chat metadata", async () => {
+    const discoveredModel: ModelCatalogEntry = {
+      id: "deepseek-v4-flash",
+      name: "DeepSeek V4 Flash",
+      provider: "omniroute",
+      reasoning: true,
+      thinkingDefault: "high",
+      thinkingLevels: ["off", "low", "medium", "high", "xhigh"].map((id) => ({
+        id,
+        label: id,
+      })),
+    };
+    const { context, request } = contextWith([]);
+    request.mockResolvedValue({ models: [discoveredModel] });
+    const control = new NewSessionModelControl(() => undefined);
+
+    control.load(context, "main", true, {
+      agent: { id: "main", model: { primary: "omniroute/deepseek-v4-flash" } },
+    });
+
+    await vi.waitFor(() =>
+      expect(
+        renderControl(control, context).querySelector("[data-chat-model-option]"),
+      ).not.toBeNull(),
+    );
+    expect(request).toHaveBeenCalledWith(
+      "models.list",
+      { agentId: "main", refresh: true, view: "configured" },
+      { timeoutMs: DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS },
+    );
+    expect(request.mock.calls.some(([method]) => method === "chat.metadata")).toBe(false);
   });
 
   it("keeps CLI agents hidden and undiscovered while the Labs gate is off", async () => {
