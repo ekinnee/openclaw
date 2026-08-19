@@ -222,8 +222,8 @@ async function defaultBuildProjection(params: {
 }): Promise<{ modelCatalog: ModelCatalogEntry[]; models?: unknown[] }> {
   const { buildModelsListResult, createGatewayAgentModelCatalogProjector } =
     await import("./models-list-result.js");
-  // New Session must not publish an empty model roster before it can issue models.list. Let the
-  // configured view complete the owner's dynamic catalog so both paths project the same rows.
+  // Chat metadata must stay on process-published facts. Live discovery belongs to explicit
+  // models.list control-plane reads so a slow provider cannot delay chat startup.
   const snapshot = params.facts.owner.modelCatalog;
   const projector = createGatewayAgentModelCatalogProjector({
     cfg: params.facts.owner.config,
@@ -250,6 +250,7 @@ async function defaultBuildProjection(params: {
         config: params.facts.owner.config,
         snapshot,
       },
+      preloadedOnly: true,
       catalogProjector: projector,
     }),
   ]);
