@@ -89,19 +89,21 @@ function createHarness(
       models: facts.owner.modelCatalog.entries,
     }),
   );
-  const loadGatewayModelCatalogSnapshot = async (params?: { readOnly?: boolean }) => {
-    const modelCatalog =
-      params?.readOnly === false && owner.loadFullModelCatalog
-        ? await owner.loadFullModelCatalog()
-        : owner.modelCatalog;
-    return {
-      ...modelCatalog,
-      agentId: owner.agentId,
-      agentDir: owner.agentDir,
-      workspaceDir: owner.workspaceDir,
-      config: owner.config,
+  const loadGatewayModelCatalogSnapshot: GatewayRequestContext["loadGatewayModelCatalogSnapshot"] =
+    async (params) => {
+      const modelCatalog =
+        params?.readOnly === false && owner.loadFullModelCatalog
+          ? await owner.loadFullModelCatalog()
+          : owner.modelCatalog;
+      return {
+        ...modelCatalog,
+        agentId: owner.agentId ?? "main",
+        agentDir: owner.agentDir,
+        catalogComplete: params?.readOnly === false,
+        workspaceDir: owner.workspaceDir ?? owner.agentDir,
+        config: owner.config,
+      };
     };
-  };
   const context = {
     getRuntimeConfig: () => config,
     loadGatewayModelCatalogSnapshot,
