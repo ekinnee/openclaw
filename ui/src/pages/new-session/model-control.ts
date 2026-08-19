@@ -470,9 +470,8 @@ export class NewSessionModelControl {
           this.catalog,
         );
     const targetEntry = selectedTarget?.entry ?? defaultTarget?.entry;
-    const authoritativeLevels = selected
-      ? targetEntry?.thinkingLevels
-      : (options.agent?.thinkingLevels ?? defaults?.thinkingLevels ?? targetEntry?.thinkingLevels);
+    const authoritativeLevels =
+      targetEntry?.thinkingLevels ?? options.agent?.thinkingLevels ?? defaults?.thinkingLevels;
     const normalizedThinking = normalizeThinkingOptionValue(thinkingLevel);
     const supported = authoritativeLevels?.some(
       (level) => normalizeThinkingOptionValue(level.id) === normalizedThinking,
@@ -567,10 +566,16 @@ export class NewSessionModelControl {
       model: defaultTarget?.model ?? sourceResult?.defaults.model ?? null,
       contextTokens: sourceResult?.defaults.contextTokens ?? null,
       agentRuntime: options.agent?.agentRuntime ?? sourceResult?.defaults.agentRuntime,
-      thinkingLevels: options.agent?.thinkingLevels ?? sourceResult?.defaults.thinkingLevels,
+      thinkingLevels:
+        defaultTarget?.entry?.thinkingLevels ??
+        options.agent?.thinkingLevels ??
+        sourceResult?.defaults.thinkingLevels,
       thinkingOptions: options.agent?.thinkingOptions ?? sourceResult?.defaults.thinkingOptions,
       thinkingDefault:
-        options.agent?.thinkingDefault ?? sourceResult?.defaults.thinkingDefault ?? "medium",
+        defaultTarget?.entry?.thinkingDefault ??
+        options.agent?.thinkingDefault ??
+        sourceResult?.defaults.thinkingDefault ??
+        "medium",
     };
     return renderChatModelControls({
       activeRunId: null,

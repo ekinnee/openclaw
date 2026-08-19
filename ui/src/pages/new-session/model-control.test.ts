@@ -115,9 +115,14 @@ describe("new-session model runtime", () => {
     const { context, request } = contextWith([]);
     request.mockResolvedValue({ models: [discoveredModel] });
     const control = new NewSessionModelControl(() => undefined);
+    const agent = {
+      id: "main",
+      model: { primary: "omniroute/deepseek-v4-flash" },
+      thinkingLevels: ["off", "low", "medium", "high"].map((id) => ({ id, label: id })),
+    };
 
     control.load(context, "main", true, {
-      agent: { id: "main", model: { primary: "omniroute/deepseek-v4-flash" } },
+      agent,
     });
 
     await vi.waitFor(() =>
@@ -131,6 +136,11 @@ describe("new-session model runtime", () => {
       { timeoutMs: DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS },
     );
     expect(request.mock.calls.some(([method]) => method === "chat.metadata")).toBe(false);
+    expect(
+      renderControl(control, context, "main", agent)
+        .querySelector('[data-chat-thinking-slider="true"]')
+        ?.getAttribute("data-chat-thinking-values"),
+    ).toBe("off,low,medium,high,xhigh");
   });
 
   it("keeps CLI agents hidden and undiscovered while the Labs gate is off", async () => {

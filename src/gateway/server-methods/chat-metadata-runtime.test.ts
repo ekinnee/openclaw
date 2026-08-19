@@ -11,6 +11,7 @@ import { setPreparedModelRuntimeAuthStore } from "../../agents/prepared-model-ru
 import type { PreparedModelRuntimeSnapshot } from "../../agents/prepared-model-runtime.js";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import { withOpenClawTestState } from "../../test-utils/openclaw-test-state.js";
+import { registerGatewayModelCatalogPrivateAccess } from "../server-model-catalog-auth.js";
 import { createGatewayChatMetadataRuntime } from "./chat-metadata-runtime.js";
 import type { GatewayRequestContext } from "./types.js";
 
@@ -88,21 +89,22 @@ function createHarness(
       models: facts.owner.modelCatalog.entries,
     }),
   );
+  const loadGatewayModelCatalogSnapshot = async (params?: { readOnly?: boolean }) => {
+    const modelCatalog =
+      params?.readOnly === false && owner.loadFullModelCatalog
+        ? await owner.loadFullModelCatalog()
+        : owner.modelCatalog;
+    return {
+      ...modelCatalog,
+      agentId: owner.agentId,
+      agentDir: owner.agentDir,
+      workspaceDir: owner.workspaceDir,
+      config: owner.config,
+    };
+  };
   const context = {
     getRuntimeConfig: () => config,
-    loadGatewayModelCatalogSnapshot: async (params?: { readOnly?: boolean }) => {
-      const modelCatalog =
-        params?.readOnly === false && owner.loadFullModelCatalog
-          ? await owner.loadFullModelCatalog()
-          : owner.modelCatalog;
-      return {
-        ...modelCatalog,
-        agentId: owner.agentId,
-        agentDir: owner.agentDir,
-        workspaceDir: owner.workspaceDir,
-        config: owner.config,
-      };
-    },
+    loadGatewayModelCatalogSnapshot,
     logGateway: {
       debug: vi.fn(),
       info: vi.fn(),
@@ -110,6 +112,22 @@ function createHarness(
       error: vi.fn(),
     },
   } as unknown as GatewayRequestContext;
+  registerGatewayModelCatalogPrivateAccess(loadGatewayModelCatalogSnapshot, {
+    loadDeferred: async (params) => ({
+      ...(await loadGatewayModelCatalogSnapshot(params)),
+      authModes: owner.authModes,
+      authStore: authStore ?? { version: 1, profiles: {} },
+      metadataSnapshot: owner.metadataSnapshot,
+      authMaterializations: [],
+    }),
+    readPrepared: async (params) => ({
+      ...(await loadGatewayModelCatalogSnapshot({ ...params, readOnly: true })),
+      authModes: owner.authModes,
+      authStore: authStore ?? { version: 1, profiles: {} },
+      metadataSnapshot: owner.metadataSnapshot,
+      authMaterializations: [],
+    }),
+  });
   const runtime = createGatewayChatMetadataRuntime({
     getConfig: () => config,
     getContext: () => context,
@@ -464,12 +482,12 @@ describe("gateway chat metadata runtime", () => {
     },
   );
 
-  test("keeps live provider discovery off chat metadata projection", async () => {
+  test("completes the configured provider catalog for chat metadata", async () => {
     const config = {
       agents: {
         defaults: {
           model: { primary: "openai/gpt-5.6-sol" },
-          models: { "openai/gpt-5.6-sol": {} },
+          modelPolicy: { allow: ["openai/*"] },
         },
         list: [{ id: "main", default: true }],
       },
@@ -491,12 +509,22 @@ describe("gateway chat metadata runtime", () => {
       "openai-chatgpt-responses",
     );
     const fullCatalog = {
-      ...owner.modelCatalog,
-      providerOutcomes: [{ provider: "openai", status: "auth-rejected" as const }],
+      entries: [
+        {
+          id: "gpt-5.6-sol",
+          name: "GPT-5.6 Sol",
+          provider: "openai",
+          api: "openai-chatgpt-responses" as const,
+          reasoning: true,
+          thinkingLevelMap: { off: "none", low: "low", medium: "medium", high: "high" },
+        },
+      ],
+      routeVariants: [],
     };
     const loadFullModelCatalog = vi.fn(async () => fullCatalog);
     harness.setOwner({
       ...owner,
+      modelCatalog: { entries: [], routeVariants: [] },
       loadFullModelCatalog,
     });
     harness.setAuthStore({
@@ -515,9 +543,15 @@ describe("gateway chat metadata runtime", () => {
     await harness.runtime.refresh();
 
     await expect(harness.runtime.read({ agentId: "main" })).resolves.toMatchObject({
-      models: [expect.objectContaining({ id: "gpt-5.6-sol", available: true })],
+      models: [
+        expect.objectContaining({
+          id: "gpt-5.6-sol",
+          provider: "openai",
+          available: true,
+        }),
+      ],
     });
-    expect(loadFullModelCatalog).not.toHaveBeenCalled();
+    expect(loadFullModelCatalog).toHaveBeenCalledOnce();
   });
 
   test("retains a generation while auth store revisions are unchanged", async () => {
