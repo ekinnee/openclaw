@@ -57,6 +57,7 @@ type DiscoveredModel = {
   contextWindow?: number;
   contextTokens?: number;
   reasoning?: boolean;
+  thinkingLevelMap?: ModelCatalogEntry["thinkingLevelMap"];
   input?: ModelInputType[];
   params?: ModelCatalogEntry["params"];
   compat?: ModelCatalogEntry["compat"];
@@ -181,6 +182,7 @@ function clearRouteBoundCatalogMetadata(entry: ModelCatalogEntry): ModelCatalogE
     contextWindow: _contextWindow,
     contextTokens: _contextTokens,
     reasoning: _reasoning,
+    thinkingLevelMap: _thinkingLevelMap,
     input: _input,
     params: _params,
     compat: _compat,
@@ -213,6 +215,9 @@ function overlayCatalogMetadata(
     ...(overlay.contextWindow !== undefined ? { contextWindow: overlay.contextWindow } : {}),
     ...(overlay.contextTokens !== undefined ? { contextTokens: overlay.contextTokens } : {}),
     ...(overlay.reasoning !== undefined ? { reasoning: overlay.reasoning } : {}),
+    ...(overlay.thinkingLevelMap !== undefined
+      ? { thinkingLevelMap: overlay.thinkingLevelMap }
+      : {}),
     ...(overlay.input !== undefined ? { input: overlay.input } : {}),
     ...(params ? { params } : {}),
     ...(overlay.mediaInput !== undefined ? { mediaInput: overlay.mediaInput } : {}),
@@ -418,6 +423,9 @@ export function loadManifestModelCatalog(params: {
     if (typeof row.reasoning === "boolean") {
       entry.reasoning = row.reasoning;
     }
+    if (row.thinkingLevelMap) {
+      entry.thinkingLevelMap = { ...row.thinkingLevelMap };
+    }
     if (row.input?.length) {
       entry.input = [...row.input];
     }
@@ -511,6 +519,10 @@ export async function buildPreparedModelCatalogSnapshot(
           ? entry.contextTokens
           : undefined;
       const reasoning = typeof entry?.reasoning === "boolean" ? entry.reasoning : undefined;
+      const thinkingLevelMap =
+        entry?.thinkingLevelMap && typeof entry.thinkingLevelMap === "object"
+          ? entry.thinkingLevelMap
+          : undefined;
       const api = typeof entry?.api === "string" ? entry.api : undefined;
       const input = Array.isArray(entry?.input) ? entry.input : undefined;
       const modelParams =
@@ -525,6 +537,7 @@ export async function buildPreparedModelCatalogSnapshot(
         contextWindow,
         ...(contextTokens !== undefined ? { contextTokens } : {}),
         reasoning,
+        ...(thinkingLevelMap ? { thinkingLevelMap } : {}),
         input,
         ...(modelParams ? { params: modelParams } : {}),
         compat,

@@ -108,6 +108,7 @@ function resolveThinkingPolicyContext(params: {
     modelKey,
     api: candidate?.api,
     reasoning: params.configuredReasoning ?? candidate?.configuredReasoning ?? candidate?.reasoning,
+    thinkingLevelMap: candidate?.thinkingLevelMap,
     ...(candidate?.params ? { params: candidate.params } : {}),
     compat: candidate?.compat,
   };
@@ -174,6 +175,7 @@ const CATALOG_ADVANCED_THINKING_LEVELS = new Set<ThinkLevel>(["adaptive", "xhigh
 function appendCatalogAdvancedThinkingLevels(
   profile: ResolvedThinkingProfile,
   compat: ThinkingCatalogEntry["compat"],
+  thinkingLevelMap: ThinkingCatalogEntry["thinkingLevelMap"],
   agentRuntime?: string | null,
 ) {
   const efforts = compat?.supportedReasoningEfforts;
@@ -183,7 +185,11 @@ function appendCatalogAdvancedThinkingLevels(
   let supportsMax = false;
   for (const effort of efforts) {
     const level = normalizeThinkLevel(effort);
-    if (level && CATALOG_ADVANCED_THINKING_LEVELS.has(level)) {
+    if (
+      level &&
+      CATALOG_ADVANCED_THINKING_LEVELS.has(level) &&
+      thinkingLevelMap?.[level] !== null
+    ) {
       appendProfileLevel(profile, level);
       supportsMax ||= level === "max";
     }
@@ -193,6 +199,21 @@ function appendCatalogAdvancedThinkingLevels(
     // Ultra is OpenClaw's orchestration tier; provider requests use Max.
     appendProfileLevel(profile, "ultra");
   }
+}
+
+function applyCatalogThinkingLevelMap(
+  profile: ResolvedThinkingProfile,
+  thinkingLevelMap: ThinkingCatalogEntry["thinkingLevelMap"],
+) {
+  if (!thinkingLevelMap) {
+    return;
+  }
+  for (const level of ["adaptive", "xhigh", "max"] as const) {
+    if (thinkingLevelMap[level] !== undefined && thinkingLevelMap[level] !== null) {
+      appendProfileLevel(profile, level);
+    }
+  }
+  profile.levels = profile.levels.filter((level) => thinkingLevelMap[level.id] !== null);
 }
 
 /** Resolve supported thinking levels and default for a provider/model pair. */
@@ -253,7 +274,13 @@ export function resolveThinkingProfile(params: {
   }
 
   const profile = buildBaseThinkingProfile();
-  appendCatalogAdvancedThinkingLevels(profile, context.compat, params.agentRuntime);
+  appendCatalogAdvancedThinkingLevels(
+    profile,
+    context.compat,
+    context.thinkingLevelMap,
+    params.agentRuntime,
+  );
+  applyCatalogThinkingLevelMap(profile, context.thinkingLevelMap);
   return profile;
 }
 

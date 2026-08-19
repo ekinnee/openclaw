@@ -657,6 +657,36 @@ describe("listThinkingLevels", () => {
     ).toBe(true);
   });
 
+  it("honors a discovered thinking map before a provider runtime is active", () => {
+    const catalog = [
+      {
+        provider: "omniroute",
+        id: "deepseekv4flash-equivalent",
+        reasoning: true,
+        thinkingLevelMap: {
+          off: "none",
+          minimal: null,
+          low: "low",
+          medium: "medium",
+          high: "high",
+          xhigh: "xhigh",
+          max: null,
+        },
+        compat: {
+          supportedReasoningEfforts: ["none", "low", "medium", "high", "xhigh"],
+        },
+      },
+    ];
+
+    expect(listThinkingLevels("omniroute", "deepseekv4flash-equivalent", catalog)).toEqual([
+      "off",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+    ]);
+  });
+
   it("uses advanced catalog efforts and derives OpenClaw Ultra from Max", () => {
     const catalog = [
       {
