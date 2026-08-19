@@ -11,6 +11,12 @@ function catalogCalls(request: ReturnType<typeof vi.fn>) {
   return request.mock.calls.filter(([method]) => method === "sessions.catalog.list");
 }
 
+function configuredModelCatalogParams(request: ReturnType<typeof vi.fn>) {
+  return request.mock.calls
+    .filter(([method]) => method === "models.list")
+    .map(([, params]) => params);
+}
+
 describe("new-session CLI-agent model targets", () => {
   it("retries failed discovery with model metadata when the picker reopens", async () => {
     const { context, request } = contextWith(models, "openclaw", ["sessions.catalog.list"]);
@@ -54,7 +60,10 @@ describe("new-session CLI-agent model targets", () => {
     picker!.dispatchEvent(new Event("toggle"));
 
     await vi.waitFor(() => {
-      expect(request.mock.calls.filter(([method]) => method === "chat.metadata")).toHaveLength(2);
+      expect(configuredModelCatalogParams(request)).toEqual([
+        { agentId: "main", refresh: true, view: "configured" },
+        { agentId: "main", refresh: true, view: "configured" },
+      ]);
       expect(catalogCalls(request)).toHaveLength(2);
     });
     await vi.waitFor(() => {
@@ -96,7 +105,10 @@ describe("new-session CLI-agent model targets", () => {
     });
 
     await vi.waitFor(() => {
-      expect(request.mock.calls.filter(([method]) => method === "chat.metadata")).toHaveLength(2);
+      expect(configuredModelCatalogParams(request)).toEqual([
+        { agentId: "main", refresh: true, view: "configured" },
+        { agentId: "main", refresh: true, view: "configured" },
+      ]);
       expect(catalogCalls(request)).toHaveLength(2);
     });
     expect(
