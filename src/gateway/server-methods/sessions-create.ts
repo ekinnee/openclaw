@@ -36,6 +36,7 @@ import { resolveRequestedSessionAgentId as resolveRequestedGlobalAgentId } from 
 import { readSessionMessageCountAsync } from "../session-transcript-readers.js";
 import {
   loadGatewaySessionEntryReadOnly,
+  loadGatewaySessionRow,
   resolveGatewaySessionStoreTarget,
 } from "../session-utils.js";
 import { createAgentRuntimeAuthorityGuard } from "./agent-runtime-authority.js";
@@ -623,6 +624,9 @@ export const sessionCreateHandlers: GatewayRequestHandlers = {
     const responseEntry = sessionEntryForkedFromParent(created.entry)
       ? { ...created.entry, forkedFromParent: true as const }
       : created.entry;
+    // Return the canonical projection before the asynchronous session observer
+    // publishes it, so clients do not render created settings from defaults.
+    const responseSession = loadGatewaySessionRow(created.key, { agentId: created.agentId });
     if (created.resetExisting) {
       respond(
         true,
@@ -631,6 +635,7 @@ export const sessionCreateHandlers: GatewayRequestHandlers = {
           key: created.key,
           sessionId: created.entry.sessionId,
           entry: responseEntry,
+          ...(responseSession ? { session: responseSession } : {}),
           resolved: created.resolved,
           runStarted: false,
           ...(createdWorktree ? { worktree: createdWorktree } : {}),
@@ -659,6 +664,7 @@ export const sessionCreateHandlers: GatewayRequestHandlers = {
         key: created.key,
         sessionId: created.entry.sessionId,
         entry: responseEntry,
+        ...(responseSession ? { session: responseSession } : {}),
         runStarted,
         ...(runPayload ? runPayload : {}),
         ...(runStarted && typeof messageSeq === "number" ? { messageSeq } : {}),

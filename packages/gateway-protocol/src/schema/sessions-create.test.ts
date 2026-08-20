@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { validateSessionsCreateParams } from "../index.js";
+import {
+  SessionRowSchema,
+  SessionsCreateResultSchema,
+  validateSessionsCreateParams,
+} from "../index.js";
 
 describe("sessions.create schema", () => {
   it.each(["read-only", "guarded", "workspace", "full"])(
@@ -23,5 +27,15 @@ describe("sessions.create schema", () => {
 
   it("rejects unknown visibility values", () => {
     expect(validateSessionsCreateParams({ agentId: "main", visibility: "private" })).toBe(false);
+  });
+
+  it("declares model-control fields on the canonical session row", () => {
+    expect(SessionRowSchema.properties).toMatchObject({
+      thinkingLevel: expect.any(Object),
+      thinkingLevels: expect.any(Object),
+      thinkingOptions: expect.any(Object),
+      thinkingDefault: expect.any(Object),
+    });
+    expect(SessionsCreateResultSchema.properties.session).toBeDefined();
   });
 });

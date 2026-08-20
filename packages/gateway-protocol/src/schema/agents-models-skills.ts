@@ -43,7 +43,7 @@ const GatewayAgentRuntimeSchema = closedObject({
   ]),
 });
 
-const GatewayThinkingLevelOptionSchema = closedObject({
+export const GatewayThinkingLevelOptionSchema = closedObject({
   id: NonEmptyString,
   label: NonEmptyString,
 });

@@ -2922,6 +2922,12 @@ test("sessions.create stores dashboard model, thinking, and parent linkage, and 
       parentSessionKey?: string;
       sessionFile?: string;
     };
+    session?: {
+      key?: string;
+      modelProvider?: string;
+      model?: string;
+      thinkingLevel?: string;
+    };
   }>("sessions.create", {
     agentId: "ops",
     label: "Dashboard Chat",
@@ -2941,6 +2947,12 @@ test("sessions.create stores dashboard model, thinking, and parent linkage, and 
   expect(created.payload?.sessionId).toMatch(
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
   );
+  expect(created.payload?.session).toMatchObject({
+    key: created.payload?.key,
+    modelProvider: "openai",
+    model: "gpt-test-a",
+    thinkingLevel: "high",
+  });
 
   const key = created.payload?.key as string;
   const storedEntry = loadSessionEntry({ agentId: "ops", sessionKey: key, storePath });
