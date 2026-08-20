@@ -316,7 +316,7 @@ describe("new-session model runtime", () => {
     remountedControl.load(context, "main", true, { agent });
 
     let container = renderControl(remountedControl, context, "main", agent);
-    expect(container.querySelector('[data-chat-model-catalog-state="refreshing"]')).not.toBeNull();
+    expect(container.querySelector("[data-chat-model-catalog-state]")).toBeNull();
     expect(remountedControl.isModelUnavailable(agent)).toBe(false);
     expect(container.textContent).not.toContain(
       "Authentication failed. Review the provider credential or sign-in, then retry.",
@@ -647,20 +647,18 @@ describe("new-session model runtime", () => {
       { id: "gpt-5.6-luna", name: "GPT-5.6 Luna", provider: "openai", available: true },
     ];
     const { context, request } = contextWith(coldModels);
-    const control = new NewSessionModelControl(() => undefined);
+    const notify = vi.fn();
+    const control = new NewSessionModelControl(notify);
     const agent = { id: "main", model: { primary: "openai/gpt-5.6-luna" } };
     control.load(context, "main", true, { agent });
-    await vi.waitFor(() => expect(control.isModelUnavailable(agent)).toBe(true));
+    await vi.waitFor(() => {
+      expect(control.isModelUnavailable(agent)).toBe(true);
+      expect(notify).toHaveBeenCalledTimes(2);
+    });
 
     request.mockRejectedValueOnce(new Error("refresh failed"));
     control.load(context, "main", true, { agent });
-    await vi.waitFor(() =>
-      expect(
-        renderControl(control, context, "main", agent).querySelector(
-          "[data-chat-model-catalog-state]",
-        ),
-      ).toBeNull(),
-    );
+    await vi.waitFor(() => expect(notify).toHaveBeenCalledTimes(4));
     let container = renderControl(control, context, "main", agent);
     expect(container.querySelector('[data-chat-model-select="true"]')?.textContent).toContain(
       "GPT-5.6 Luna",
@@ -671,13 +669,7 @@ describe("new-session model runtime", () => {
     request.mockResolvedValueOnce({ models: availableModels });
     control.load(context, "main", true, { agent });
     await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(3));
-    await vi.waitFor(() =>
-      expect(
-        renderControl(control, context, "main", agent).querySelector(
-          "[data-chat-model-catalog-state]",
-        ),
-      ).toBeNull(),
-    );
+    await vi.waitFor(() => expect(notify).toHaveBeenCalledTimes(6));
     expect(control.isModelUnavailable(agent)).toBe(false);
     container = renderControl(control, context, "main", agent);
     expect(
@@ -751,7 +743,7 @@ describe("new-session model runtime", () => {
     });
 
     let container = renderControl(control, context);
-    expect(container.querySelector('[data-chat-model-catalog-state="refreshing"]')).not.toBeNull();
+    expect(container.querySelector("[data-chat-model-catalog-state]")).toBeNull();
     expect(container.querySelectorAll("[data-chat-model-option]")).toHaveLength(2);
 
     container
