@@ -161,6 +161,20 @@ function createFullModelCatalogAccess(params: {
   let runtimeDiscoveryCatalog: ModelCatalogSnapshot | undefined;
   let runtimeDiscoveryProviderIds: readonly string[] | undefined;
   let pendingRuntimeDiscoveryCatalog: Promise<ModelCatalogSnapshot> | undefined;
+  const loadCatalog = (catalogWorker: ReturnType<typeof createPreparedModelCatalogWorker>) =>
+    runSerializedPreparedModelRuntimeTask({
+      agentDir: params.agentFacts.input.agentDir,
+      agentBuildCompletions: params.agentBuildCompletions,
+      isCurrent: params.isCurrent,
+      task: async () =>
+        await limitFullModelCatalogBuild(async () => {
+          // Catalog builds serialize per agent so a stale plan cannot overlap a replacement.
+          assertCurrent();
+          const catalog = await catalogWorker.loadCatalog();
+          assertCurrent();
+          return catalog;
+        }),
+    });
   return {
     loadAuth: ({ providerIds, profileIds }) => {
       const key = [...new Set(providerIds)]
@@ -207,21 +221,7 @@ function createFullModelCatalogAccess(params: {
         return Promise.resolve(fullCatalog);
       }
       if (!pending) {
-        const build = runSerializedPreparedModelRuntimeTask({
-          agentDir: params.agentFacts.input.agentDir,
-          agentBuildCompletions: params.agentBuildCompletions,
-          isCurrent: params.isCurrent,
-          task: async () =>
-            await limitFullModelCatalogBuild(async () => {
-              // Full inventory belongs to explicit control-plane reads. The generation queue
-              // prevents a stale plan from overlapping or following a replacement build.
-              assertCurrent();
-              const catalog = await worker.loadCatalog();
-              assertCurrent();
-              return catalog;
-            }),
-        });
-        pending = build
+        pending = loadCatalog(worker)
           .then((catalog) => {
             fullCatalog = catalog;
             return catalog;
@@ -259,19 +259,7 @@ function createFullModelCatalogAccess(params: {
       }
       if (!pendingRuntimeDiscoveryCatalog) {
         const runtimeWorker = createWorker(normalizedProviderIds);
-        const build = runSerializedPreparedModelRuntimeTask({
-          agentDir: params.agentFacts.input.agentDir,
-          agentBuildCompletions: params.agentBuildCompletions,
-          isCurrent: params.isCurrent,
-          task: async () =>
-            await limitFullModelCatalogBuild(async () => {
-              assertCurrent();
-              const catalog = await runtimeWorker.loadCatalog();
-              assertCurrent();
-              return catalog;
-            }),
-        });
-        pendingRuntimeDiscoveryCatalog = build
+        pendingRuntimeDiscoveryCatalog = loadCatalog(runtimeWorker)
           .then((catalog) => {
             runtimeDiscoveryCatalog = catalog;
             runtimeDiscoveryProviderIds = normalizedProviderIds;

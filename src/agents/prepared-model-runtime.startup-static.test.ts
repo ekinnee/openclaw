@@ -167,7 +167,8 @@ vi.mock("./legacy-inherited-auth-dir.js", () => ({
 
 vi.mock("./agent-scope.js", () => ({
   listAgentEntries: (config: { agents?: { list?: unknown[] } }) => config.agents?.list ?? [],
-  listAgentIds: () => ["default"],
+  listAgentIds: (config: { agents?: { list?: Array<{ id?: string }> } }) =>
+    config.agents?.list?.map((entry) => entry.id ?? "") ?? ["default"],
   resolveAgentDir: () => "/tmp/prepared-static-agent",
   resolveAgentWorkspaceDir: () => "/tmp/prepared-static-workspace",
   tryResolveConfiguredAgentWorkspaceDir: () => "/tmp/prepared-static-workspace",
@@ -340,6 +341,37 @@ describe("prepared model runtime Gateway catalog mode", () => {
       workspaceDir: "/tmp/prepared-static-workspace",
     });
     expect(snapshot?.readRuntimeDiscoveryCatalog?.()).toEqual({ entries: [], routeVariants: [] });
+  });
+
+  it("keeps post-ready runtime discovery scoped to each configured agent", async () => {
+    (mocks.metadataSnapshot as { plugins: unknown[] }).plugins = [
+      {
+        modelCatalog: { discovery: { alpha: "runtime", beta: "runtime" } },
+      },
+    ];
+    const config = {
+      agents: {
+        defaults: { model: { primary: "openai/gpt-5.5" } },
+        list: [
+          { id: "alpha-agent", model: { primary: "alpha/model" } },
+          { id: "beta-agent", model: { primary: "beta/model" } },
+        ],
+      },
+    };
+
+    await refreshPreparedModelRuntimeSnapshots(config, {
+      gatewayLifecycle: true,
+      catalogMode: "static",
+    });
+    mocks.workerInputs.length = 0;
+
+    await expect(publishPreparedRuntimeDiscoveryCatalogs()).resolves.toBe(2);
+    expect(
+      mocks.workerInputs.map(
+        (input) =>
+          (input as { providerDiscoveryProviderIds?: string[] }).providerDiscoveryProviderIds,
+      ),
+    ).toEqual([["alpha"], ["beta"]]);
   });
 
   it("does not publish a static catalog generation superseded while its hook is running", async () => {

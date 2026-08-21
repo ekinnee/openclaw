@@ -6,7 +6,10 @@ import type { PluginMetadataSnapshot } from "../plugins/plugin-metadata-snapshot
 import { registerRuntimeAuthProfileStoreMutationListener } from "./auth-profiles/runtime-snapshots.js";
 import { acquirePreparedModelRuntimeLeaseFromOwners } from "./prepared-model-runtime-lease.js";
 import { registerPreparedRuntimeAuthMaterializationPublisher } from "./prepared-model-runtime-materializations.js";
-import { collectPreparedModelRuntimeProviderIds } from "./prepared-model-runtime.configured.js";
+import {
+  collectPreparedModelRuntimeConfiguredRefs,
+  collectPreparedModelRuntimeProviderIds,
+} from "./prepared-model-runtime.configured.js";
 import {
   PreparedModelRuntimeOwnerNotPublishedError,
   PreparedModelRuntimeOwnerRetention,
@@ -89,9 +92,14 @@ function listRuntimeDiscoveryProviderIds(snapshot: PreparedModelRuntimeSnapshot)
       }
     }
   }
-  return collectPreparedModelRuntimeProviderIds(snapshot.config, {}, false).filter((providerId) =>
-    runtimeProviders.has(providerId),
-  );
+  // Runtime discovery is published per configured owner; global refs would leak another agent's
+  // model providers into this worker.
+  return collectPreparedModelRuntimeProviderIds(
+    snapshot.config,
+    {},
+    false,
+    collectPreparedModelRuntimeConfiguredRefs(snapshot.config, snapshot.agentId),
+  ).filter((providerId) => runtimeProviders.has(providerId));
 }
 
 /** Publishes post-ready catalogs for configured runtime-only providers without touching refreshable catalogs. */
