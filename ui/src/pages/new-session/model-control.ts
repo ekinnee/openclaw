@@ -243,7 +243,7 @@ export class NewSessionModelControl {
       client,
       id: requestId,
     };
-    const cached = peekModels(client, { agentId });
+    const cached = peekModels(client, { agentId, preparedOnly: true });
     if (cached) {
       this.publishMetadataCatalog(cached, "refreshing");
     } else {
@@ -255,6 +255,7 @@ export class NewSessionModelControl {
 
     void revalidateModels(client, {
       agentId,
+      preparedOnly: true,
       startupRetryWindowMs: 60_000,
     }).then(
       (catalog) => {
@@ -407,6 +408,8 @@ export class NewSessionModelControl {
       this.notify();
       return;
     }
+    // New Session is an automatic hot path. It may reproject the published
+    // generation, but provider discovery belongs to explicit/background owners.
     this.startMetadataRequest(client, normalizedAgentId);
   }
 

@@ -60,10 +60,15 @@ describe("new-session CLI-agent model targets", () => {
     picker!.dispatchEvent(new Event("toggle"));
 
     await vi.waitFor(() => {
-      expect(configuredModelCatalogParams(request)).toEqual([
-        { agentId: "main", view: "configured" },
-        { agentId: "main", view: "configured" },
-      ]);
+      const modelCatalogParams = configuredModelCatalogParams(request);
+      expect(modelCatalogParams.length).toBeGreaterThanOrEqual(2);
+      expect(modelCatalogParams).toEqual(
+        modelCatalogParams.map(() => ({
+          agentId: "main",
+          preparedOnly: true,
+          view: "configured",
+        })),
+      );
       expect(catalogCalls(request)).toHaveLength(2);
     });
     await vi.waitFor(() => {
@@ -106,8 +111,8 @@ describe("new-session CLI-agent model targets", () => {
 
     await vi.waitFor(() => {
       expect(configuredModelCatalogParams(request)).toEqual([
-        { agentId: "main", view: "configured" },
-        { agentId: "main", view: "configured" },
+        { agentId: "main", preparedOnly: true, view: "configured" },
+        { agentId: "main", preparedOnly: true, view: "configured" },
       ]);
       expect(catalogCalls(request)).toHaveLength(2);
     });

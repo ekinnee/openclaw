@@ -100,8 +100,13 @@ describe("new-session model runtime", () => {
     );
   });
 
-  it("loads the normal configured catalog instead of chat metadata", async () => {
-    const discoveredModel: ModelCatalogEntry = {
+  it("keeps startup and picker retries on the prepared catalog", async () => {
+    const preparedModel: ModelCatalogEntry = {
+      id: "gpt-5.6-luna",
+      name: "GPT-5.6 Luna",
+      provider: "openai",
+    };
+    const refreshedPreparedModel: ModelCatalogEntry = {
       id: "deepseek-v4-flash",
       name: "DeepSeek V4 Flash",
       provider: "omniroute",
@@ -113,7 +118,9 @@ describe("new-session model runtime", () => {
       })),
     };
     const { context, request } = contextWith([]);
-    request.mockResolvedValue({ models: [discoveredModel] });
+    request
+      .mockResolvedValueOnce({ models: [preparedModel] })
+      .mockResolvedValue({ models: [refreshedPreparedModel] });
     const control = new NewSessionModelControl(() => undefined);
     const agent = {
       id: "main",
@@ -127,20 +134,46 @@ describe("new-session model runtime", () => {
 
     await vi.waitFor(() =>
       expect(
-        renderControl(control, context).querySelector("[data-chat-model-option]"),
+        renderControl(control, context).querySelector(
+          '[data-chat-model-option="openai/gpt-5.6-luna"]',
+        ),
       ).not.toBeNull(),
     );
     expect(request).toHaveBeenCalledWith(
       "models.list",
-      { agentId: "main", view: "configured" },
+      { agentId: "main", preparedOnly: true, view: "configured" },
       { timeoutMs: DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS },
     );
     expect(request.mock.calls.some(([method]) => method === "chat.metadata")).toBe(false);
+    expect(request).toHaveBeenCalledTimes(1);
+
+    const initialPicker = renderControl(control, context).querySelector<HTMLDetailsElement>(
+      ".chat-controls__model-picker",
+    );
+    initialPicker!.open = true;
+    initialPicker!.dispatchEvent(new Event("toggle"));
+
+    await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+    expect(request).toHaveBeenLastCalledWith(
+      "models.list",
+      { agentId: "main", preparedOnly: true, view: "configured" },
+      { timeoutMs: DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS },
+    );
     expect(
-      renderControl(control, context, "main", agent)
-        .querySelector('[data-chat-thinking-slider="true"]')
-        ?.getAttribute("data-chat-thinking-values"),
-    ).toBe("off,low,medium,high,xhigh");
+      request.mock.calls.every(
+        ([method, params]) =>
+          method !== "models.list" ||
+          ((params as { preparedOnly?: boolean; refresh?: boolean }).preparedOnly === true &&
+            (params as { refresh?: boolean }).refresh !== true),
+      ),
+    ).toBe(true);
+    await vi.waitFor(() =>
+      expect(
+        renderControl(control, context, "main", agent)
+          .querySelector('[data-chat-thinking-slider="true"]')
+          ?.getAttribute("data-chat-thinking-values"),
+      ).toBe("off,low,medium,high,xhigh"),
+    );
   });
 
   it("keeps CLI agents hidden and undiscovered while the Labs gate is off", async () => {
