@@ -504,6 +504,9 @@ export const sessionCreateHandlers: GatewayRequestHandlers = {
       clientScopes,
     ).allowed;
     const modelCatalogAgentId = sessionAgentId;
+    let validatedModelCatalog: ReturnType<typeof context.loadGatewayModelCatalog> | undefined;
+    const loadValidatedModelCatalog = () =>
+      (validatedModelCatalog ??= context.loadGatewayModelCatalog({ agentId: modelCatalogAgentId }));
     if (!authority.ensureActive()) {
       return;
     }
@@ -554,8 +557,7 @@ export const sessionCreateHandlers: GatewayRequestHandlers = {
       creation: sessionCreation,
       authorizedPluginId: normalizeOptionalString(client?.internal?.pluginRuntimeOwnerId),
       armSessionDiffBaselineCapture: true,
-      loadGatewayModelCatalog: () =>
-        context.loadGatewayModelCatalog({ agentId: modelCatalogAgentId }),
+      loadGatewayModelCatalog: loadValidatedModelCatalog,
       ...(commitGuard ? { commitGuard } : {}),
       afterCreate: async ({ key, agentId, entry, storePath }) => {
         if (!authority.hasActive()) {
@@ -626,7 +628,10 @@ export const sessionCreateHandlers: GatewayRequestHandlers = {
       : created.entry;
     // Return the canonical projection before the asynchronous session observer
     // publishes it, so clients do not render created settings from defaults.
-    const responseSession = loadGatewaySessionRow(created.key, { agentId: created.agentId });
+    const responseSession = loadGatewaySessionRow(created.key, {
+      agentId: created.agentId,
+      ...(validatedModelCatalog ? { modelCatalog: await validatedModelCatalog } : {}),
+    });
     if (created.resetExisting) {
       respond(
         true,

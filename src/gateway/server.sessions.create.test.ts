@@ -2905,7 +2905,15 @@ test("sessions.create stores dashboard model, thinking, and parent linkage, and 
   const { storePath } = await createSessionStoreDir();
   testState.agentsConfig = { list: [{ id: "main", default: true }, { id: "ops" }] };
   agentDiscoveryMock.enabled = true;
-  agentDiscoveryMock.models = [{ id: "gpt-test-a", name: "A", provider: "openai" }];
+  const loadGatewayModelCatalog = vi.fn().mockResolvedValue([
+    {
+      id: "deepseek-v4-flash",
+      name: "DeepSeek V4 Flash",
+      provider: "omniroute",
+      reasoning: true,
+      thinkingLevelMap: { off: "none", xhigh: "xhigh" },
+    },
+  ]);
   await writeSessionStore({
     entries: {
       main: sessionStoreEntry("sess-parent"),
@@ -2927,21 +2935,26 @@ test("sessions.create stores dashboard model, thinking, and parent linkage, and 
       modelProvider?: string;
       model?: string;
       thinkingLevel?: string;
+      thinkingLevels?: Array<{ id: string }>;
     };
-  }>("sessions.create", {
-    agentId: "ops",
-    label: "Dashboard Chat",
-    model: "openai/gpt-test-a",
-    thinkingLevel: "high",
-    parentSessionKey: "main",
-  });
+  }>(
+    "sessions.create",
+    {
+      agentId: "ops",
+      label: "Dashboard Chat",
+      model: "omniroute/deepseek-v4-flash",
+      thinkingLevel: "xhigh",
+      parentSessionKey: "main",
+    },
+    { context: { loadGatewayModelCatalog } },
+  );
 
   expect(created.ok).toBe(true);
   expect(created.payload?.key).toMatch(/^agent:ops:dashboard:/);
   expect(created.payload?.entry?.label).toBe("Dashboard Chat");
-  expect(created.payload?.entry?.providerOverride).toBe("openai");
-  expect(created.payload?.entry?.modelOverride).toBe("gpt-test-a");
-  expect(created.payload?.entry?.thinkingLevel).toBe("high");
+  expect(created.payload?.entry?.providerOverride).toBe("omniroute");
+  expect(created.payload?.entry?.modelOverride).toBe("deepseek-v4-flash");
+  expect(created.payload?.entry?.thinkingLevel).toBe("xhigh");
   expect(created.payload?.entry?.parentSessionKey).toBe("agent:main:main");
   expect(created.payload?.entry).not.toHaveProperty("sessionFile");
   expect(created.payload?.sessionId).toMatch(
@@ -2949,18 +2962,20 @@ test("sessions.create stores dashboard model, thinking, and parent linkage, and 
   );
   expect(created.payload?.session).toMatchObject({
     key: created.payload?.key,
-    modelProvider: "openai",
-    model: "gpt-test-a",
-    thinkingLevel: "high",
+    modelProvider: "omniroute",
+    model: "deepseek-v4-flash",
+    thinkingLevel: "xhigh",
   });
+  expect(created.payload?.session?.thinkingLevels?.map(({ id }) => id)).toContain("xhigh");
+  expect(loadGatewayModelCatalog).toHaveBeenCalledTimes(1);
 
   const key = created.payload?.key as string;
   const storedEntry = loadSessionEntry({ agentId: "ops", sessionKey: key, storePath });
   expect(storedEntry?.sessionId).toBe(created.payload?.sessionId);
   expect(storedEntry?.label).toBe("Dashboard Chat");
-  expect(storedEntry?.providerOverride).toBe("openai");
-  expect(storedEntry?.modelOverride).toBe("gpt-test-a");
-  expect(storedEntry?.thinkingLevel).toBe("high");
+  expect(storedEntry?.providerOverride).toBe("omniroute");
+  expect(storedEntry?.modelOverride).toBe("deepseek-v4-flash");
+  expect(storedEntry?.thinkingLevel).toBe("xhigh");
   expect(storedEntry?.parentSessionKey).toBe("agent:main:main");
   expect(storedEntry).not.toHaveProperty("sessionFile");
 
