@@ -350,6 +350,12 @@ describe("prepared model runtime Gateway catalog mode", () => {
       },
     ];
     const config = {
+      models: {
+        providers: {
+          alpha: { baseUrl: "http://alpha.invalid", models: [] },
+          beta: { baseUrl: "http://beta.invalid", models: [] },
+        },
+      },
       agents: {
         defaults: { model: { primary: "openai/gpt-5.5" } },
         list: [

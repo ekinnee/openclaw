@@ -95,9 +95,6 @@ export function collectPreparedModelRuntimeProviderIds(
       addProviderId(providerId);
     }
   }
-  for (const providerId of Object.keys(config.models?.providers ?? {})) {
-    addProviderId(providerId);
-  }
   for (const ref of configuredModelRefs) {
     const separator = ref.value.indexOf("/");
     if (separator > 0) {
