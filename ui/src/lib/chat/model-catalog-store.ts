@@ -33,6 +33,8 @@ function modelCatalogCacheKey(agentId: string, preparedOnly: boolean): string {
 type LoadModelsOptions = {
   agentId: string;
   preparedOnly?: boolean;
+  /** Bypass the Control UI cache without replacing Gateway's completed catalog generation. */
+  revalidate?: boolean;
   refresh?: boolean;
   rejectOnFailure?: boolean;
   requestTimeoutMs?: number;
@@ -59,7 +61,7 @@ export async function loadModels(
   const preparedCacheKey = modelCatalogCacheKey(agentId, true);
   const cached = cache.get(cacheKey);
   const now = Date.now();
-  if (!opts.refresh && cached?.models && cached.expiresAt > now) {
+  if (!opts.revalidate && !opts.refresh && cached?.models && cached.expiresAt > now) {
     return cached.models;
   }
   if (
@@ -114,7 +116,7 @@ export async function loadModels(
     models: cached?.models ?? [],
     inFlight,
     inFlightRejects: rejectOnFailure,
-    ...(opts.refresh ? { inFlightRefresh: true } : {}),
+    inFlightRefresh: opts.refresh === true,
   });
   return inFlight;
 }
@@ -136,7 +138,7 @@ export function revalidateModels(
     loadModels(client, {
       agentId,
       ...(preparedOnly ? { preparedOnly: true } : {}),
-      refresh: true,
+      revalidate: true,
       rejectOnFailure: true,
       ...(requestTimeoutMs === undefined ? {} : { requestTimeoutMs }),
     });

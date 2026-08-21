@@ -1,7 +1,7 @@
 // Control UI tests cover models behavior.
 import { describe, expect, it, vi } from "vitest";
 import type { GatewayBrowserClient } from "../../api/gateway.ts";
-import { loadModels } from "./model-catalog-store.ts";
+import { loadModels, revalidateModels } from "./model-catalog-store.ts";
 
 describe("loadModels", () => {
   it("requests the configured model list view", async () => {
@@ -50,6 +50,29 @@ describe("loadModels", () => {
 
     expect(request).toHaveBeenCalledTimes(1);
     expect(first).toBe(second);
+  });
+
+  it("revalidates cached models without forcing a Gateway catalog rebuild", async () => {
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce({
+        models: [{ id: "cached", name: "Cached", provider: "openai" }],
+      })
+      .mockResolvedValueOnce({
+        models: [{ id: "revalidated", name: "Revalidated", provider: "openai" }],
+      });
+    const client = { request } as unknown as GatewayBrowserClient;
+
+    await loadModels(client, { agentId: "main" });
+    await expect(revalidateModels(client, { agentId: "main" })).resolves.toEqual([
+      { id: "revalidated", name: "Revalidated", provider: "openai" },
+    ]);
+
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(request).toHaveBeenNthCalledWith(2, "models.list", {
+      view: "configured",
+      agentId: "main",
+    });
   });
 
   it("keeps model catalogs scoped by agent", async () => {

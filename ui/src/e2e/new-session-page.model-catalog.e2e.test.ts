@@ -83,7 +83,6 @@ suite.define(() => {
       const firstCatalogRequest = await gateway.waitForRequest("models.list");
       expect(firstCatalogRequest.params).toEqual({
         agentId: "main",
-        refresh: true,
         view: "configured",
       });
       expect(await gateway.getRequests("chat.metadata")).toHaveLength(0);
@@ -111,7 +110,6 @@ suite.define(() => {
       const reloadedCatalogRequest = await gateway.waitForRequest("models.list");
       expect(reloadedCatalogRequest.params).toEqual({
         agentId: "main",
-        refresh: true,
         view: "configured",
       });
       expect(await gateway.getRequests("chat.metadata")).toHaveLength(0);
@@ -190,7 +188,6 @@ suite.define(() => {
       await expect.poll(async () => (await gateway.getRequests("models.list")).length).toBe(2);
       expect((await gateway.getRequests("models.list"))[1]?.params).toEqual({
         agentId: "main",
-        refresh: true,
         view: "configured",
       });
       await expect.poll(() => page.locator("[data-chat-model-option]").count()).toBe(3);
@@ -249,13 +246,13 @@ suite.define(() => {
       await expect.poll(async () => (await gateway.getRequests("models.list")).length).toBe(3);
       expect(await gateway.getRequests("models.list")).toEqual([
         expect.objectContaining({
-          params: { agentId: "main", refresh: true, view: "configured" },
+          params: { agentId: "main", view: "configured" },
         }),
         expect.objectContaining({
-          params: { agentId: "main", refresh: true, view: "configured" },
+          params: { agentId: "main", view: "configured" },
         }),
         expect.objectContaining({
-          params: { agentId: "main", refresh: true, view: "configured" },
+          params: { agentId: "main", view: "configured" },
         }),
       ]);
     } finally {

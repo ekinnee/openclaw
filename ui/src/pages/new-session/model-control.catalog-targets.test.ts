@@ -61,8 +61,8 @@ describe("new-session CLI-agent model targets", () => {
 
     await vi.waitFor(() => {
       expect(configuredModelCatalogParams(request)).toEqual([
-        { agentId: "main", refresh: true, view: "configured" },
-        { agentId: "main", refresh: true, view: "configured" },
+        { agentId: "main", view: "configured" },
+        { agentId: "main", view: "configured" },
       ]);
       expect(catalogCalls(request)).toHaveLength(2);
     });
@@ -106,8 +106,8 @@ describe("new-session CLI-agent model targets", () => {
 
     await vi.waitFor(() => {
       expect(configuredModelCatalogParams(request)).toEqual([
-        { agentId: "main", refresh: true, view: "configured" },
-        { agentId: "main", refresh: true, view: "configured" },
+        { agentId: "main", view: "configured" },
+        { agentId: "main", view: "configured" },
       ]);
       expect(catalogCalls(request)).toHaveLength(2);
     });

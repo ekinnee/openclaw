@@ -132,7 +132,7 @@ describe("new-session model runtime", () => {
     );
     expect(request).toHaveBeenCalledWith(
       "models.list",
-      { agentId: "main", refresh: true, view: "configured" },
+      { agentId: "main", view: "configured" },
       { timeoutMs: DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS },
     );
     expect(request.mock.calls.some(([method]) => method === "chat.metadata")).toBe(false);
