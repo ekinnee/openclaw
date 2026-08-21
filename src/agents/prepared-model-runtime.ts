@@ -6,6 +6,7 @@ import type { PluginMetadataSnapshot } from "../plugins/plugin-metadata-snapshot
 import { registerRuntimeAuthProfileStoreMutationListener } from "./auth-profiles/runtime-snapshots.js";
 import { acquirePreparedModelRuntimeLeaseFromOwners } from "./prepared-model-runtime-lease.js";
 import { registerPreparedRuntimeAuthMaterializationPublisher } from "./prepared-model-runtime-materializations.js";
+import { collectPreparedModelRuntimeProviderIds } from "./prepared-model-runtime.configured.js";
 import {
   PreparedModelRuntimeOwnerNotPublishedError,
   PreparedModelRuntimeOwnerRetention,
@@ -77,6 +78,43 @@ const replyDispatchPublication = new PreparedReplyDispatchPublicationOwner({
   getPendingReplacement: () => pendingModelRuntimeReplacement?.promise,
 });
 export const loadPublishedGatewayReplyDispatchRuntime = replyDispatchPublication.load;
+
+function listRuntimeDiscoveryProviderIds(snapshot: PreparedModelRuntimeSnapshot): string[] {
+  const runtimeProviders = new Set<string>();
+  for (const plugin of snapshot.metadataSnapshot.plugins) {
+    for (const [provider, discovery] of Object.entries(plugin.modelCatalog?.discovery ?? {})) {
+      if (discovery === "runtime") {
+        // Manifest parsing has already normalized discovery keys against the plugin's providers.
+        runtimeProviders.add(provider);
+      }
+    }
+  }
+  return collectPreparedModelRuntimeProviderIds(snapshot.config, {}, false).filter((providerId) =>
+    runtimeProviders.has(providerId),
+  );
+}
+
+/** Publishes post-ready catalogs for configured runtime-only providers without touching refreshable catalogs. */
+export async function publishPreparedRuntimeDiscoveryCatalogs(): Promise<number> {
+  let published = 0;
+  for (const owner of owners.values()) {
+    if (
+      owner.provenance !== "configured" ||
+      owner.needsRefresh ||
+      owner.pending ||
+      !owner.snapshot
+    ) {
+      continue;
+    }
+    const providerIds = listRuntimeDiscoveryProviderIds(owner.snapshot);
+    if (providerIds.length === 0 || !owner.snapshot.loadRuntimeDiscoveryCatalog) {
+      continue;
+    }
+    await owner.snapshot.loadRuntimeDiscoveryCatalog(providerIds);
+    published += 1;
+  }
+  return published;
+}
 
 /** Resolves a published owner or activates a standalone lifecycle owner. */
 export async function loadPreparedModelRuntimeSnapshot(

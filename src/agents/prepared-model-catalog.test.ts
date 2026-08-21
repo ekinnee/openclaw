@@ -67,6 +67,7 @@ vi.mock("./prepared-model-runtime.scoped-catalog.js", () => ({
 
 import { PreparedModelCatalogConfigReplacedError } from "./prepared-model-catalog.errors.js";
 import {
+  getAvailablePreparedModelCatalogSnapshot,
   getPublishedPreparedModelCatalogOwnerSnapshot,
   getPreparedModelCatalogSnapshot,
   loadPreparedModelCatalogOwnerSnapshot,
@@ -154,6 +155,35 @@ describe("prepared model catalog access", () => {
     expect(mocks.prepareSnapshot.mock.calls[0]?.[0]).not.toHaveProperty("readOnly");
     expect(mocks.loadSnapshot).not.toHaveBeenCalled();
     expect(mocks.releaseSnapshot).not.toHaveBeenCalled();
+  });
+
+  it("uses the published runtime-discovery catalog for prepared-only reads", async () => {
+    const configuredCatalog = {
+      entries: [{ provider: "omniroute", id: "static", name: "Static" }],
+      routeVariants: [],
+    };
+    const runtimeCatalog = {
+      entries: [{ provider: "omniroute", id: "deepseekv4flash", name: "DeepSeek V4 Flash" }],
+      routeVariants: [],
+    };
+    const authStore = { version: 1, profiles: {} };
+    const loadFullModelCatalog = vi.fn();
+    const snapshot = {
+      ...fullSnapshot,
+      modelCatalog: configuredCatalog,
+      loadFullModelCatalog,
+      readRuntimeDiscoveryCatalog: () => runtimeCatalog,
+    };
+    mocks.fullCatalogAuth = { authStore, authModes: {} };
+    setPreparedModelRuntimeAuthStore(snapshot, authStore);
+    mocks.prepareSnapshot.mockResolvedValue(snapshot);
+    mocks.getSnapshot.mockReturnValue(snapshot);
+
+    await expect(loadPreparedModelCatalogSnapshot({ readOnly: true })).resolves.toBe(
+      runtimeCatalog,
+    );
+    expect(getAvailablePreparedModelCatalogSnapshot()).toBe(runtimeCatalog);
+    expect(loadFullModelCatalog).not.toHaveBeenCalled();
   });
 
   it("reuses a published full generation for a provider-scoped read-only load", async () => {

@@ -5,6 +5,7 @@ import {
   type AuthProfileStore,
 } from "../../agents/auth-profiles.js";
 import type { ModelCatalogEntry } from "../../agents/model-catalog.types.js";
+import { getPreparedModelFullCatalogAuth } from "../../agents/prepared-model-catalog-worker.js";
 import {
   getPublishedPreparedModelCatalogOwnerSnapshot,
   type GetPublishedPreparedModelCatalogOwnerParams,
@@ -224,15 +225,19 @@ async function defaultBuildProjection(params: {
     await import("./models-list-result.js");
   // Chat metadata must stay on process-published facts. Live discovery belongs to explicit
   // models.list control-plane reads so a slow provider cannot delay chat startup.
-  const snapshot = params.facts.owner.modelCatalog;
+  const runtimeDiscoveryCatalog = params.facts.owner.readRuntimeDiscoveryCatalog?.();
+  const runtimeDiscoveryAuth = runtimeDiscoveryCatalog
+    ? getPreparedModelFullCatalogAuth(runtimeDiscoveryCatalog)
+    : undefined;
+  const snapshot = runtimeDiscoveryCatalog ?? params.facts.owner.modelCatalog;
   const projector = createGatewayAgentModelCatalogProjector({
     cfg: params.facts.owner.config,
     agentId: params.facts.agentId,
     snapshot,
     metadataSnapshot: params.facts.owner.metadataSnapshot,
-    preparedAuthStore: params.facts.authStore,
+    preparedAuthStore: runtimeDiscoveryAuth?.authStore ?? params.facts.authStore,
     // The owner records usable auth at discovery; metadata must share that exact generation fact.
-    preparedRuntimeAuthModes: params.facts.owner.authModes,
+    preparedRuntimeAuthModes: runtimeDiscoveryAuth?.authModes ?? params.facts.owner.authModes,
     preparedRuntimeAuthMaterializations: getPreparedModelRuntimeAuthMaterializations(
       params.facts.owner,
     ),
@@ -244,7 +249,7 @@ async function defaultBuildProjection(params: {
     buildModelsListResult({
       context: params.context,
       agentId: params.facts.agentId,
-      params: { view: "configured" },
+      params: { view: "configured", preparedOnly: true },
       preloadedCatalog: {
         agentId: params.facts.agentId,
         config: params.facts.owner.config,

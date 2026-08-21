@@ -74,7 +74,7 @@ async function materializeRequestedModelCatalog(
   }
   const modelCatalog =
     readOnly === true
-      ? snapshot.readFullModelCatalog?.()
+      ? (snapshot.readFullModelCatalog?.() ?? snapshot.readRuntimeDiscoveryCatalog?.())
       : await snapshot.loadFullModelCatalog({ refresh: refreshFullCatalog === true });
   if (!modelCatalog) {
     return snapshot;
@@ -215,7 +215,9 @@ export function getAvailablePreparedModelCatalogSnapshot(
   params: LoadPreparedModelCatalogParams = {},
 ): ModelCatalogSnapshot | undefined {
   const owner = getPreparedModelCatalogOwnerSnapshot(params);
-  return owner?.readFullModelCatalog?.() ?? owner?.modelCatalog;
+  return (
+    owner?.readFullModelCatalog?.() ?? owner?.readRuntimeDiscoveryCatalog?.() ?? owner?.modelCatalog
+  );
 }
 
 async function resolvePreparedModelCatalogOwnerSnapshotWithPolicy(

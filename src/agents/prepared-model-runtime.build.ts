@@ -53,6 +53,10 @@ const limitFullModelCatalogBuild = pLimit(MAX_CONCURRENT_FULL_MODEL_CATALOG_BUIL
 type PreparedModelRuntimeCatalogAccess = Readonly<{
   readFullModelCatalog: () => ModelCatalogSnapshot | undefined;
   loadFullModelCatalog: (options?: { refresh?: boolean }) => Promise<ModelCatalogSnapshot>;
+  readRuntimeDiscoveryCatalog: () => ModelCatalogSnapshot | undefined;
+  loadRuntimeDiscoveryCatalog: (
+    providerDiscoveryProviderIds: readonly string[],
+  ) => Promise<ModelCatalogSnapshot>;
   loadAuth: (scope: PreparedModelRuntimeAuthScope) => Promise<PreparedModelRuntimeAuth>;
 }>;
 type PreparedModelRuntimeBuildGuards =
@@ -144,13 +148,19 @@ function createFullModelCatalogAccess(params: {
   };
   // Construction is lazy: automatic prepared reads do not start a thread. The first explicit
   // request initializes one registry and reuses that exact plugin generation until retirement.
-  const worker = createPreparedModelCatalogWorker({
-    input: createPreparedModelCatalogWorkerInput({
-      agentFacts: params.agentFacts,
-      pluginMetadataSnapshot: params.pluginGeneration.pluginMetadataSnapshot,
-    }),
-    isCurrent: params.isCurrent,
-  });
+  const createWorker = (providerDiscoveryProviderIds?: readonly string[]) =>
+    createPreparedModelCatalogWorker({
+      input: createPreparedModelCatalogWorkerInput({
+        agentFacts: params.agentFacts,
+        pluginMetadataSnapshot: params.pluginGeneration.pluginMetadataSnapshot,
+        ...(providerDiscoveryProviderIds ? { providerDiscoveryProviderIds } : {}),
+      }),
+      isCurrent: params.isCurrent,
+    });
+  const worker = createWorker();
+  let runtimeDiscoveryCatalog: ModelCatalogSnapshot | undefined;
+  let runtimeDiscoveryProviderIds: readonly string[] | undefined;
+  let pendingRuntimeDiscoveryCatalog: Promise<ModelCatalogSnapshot> | undefined;
   return {
     loadAuth: ({ providerIds, profileIds }) => {
       const key = [...new Set(providerIds)]
@@ -222,6 +232,57 @@ function createFullModelCatalogAccess(params: {
       }
       return pending;
     },
+    readRuntimeDiscoveryCatalog: () => {
+      assertCurrent();
+      return runtimeDiscoveryCatalog;
+    },
+    loadRuntimeDiscoveryCatalog: (providerDiscoveryProviderIds) => {
+      try {
+        assertCurrent();
+      } catch (error) {
+        return Promise.reject(toStringifiedError(error));
+      }
+      const normalizedProviderIds = [
+        ...new Set(providerDiscoveryProviderIds.map(normalizeProviderId).filter(Boolean)),
+      ].toSorted((left, right) => left.localeCompare(right));
+      if (normalizedProviderIds.length === 0) {
+        return Promise.reject(new Error("runtime discovery requires at least one provider"));
+      }
+      if (
+        runtimeDiscoveryCatalog &&
+        runtimeDiscoveryProviderIds?.every(
+          (providerId, index) => providerId === normalizedProviderIds[index],
+        ) &&
+        runtimeDiscoveryProviderIds.length === normalizedProviderIds.length
+      ) {
+        return Promise.resolve(runtimeDiscoveryCatalog);
+      }
+      if (!pendingRuntimeDiscoveryCatalog) {
+        const runtimeWorker = createWorker(normalizedProviderIds);
+        const build = runSerializedPreparedModelRuntimeTask({
+          agentDir: params.agentFacts.input.agentDir,
+          agentBuildCompletions: params.agentBuildCompletions,
+          isCurrent: params.isCurrent,
+          task: async () =>
+            await limitFullModelCatalogBuild(async () => {
+              assertCurrent();
+              const catalog = await runtimeWorker.loadCatalog();
+              assertCurrent();
+              return catalog;
+            }),
+        });
+        pendingRuntimeDiscoveryCatalog = build
+          .then((catalog) => {
+            runtimeDiscoveryCatalog = catalog;
+            runtimeDiscoveryProviderIds = normalizedProviderIds;
+            return catalog;
+          })
+          .finally(() => {
+            pendingRuntimeDiscoveryCatalog = undefined;
+          });
+      }
+      return pendingRuntimeDiscoveryCatalog;
+    },
   };
 }
 
@@ -258,6 +319,8 @@ function createSnapshot(
     modelCatalog,
     readFullModelCatalog: catalogAccess.readFullModelCatalog,
     loadFullModelCatalog: catalogAccess.loadFullModelCatalog,
+    readRuntimeDiscoveryCatalog: catalogAccess.readRuntimeDiscoveryCatalog,
+    loadRuntimeDiscoveryCatalog: catalogAccess.loadRuntimeDiscoveryCatalog,
     configuredRuntimeModels,
     inlineProviderModels,
     createStores,

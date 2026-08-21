@@ -59,6 +59,7 @@ const mocks = vi.hoisted(() => {
     ),
     buildPreparedModelCatalogSnapshot: vi.fn(async () => ({ entries: [], routeVariants: [] })),
     runPreparedModelCatalogWorker: vi.fn(async () => ({ entries: [], routeVariants: [] })),
+    workerInputs: [] as unknown[],
     loadAgentRuntimePluginRegistryHandle: vi.fn(),
     loadStaticCatalog: vi.fn(async () => []),
     prepareStaticCatalog: vi.fn(async (..._args: unknown[]) => ({
@@ -113,14 +114,24 @@ vi.mock("./agent-auth-discovery.js", () => ({
 }));
 
 vi.mock("./prepared-model-catalog-worker.js", () => ({
-  createPreparedModelCatalogWorkerInput: ({ agentFacts }: { agentFacts: unknown }) => ({
+  createPreparedModelCatalogWorkerInput: ({
+    agentFacts,
+    providerDiscoveryProviderIds,
+  }: {
+    agentFacts: unknown;
+    providerDiscoveryProviderIds?: readonly string[];
+  }) => ({
     generationFingerprint: "test-generation",
     input: (agentFacts as { input: unknown }).input,
+    ...(providerDiscoveryProviderIds ? { providerDiscoveryProviderIds } : {}),
   }),
-  createPreparedModelCatalogWorker: () => ({
-    loadCatalog: mocks.runPreparedModelCatalogWorker,
-    loadAuth: async () => ({ authStore: { version: 1, profiles: {} }, authModes: {} }),
-  }),
+  createPreparedModelCatalogWorker: ({ input }: { input: unknown }) => {
+    mocks.workerInputs.push(input);
+    return {
+      loadCatalog: mocks.runPreparedModelCatalogWorker,
+      loadAuth: async () => ({ authStore: { version: 1, profiles: {} }, authModes: {} }),
+    };
+  },
 }));
 
 vi.mock("./agent-model-discovery.js", () => ({
@@ -209,8 +220,11 @@ vi.mock("../logging/subsystem.js", () => ({
   createSubsystemLogger: () => ({ warn: vi.fn() }),
 }));
 
-const { getPreparedModelRuntimeSnapshot, refreshPreparedModelRuntimeSnapshots } =
-  await import("./prepared-model-runtime.js");
+const {
+  getPreparedModelRuntimeSnapshot,
+  publishPreparedRuntimeDiscoveryCatalogs,
+  refreshPreparedModelRuntimeSnapshots,
+} = await import("./prepared-model-runtime.js");
 const { getAvailablePreparedModelCatalogSnapshot } = await import("./prepared-model-catalog.js");
 const { prepareScopedReadOnlyLiveModelCatalog, prepareScopedReadOnlyModelCatalog } =
   await import("./prepared-model-runtime.scoped-catalog.js");
@@ -223,6 +237,8 @@ beforeEach(() => {
     .mockReset()
     .mockReturnValue(createEmptyPluginRegistry());
   vi.clearAllMocks();
+  mocks.workerInputs.length = 0;
+  (mocks.metadataSnapshot as { plugins: unknown[] }).plugins = [];
   mocks.resolveStaticCatalogModel.mockReturnValue(undefined);
 });
 
@@ -294,6 +310,36 @@ describe("prepared model runtime Gateway catalog mode", () => {
       expect.objectContaining({ providerDiscoveryEntriesOnly: true }),
     );
     expect(mocks.ensureOpenClawModelsJson).not.toHaveBeenCalled();
+  });
+
+  it("publishes configured runtime catalogs without discovering refreshable providers", async () => {
+    (mocks.metadataSnapshot as { plugins: unknown[] }).plugins = [
+      {
+        modelCatalog: { discovery: { omniroute: "runtime", ollama: "refreshable" } },
+      },
+    ];
+    const config = {
+      agents: { defaults: { model: { primary: "omniroute/auto" } } },
+      models: { providers: { ollama: { baseUrl: "http://127.0.0.1:11434", models: [] } } },
+    };
+
+    await refreshPreparedModelRuntimeSnapshots(config, {
+      gatewayLifecycle: true,
+      catalogMode: "static",
+    });
+
+    await expect(publishPreparedRuntimeDiscoveryCatalogs()).resolves.toBe(1);
+    expect(mocks.workerInputs).toContainEqual(
+      expect.objectContaining({ providerDiscoveryProviderIds: ["omniroute"] }),
+    );
+    const snapshot = getPreparedModelRuntimeSnapshot({
+      agentId: "default",
+      config,
+      agentDir: "/tmp/prepared-static-agent",
+      inheritedAuthDir: "/tmp/prepared-static-agent",
+      workspaceDir: "/tmp/prepared-static-workspace",
+    });
+    expect(snapshot?.readRuntimeDiscoveryCatalog?.()).toEqual({ entries: [], routeVariants: [] });
   });
 
   it("does not publish a static catalog generation superseded while its hook is running", async () => {

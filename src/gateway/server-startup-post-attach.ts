@@ -969,6 +969,26 @@ export async function startGatewaySidecars(params: {
     );
   }
 
+  postReadySidecars.push(
+    schedulePostReadySidecarTask({
+      startupTrace: params.startupTrace,
+      name: "sidecars.model-runtime-discovery",
+      log: params.log,
+      waitForPostReadyWork: params.waitForPostReadyWork,
+      run: async (isStopped) => {
+        const { publishPreparedRuntimeDiscoveryCatalogs } =
+          await import("../agents/prepared-model-runtime.js");
+        if (isStopped()) {
+          return;
+        }
+        const published = await publishPreparedRuntimeDiscoveryCatalogs();
+        if (published > 0 && !isStopped()) {
+          await params.refreshChatMetadata?.();
+        }
+      },
+    }),
+  );
+
   // These handles schedule later tasks but do not yield after creation. Transfer
   // ownership in the same turn so close cannot seal between creation and publication.
   params.onPostReadySidecars?.(postReadySidecars);

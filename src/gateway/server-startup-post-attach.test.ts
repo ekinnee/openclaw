@@ -83,6 +83,7 @@ const hoisted = vi.hoisted(() => {
   const refreshPreparedModelRuntimeSnapshots = vi.fn(
     async (_cfg?: unknown, _options?: unknown) => {},
   );
+  const publishPreparedRuntimeDiscoveryCatalogs = vi.fn(async () => 0);
   const prewarmConfigDrivenReplyRuntime = vi.fn(async () => {});
   const prewarmContextWindowCacheAfterReady = vi.fn(async () => {});
   const scheduleGatewayHandlerPrewarm = vi.fn(() => ({ stop: vi.fn() }));
@@ -123,6 +124,7 @@ const hoisted = vi.hoisted(() => {
     getModelRefStatus,
     prepareModelRuntimeSnapshot,
     refreshPreparedModelRuntimeSnapshots,
+    publishPreparedRuntimeDiscoveryCatalogs,
     prewarmConfigDrivenReplyRuntime,
     prewarmContextWindowCacheAfterReady,
     scheduleGatewayHandlerPrewarm,
@@ -229,6 +231,7 @@ vi.mock("../agents/model-selection.js", () => ({
 vi.mock("../agents/prepared-model-runtime.js", () => ({
   publishPreparedModelRuntimeSnapshot: hoisted.prepareModelRuntimeSnapshot,
   refreshPreparedModelRuntimeSnapshots: hoisted.refreshPreparedModelRuntimeSnapshots,
+  publishPreparedRuntimeDiscoveryCatalogs: hoisted.publishPreparedRuntimeDiscoveryCatalogs,
 }));
 
 vi.mock("../auto-reply/reply/get-reply-from-config.runtime.js", () => ({
@@ -516,6 +519,8 @@ describe("startGatewayPostAttachRuntime", () => {
     hoisted.prepareModelRuntimeSnapshot.mockResolvedValue({});
     hoisted.refreshPreparedModelRuntimeSnapshots.mockReset();
     hoisted.refreshPreparedModelRuntimeSnapshots.mockResolvedValue(undefined);
+    hoisted.publishPreparedRuntimeDiscoveryCatalogs.mockReset();
+    hoisted.publishPreparedRuntimeDiscoveryCatalogs.mockResolvedValue(0);
     hoisted.prewarmConfigDrivenReplyRuntime.mockReset();
     hoisted.prewarmConfigDrivenReplyRuntime.mockResolvedValue(undefined);
     hoisted.prewarmContextWindowCacheAfterReady.mockReset();
@@ -1573,7 +1578,7 @@ describe("startGatewayPostAttachRuntime", () => {
       await vi.advanceTimersToNextTimerAsync();
       await vi.advanceTimersToNextTimerAsync();
       expect(postReadyRequestTurn).toHaveBeenCalledTimes(1);
-      expect(onPostReadySidecars.mock.calls[0]?.[0]).toHaveLength(1);
+      expect(onPostReadySidecars.mock.calls[0]?.[0]).toHaveLength(2);
       expect(onGatewayLifetimeSidecars.mock.calls[0]?.[0]).toHaveLength(3);
       await vi.dynamicImportSettled();
       await waitForGatewayTestState(() => {
@@ -1715,7 +1720,7 @@ describe("startGatewayPostAttachRuntime", () => {
       const lifetimeSidecars = onGatewayLifetimeSidecars.mock.calls[0]?.[0] as
         | { stop: () => void }[]
         | undefined;
-      expect(gmailSidecars).toHaveLength(2);
+      expect(gmailSidecars).toHaveLength(3);
       expect(lifetimeSidecars).toHaveLength(3);
 
       for (const sidecar of gmailSidecars ?? []) {
@@ -1777,7 +1782,7 @@ describe("startGatewayPostAttachRuntime", () => {
     const lifetimeSidecars = onGatewayLifetimeSidecars.mock.calls[0]?.[0] as
       | Array<{ stop: () => Promise<void> | void }>
       | undefined;
-    expect(gmailSidecars).toHaveLength(2);
+    expect(gmailSidecars).toHaveLength(3);
     expect(lifetimeSidecars).toHaveLength(3);
 
     await waitForGatewayTestState(() => {
@@ -2814,9 +2819,43 @@ describe("startGatewayPostAttachRuntime", () => {
       name: "sidecars.ready",
       metrics: [
         ["loadedPluginCount", 2],
-        ["postReadySidecarCount", 3],
+        ["postReadySidecarCount", 4],
       ],
     });
+  });
+
+  it("publishes runtime discovery after ready and refreshes Chat metadata", async () => {
+    const refreshChatMetadata = vi.fn(async () => {});
+    hoisted.publishPreparedRuntimeDiscoveryCatalogs.mockResolvedValueOnce(1);
+
+    const result = await startGatewaySidecars({
+      cfg: { hooks: { internal: { enabled: false } } } as never,
+      pluginRegistry: createPostAttachParams().pluginRegistry,
+      defaultWorkspaceDir: "/tmp/openclaw-workspace",
+      deps: {} as never,
+      startChannels: vi.fn(async () => {}),
+      refreshChatMetadata,
+      log: { warn: vi.fn() },
+      logHooks: {
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      },
+      logChannels: {
+        info: vi.fn(),
+        error: vi.fn(),
+      },
+    });
+    // Startup performs its own initial projection. Isolate the later post-ready refresh.
+    refreshChatMetadata.mockClear();
+
+    await waitForGatewayTestState(() => {
+      expect(hoisted.publishPreparedRuntimeDiscoveryCatalogs).toHaveBeenCalledTimes(1);
+      expect(refreshChatMetadata).toHaveBeenCalledTimes(1);
+    });
+    for (const sidecar of result.postReadySidecars) {
+      await stopTrackedSidecar(sidecar);
+    }
   });
 
   it("runs Gmail watcher after sidecars are ready", async () => {
@@ -2859,7 +2898,7 @@ describe("startGatewayPostAttachRuntime", () => {
     });
     sidecarStartReturned = true;
 
-    expect(result.postReadySidecars).toHaveLength(2);
+    expect(result.postReadySidecars).toHaveLength(3);
     expect(hoisted.startGmailWatcherWithLogs).not.toHaveBeenCalled();
     expect(onPostReadySidecars).toHaveBeenCalledWith(result.postReadySidecars);
 
@@ -2949,7 +2988,7 @@ describe("startGatewayPostAttachRuntime", () => {
       },
     });
 
-    expect(result.postReadySidecars).toHaveLength(2);
+    expect(result.postReadySidecars).toHaveLength(3);
     await waitForGatewayTestState(() => {
       expect(log.warn).toHaveBeenCalledWith(
         "sidecars.gmail-watch failed after gateway ready: Error: boom",
@@ -2978,7 +3017,7 @@ describe("startGatewayPostAttachRuntime", () => {
       },
     });
 
-    expect(result.postReadySidecars).toHaveLength(2);
+    expect(result.postReadySidecars).toHaveLength(3);
     for (const sidecar of result.postReadySidecars) {
       await stopTrackedSidecar(sidecar);
     }
@@ -3086,7 +3125,7 @@ describe("startGatewayPostAttachRuntime", () => {
       },
     });
 
-    expect(result.postReadySidecars).toHaveLength(2);
+    expect(result.postReadySidecars).toHaveLength(3);
     expect(hoisted.loadModelCatalog).not.toHaveBeenCalled();
 
     await waitForGatewayTestState(() => {
@@ -3590,7 +3629,7 @@ describe("startGatewayPostAttachRuntime", () => {
       waitForPostReadyWork: () => postReadyWork,
     });
 
-    expect(result.postReadySidecars).toHaveLength(2);
+    expect(result.postReadySidecars).toHaveLength(3);
     for (const sidecar of result.postReadySidecars) {
       await stopTrackedSidecar(sidecar);
     }

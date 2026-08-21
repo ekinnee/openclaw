@@ -59,6 +59,12 @@ export type PreparedModelRuntimeSnapshot = Readonly<{
   readFullModelCatalog?: () => ModelCatalogSnapshot | undefined;
   /** Builds this generation's full control-plane catalog without replacing turn facts. */
   loadFullModelCatalog?: (options?: { refresh?: boolean }) => Promise<ModelCatalogSnapshot>;
+  /** Reads the post-ready runtime-discovery catalog without starting provider discovery. */
+  readRuntimeDiscoveryCatalog?: () => ModelCatalogSnapshot | undefined;
+  /** Discovers configured runtime-only providers without replacing the full control-plane cache. */
+  loadRuntimeDiscoveryCatalog?: (
+    providerDiscoveryProviderIds: readonly string[],
+  ) => Promise<ModelCatalogSnapshot>;
   /** Full static models for configured refs, resolved once at the lifecycle boundary. */
   configuredRuntimeModels: readonly PreparedConfiguredRuntimeModel[];
   /** Inline provider projection prepared once for all resolutions owned by this snapshot. */
