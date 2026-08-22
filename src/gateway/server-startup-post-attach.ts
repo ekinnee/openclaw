@@ -981,10 +981,7 @@ export async function startGatewaySidecars(params: {
         if (isStopped()) {
           return;
         }
-        const published = await publishPreparedRuntimeDiscoveryCatalogs();
-        if (published > 0 && !isStopped()) {
-          await params.refreshChatMetadata?.();
-        }
+        await publishPreparedRuntimeDiscoveryCatalogs();
       },
     }),
   );

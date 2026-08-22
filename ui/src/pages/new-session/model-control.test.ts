@@ -1,4 +1,7 @@
-import { DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS } from "@openclaw/gateway-client/browser";
+import {
+  DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS,
+  gatewayStartupUnavailableDetails,
+} from "@openclaw/gateway-client/browser";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GatewayAgentRow, ModelCatalogEntry } from "../../api/types.ts";
 import type { ApplicationContext } from "../../app/context.ts";
@@ -100,12 +103,7 @@ describe("new-session model runtime", () => {
     );
   });
 
-  it("keeps startup and picker retries on the prepared catalog", async () => {
-    const preparedModel: ModelCatalogEntry = {
-      id: "gpt-5.6-luna",
-      name: "GPT-5.6 Luna",
-      provider: "openai",
-    };
+  it("keeps New Session pending until post-ready discovery publishes", async () => {
     const refreshedPreparedModel: ModelCatalogEntry = {
       id: "deepseek-v4-flash",
       name: "DeepSeek V4 Flash",
@@ -118,9 +116,14 @@ describe("new-session model runtime", () => {
       })),
     };
     const { context, request } = contextWith([]);
-    request
-      .mockResolvedValueOnce({ models: [preparedModel] })
-      .mockResolvedValue({ models: [refreshedPreparedModel] });
+    const retry = deferred<{ models: ModelCatalogEntry[] }>();
+    const pending = Object.assign(new Error("runtime discovery pending"), {
+      code: "UNAVAILABLE",
+      details: gatewayStartupUnavailableDetails(),
+      retryAfterMs: 100,
+      retryable: true,
+    });
+    request.mockRejectedValueOnce(pending).mockReturnValueOnce(retry.promise);
     const control = new NewSessionModelControl(() => undefined);
     const agent = {
       id: "main",
@@ -132,32 +135,32 @@ describe("new-session model runtime", () => {
       agent,
     });
 
-    await vi.waitFor(() =>
-      expect(
-        renderControl(control, context).querySelector(
-          '[data-chat-model-option="openai/gpt-5.6-luna"]',
-        ),
-      ).not.toBeNull(),
-    );
+    await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
+    expect(
+      renderControl(control, context).querySelector(
+        '[data-chat-model-option="openai/gpt-5.6-luna"]',
+      ),
+    ).toBeNull();
     expect(request).toHaveBeenCalledWith(
       "models.list",
       { agentId: "main", preparedOnly: true, view: "configured" },
       { timeoutMs: DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS },
     );
     expect(request.mock.calls.some(([method]) => method === "chat.metadata")).toBe(false);
-    expect(request).toHaveBeenCalledTimes(1);
+    expect(request).toHaveBeenCalledTimes(2);
 
-    const initialPicker = renderControl(control, context).querySelector<HTMLDetailsElement>(
-      ".chat-controls__model-picker",
-    );
-    initialPicker!.open = true;
-    initialPicker!.dispatchEvent(new Event("toggle"));
-
-    await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
     expect(request).toHaveBeenLastCalledWith(
       "models.list",
       { agentId: "main", preparedOnly: true, view: "configured" },
       { timeoutMs: DEFAULT_GATEWAY_REQUEST_TIMEOUT_MS },
+    );
+    retry.resolve({ models: [refreshedPreparedModel] });
+    await vi.waitFor(() =>
+      expect(
+        renderControl(control, context, "main", agent).querySelector(
+          '[data-chat-model-option="omniroute/deepseek-v4-flash"]',
+        ),
+      ).not.toBeNull(),
     );
     expect(
       request.mock.calls.every(

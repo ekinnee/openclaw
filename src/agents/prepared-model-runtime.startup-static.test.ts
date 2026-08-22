@@ -223,7 +223,9 @@ vi.mock("../logging/subsystem.js", () => ({
 
 const {
   getPreparedModelRuntimeSnapshot,
+  isPreparedRuntimeDiscoveryPending,
   publishPreparedRuntimeDiscoveryCatalogs,
+  registerPreparedModelRuntimePublicationListener,
   refreshPreparedModelRuntimeSnapshots,
 } = await import("./prepared-model-runtime.js");
 const { getAvailablePreparedModelCatalogSnapshot } = await import("./prepared-model-catalog.js");
@@ -329,10 +331,6 @@ describe("prepared model runtime Gateway catalog mode", () => {
       catalogMode: "static",
     });
 
-    await expect(publishPreparedRuntimeDiscoveryCatalogs()).resolves.toBe(1);
-    expect(mocks.workerInputs).toContainEqual(
-      expect.objectContaining({ providerDiscoveryProviderIds: ["omniroute"] }),
-    );
     const snapshot = getPreparedModelRuntimeSnapshot({
       agentId: "default",
       config,
@@ -340,7 +338,21 @@ describe("prepared model runtime Gateway catalog mode", () => {
       inheritedAuthDir: "/tmp/prepared-static-agent",
       workspaceDir: "/tmp/prepared-static-workspace",
     });
+    expect(snapshot).toBeDefined();
+    expect(isPreparedRuntimeDiscoveryPending(snapshot!)).toBe(true);
+
+    const events: string[] = [];
+    const unregister = registerPreparedModelRuntimePublicationListener((event) => {
+      events.push(event.phase);
+    });
+    await expect(publishPreparedRuntimeDiscoveryCatalogs()).resolves.toBe(1);
+    unregister();
+    expect(events).toEqual(["published"]);
+    expect(mocks.workerInputs).toContainEqual(
+      expect.objectContaining({ providerDiscoveryProviderIds: ["omniroute"] }),
+    );
     expect(snapshot?.readRuntimeDiscoveryCatalog?.()).toEqual({ entries: [], routeVariants: [] });
+    expect(isPreparedRuntimeDiscoveryPending(snapshot!)).toBe(false);
   });
 
   it("keeps post-ready runtime discovery scoped to each configured agent", async () => {

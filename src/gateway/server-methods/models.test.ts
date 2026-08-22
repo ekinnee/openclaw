@@ -11,6 +11,7 @@ import {
   loadAuthProfileStoreWithoutExternalProfiles,
   replaceRuntimeAuthProfileStoreSnapshots,
 } from "../../agents/auth-profiles.js";
+import * as preparedModelCatalog from "../../agents/prepared-model-catalog.js";
 import type { PreparedModelRuntimeAuth } from "../../agents/prepared-model-runtime-auth.js";
 import { materializeRuntimeCapabilities } from "../../agents/prepared-model-runtime.configured-catalog.js";
 import { clearRuntimeConfigSnapshot, setRuntimeConfigSnapshot } from "../../config/config.js";
@@ -269,6 +270,7 @@ function requestModelsList(params: {
   }) => Promise<Array<Record<string, unknown>>>;
   reqId?: string;
   includeProviderCapabilities?: boolean;
+  preparedOnly?: boolean;
   deferredAuth?: Promise<PreparedModelRuntimeAuth>;
   preparedAuthModes?: PreparedModelRuntimeAuth["authModes"];
 }) {
@@ -338,12 +340,14 @@ function requestModelsList(params: {
       params: {
         view: params.view,
         ...(params.agentId ? { agentId: params.agentId } : {}),
+        ...(params.preparedOnly ? { preparedOnly: true } : {}),
         ...(params.includeProviderCapabilities ? { includeProviderCapabilities: true } : {}),
       },
     },
     params: {
       view: params.view,
       ...(params.agentId ? { agentId: params.agentId } : {}),
+      ...(params.preparedOnly ? { preparedOnly: true } : {}),
       ...(params.includeProviderCapabilities ? { includeProviderCapabilities: true } : {}),
     },
     respond: respond as RespondFn,
@@ -362,6 +366,36 @@ function requestModelsList(params: {
 }
 
 describe("models.list", () => {
+  it("keeps prepared-only reads retryable while runtime discovery is pending", async () => {
+    const pending = vi
+      .spyOn(preparedModelCatalog, "isPreparedModelRuntimeDiscoveryPending")
+      .mockReturnValue(true);
+    try {
+      const { request, respond } = requestModelsList({
+        view: "configured",
+        preparedOnly: true,
+        loadGatewayModelCatalog: vi.fn(async () => [
+          { id: "static-model", name: "Static Model", provider: "test" },
+        ]),
+      });
+
+      await request;
+
+      expect(respond).toHaveBeenCalledWith(
+        false,
+        undefined,
+        expect.objectContaining({
+          code: "UNAVAILABLE",
+          details: { reason: "startup-sidecars" },
+          retryAfterMs: 100,
+          retryable: true,
+        }),
+      );
+    } finally {
+      pending.mockRestore();
+    }
+  });
+
   it("loads the requested agent catalog", async () => {
     const loadGatewayModelCatalog = vi.fn(async () => [
       { id: "writer-model", name: "Writer Model", provider: "test" },

@@ -26,6 +26,7 @@ import {
   acquireReadOnlyPreparedModelRuntime,
   activateStandalonePreparedModelRuntime,
   getPreparedModelRuntimeSnapshot,
+  isPreparedRuntimeDiscoveryPending,
   prepareModelRuntimeSnapshot,
   PreparedModelRuntimeOwnerNotPublishedError,
   preparedModelRuntimeConfigsMatch,
@@ -201,6 +202,15 @@ export function getPublishedPreparedModelCatalogOwnerSnapshot(
     return undefined;
   }
   return getPreparedModelRuntimeSnapshot(activationFull);
+}
+
+/** Reports pending post-ready runtime discovery without starting provider discovery. */
+export function isPreparedModelRuntimeDiscoveryPending(params: {
+  agentId: string;
+  config: OpenClawConfig;
+}): boolean {
+  const owner = getPublishedPreparedModelCatalogOwnerSnapshot(params);
+  return owner ? isPreparedRuntimeDiscoveryPending(owner) : false;
 }
 
 /** Returns the configured catalog for the current generation without starting discovery. */

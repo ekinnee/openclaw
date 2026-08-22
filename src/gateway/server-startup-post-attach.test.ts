@@ -2824,7 +2824,7 @@ describe("startGatewayPostAttachRuntime", () => {
     });
   });
 
-  it("publishes runtime discovery after ready and refreshes Chat metadata", async () => {
+  it("publishes runtime discovery after ready without owning Chat metadata refresh", async () => {
     const refreshChatMetadata = vi.fn(async () => {});
     hoisted.publishPreparedRuntimeDiscoveryCatalogs.mockResolvedValueOnce(1);
 
@@ -2851,7 +2851,7 @@ describe("startGatewayPostAttachRuntime", () => {
 
     await waitForGatewayTestState(() => {
       expect(hoisted.publishPreparedRuntimeDiscoveryCatalogs).toHaveBeenCalledTimes(1);
-      expect(refreshChatMetadata).toHaveBeenCalledTimes(1);
+      expect(refreshChatMetadata).not.toHaveBeenCalled();
     });
     for (const sidecar of result.postReadySidecars) {
       await stopTrackedSidecar(sidecar);

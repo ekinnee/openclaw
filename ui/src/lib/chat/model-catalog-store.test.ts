@@ -1,4 +1,5 @@
 // Control UI tests cover models behavior.
+import { gatewayStartupUnavailableDetails } from "@openclaw/gateway-client/browser";
 import { describe, expect, it, vi } from "vitest";
 import type { GatewayBrowserClient } from "../../api/gateway.ts";
 import { loadModels, revalidateModels } from "./model-catalog-store.ts";
@@ -37,6 +38,31 @@ describe("loadModels", () => {
       agentId: "main",
       preparedOnly: true,
     });
+  });
+
+  it("keeps startup revalidation pending until runtime discovery publishes", async () => {
+    const pending = Object.assign(new Error("runtime discovery pending"), {
+      code: "UNAVAILABLE",
+      details: gatewayStartupUnavailableDetails(),
+      retryAfterMs: 100,
+      retryable: true,
+    });
+    const request = vi
+      .fn()
+      .mockRejectedValueOnce(pending)
+      .mockResolvedValueOnce({
+        models: [{ id: "runtime", name: "Runtime", provider: "omniroute" }],
+      });
+    const client = { request } as unknown as GatewayBrowserClient;
+
+    await expect(
+      revalidateModels(client, {
+        agentId: "main",
+        preparedOnly: true,
+        startupRetryWindowMs: 1_000,
+      }),
+    ).resolves.toEqual([{ id: "runtime", name: "Runtime", provider: "omniroute" }]);
+    expect(request).toHaveBeenCalledTimes(2);
   });
 
   it("reuses the configured model list while the cache is fresh", async () => {

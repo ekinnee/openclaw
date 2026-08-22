@@ -82,7 +82,9 @@ const replyDispatchPublication = new PreparedReplyDispatchPublicationOwner({
 });
 export const loadPublishedGatewayReplyDispatchRuntime = replyDispatchPublication.load;
 
-function listRuntimeDiscoveryProviderIds(snapshot: PreparedModelRuntimeSnapshot): string[] {
+export function listPreparedRuntimeDiscoveryProviderIds(
+  snapshot: PreparedModelRuntimeSnapshot,
+): string[] {
   const runtimeProviders = new Set<string>();
   for (const plugin of snapshot.metadataSnapshot.plugins) {
     for (const [provider, discovery] of Object.entries(plugin.modelCatalog?.discovery ?? {})) {
@@ -102,6 +104,13 @@ function listRuntimeDiscoveryProviderIds(snapshot: PreparedModelRuntimeSnapshot)
   ).filter((providerId) => runtimeProviders.has(providerId));
 }
 
+export function isPreparedRuntimeDiscoveryPending(snapshot: PreparedModelRuntimeSnapshot): boolean {
+  return (
+    listPreparedRuntimeDiscoveryProviderIds(snapshot).length > 0 &&
+    snapshot.readRuntimeDiscoveryCatalog?.() === undefined
+  );
+}
+
 /** Publishes post-ready catalogs for configured runtime-only providers without touching refreshable catalogs. */
 export async function publishPreparedRuntimeDiscoveryCatalogs(): Promise<number> {
   let published = 0;
@@ -114,12 +123,18 @@ export async function publishPreparedRuntimeDiscoveryCatalogs(): Promise<number>
     ) {
       continue;
     }
-    const providerIds = listRuntimeDiscoveryProviderIds(owner.snapshot);
+    const providerIds = listPreparedRuntimeDiscoveryProviderIds(owner.snapshot);
     if (providerIds.length === 0 || !owner.snapshot.loadRuntimeDiscoveryCatalog) {
       continue;
     }
+    const previousCatalog = owner.snapshot.readRuntimeDiscoveryCatalog?.();
     await owner.snapshot.loadRuntimeDiscoveryCatalog(providerIds);
-    published += 1;
+    if (owner.snapshot.readRuntimeDiscoveryCatalog?.() !== previousCatalog) {
+      published += 1;
+    }
+  }
+  if (published > 0) {
+    notifyPreparedModelRuntimePublication({ phase: "published" });
   }
   return published;
 }
