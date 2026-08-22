@@ -4,6 +4,7 @@ import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import type { PluginMetadataSnapshot } from "../plugins/plugin-metadata-snapshot.types.js";
 import { registerRuntimeAuthProfileStoreMutationListener } from "./auth-profiles/runtime-snapshots.js";
+import { parseConfiguredModelVisibilityEntries } from "./model-selection-shared.js";
 import { acquirePreparedModelRuntimeLeaseFromOwners } from "./prepared-model-runtime-lease.js";
 import { registerPreparedRuntimeAuthMaterializationPublisher } from "./prepared-model-runtime-materializations.js";
 import {
@@ -95,13 +96,24 @@ export function listPreparedRuntimeDiscoveryProviderIds(
     }
   }
   // Runtime discovery is published per configured owner; global refs would leak another agent's
-  // model providers into this worker.
-  return collectPreparedModelRuntimeProviderIds(
-    snapshot.config,
-    {},
-    false,
-    collectPreparedModelRuntimeConfiguredRefs(snapshot.config, snapshot.agentId),
-  ).filter((providerId) => runtimeProviders.has(providerId));
+  // model providers into this worker. A policy wildcard is an owner-scoped visibility reference,
+  // so it must also keep that provider pending until its runtime rows are published.
+  return [
+    ...new Set([
+      ...collectPreparedModelRuntimeProviderIds(
+        snapshot.config,
+        {},
+        false,
+        collectPreparedModelRuntimeConfiguredRefs(snapshot.config, snapshot.agentId),
+      ),
+      ...parseConfiguredModelVisibilityEntries({
+        cfg: snapshot.config,
+        agentId: snapshot.agentId,
+      }).providerWildcards,
+    ]),
+  ]
+    .toSorted((left, right) => left.localeCompare(right))
+    .filter((providerId) => runtimeProviders.has(providerId));
 }
 
 export function isPreparedRuntimeDiscoveryPending(snapshot: PreparedModelRuntimeSnapshot): boolean {
@@ -128,9 +140,17 @@ export async function publishPreparedRuntimeDiscoveryCatalogs(): Promise<number>
       continue;
     }
     const previousCatalog = owner.snapshot.readRuntimeDiscoveryCatalog?.();
-    await owner.snapshot.loadRuntimeDiscoveryCatalog(providerIds);
-    if (owner.snapshot.readRuntimeDiscoveryCatalog?.() !== previousCatalog) {
-      published += 1;
+    try {
+      await owner.snapshot.loadRuntimeDiscoveryCatalog(providerIds);
+      if (owner.snapshot.readRuntimeDiscoveryCatalog?.() !== previousCatalog) {
+        published += 1;
+      }
+    } catch (error) {
+      // Owners are independent post-ready work. One unavailable provider must not hide a
+      // completed sibling catalog or prevent later owners from being discovered.
+      log.warn(
+        `runtime model discovery failed for agent ${owner.input.agentId ?? "unknown"}: ${String(toStringifiedError(error))}`,
+      );
     }
   }
   if (published > 0) {

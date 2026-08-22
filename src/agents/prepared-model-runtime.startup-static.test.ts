@@ -355,6 +355,40 @@ describe("prepared model runtime Gateway catalog mode", () => {
     expect(isPreparedRuntimeDiscoveryPending(snapshot!)).toBe(false);
   });
 
+  it("discovers a runtime provider selected only by its owner policy wildcard", async () => {
+    (mocks.metadataSnapshot as { plugins: unknown[] }).plugins = [
+      { modelCatalog: { discovery: { omniroute: "runtime" } } },
+    ];
+    const config = {
+      agents: {
+        defaults: {
+          model: { primary: "openai/gpt-5.5" },
+          modelPolicy: { allow: ["omniroute/*"] },
+        },
+      },
+      models: { providers: { omniroute: { baseUrl: "http://omniroute.invalid", models: [] } } },
+    };
+
+    await refreshPreparedModelRuntimeSnapshots(config, {
+      gatewayLifecycle: true,
+      catalogMode: "static",
+    });
+    const snapshot = getPreparedModelRuntimeSnapshot({
+      agentId: "default",
+      config,
+      agentDir: "/tmp/prepared-static-agent",
+      inheritedAuthDir: "/tmp/prepared-static-agent",
+      workspaceDir: "/tmp/prepared-static-workspace",
+    });
+
+    expect(isPreparedRuntimeDiscoveryPending(snapshot!)).toBe(true);
+    await expect(publishPreparedRuntimeDiscoveryCatalogs()).resolves.toBe(1);
+    expect(mocks.workerInputs).toContainEqual(
+      expect.objectContaining({ providerDiscoveryProviderIds: ["omniroute"] }),
+    );
+    expect(isPreparedRuntimeDiscoveryPending(snapshot!)).toBe(false);
+  });
+
   it("keeps post-ready runtime discovery scoped to each configured agent", async () => {
     (mocks.metadataSnapshot as { plugins: unknown[] }).plugins = [
       {
@@ -390,6 +424,67 @@ describe("prepared model runtime Gateway catalog mode", () => {
           (input as { providerDiscoveryProviderIds?: string[] }).providerDiscoveryProviderIds,
       ),
     ).toEqual([["alpha"], ["beta"]]);
+  });
+
+  it("publishes a successful owner when an earlier runtime discovery fails", async () => {
+    (mocks.metadataSnapshot as { plugins: unknown[] }).plugins = [
+      { modelCatalog: { discovery: { alpha: "runtime", beta: "runtime" } } },
+    ];
+    const config = {
+      agents: {
+        defaults: { model: { primary: "openai/gpt-5.5" } },
+        list: [
+          { id: "alpha-agent", model: { primary: "alpha/model" } },
+          { id: "beta-agent", model: { primary: "beta/model" } },
+        ],
+      },
+    };
+    mocks.runPreparedModelCatalogWorker
+      .mockRejectedValueOnce(new Error("alpha discovery failed"))
+      .mockResolvedValueOnce({ entries: [], routeVariants: [] });
+
+    await refreshPreparedModelRuntimeSnapshots(config, {
+      gatewayLifecycle: true,
+      catalogMode: "static",
+    });
+    mocks.workerInputs.length = 0;
+    const events: string[] = [];
+    const unregister = registerPreparedModelRuntimePublicationListener((event) => {
+      events.push(event.phase);
+    });
+
+    await expect(publishPreparedRuntimeDiscoveryCatalogs()).resolves.toBe(1);
+    unregister();
+
+    expect(
+      mocks.workerInputs.map(
+        (input) =>
+          (input as { providerDiscoveryProviderIds?: string[] }).providerDiscoveryProviderIds,
+      ),
+    ).toEqual([["alpha"], ["beta"]]);
+    expect(events).toEqual(["published"]);
+    expect(
+      isPreparedRuntimeDiscoveryPending(
+        getPreparedModelRuntimeSnapshot({
+          agentId: "alpha-agent",
+          config,
+          agentDir: "/tmp/prepared-static-agent",
+          inheritedAuthDir: "/tmp/prepared-static-agent",
+          workspaceDir: "/tmp/prepared-static-workspace",
+        })!,
+      ),
+    ).toBe(true);
+    expect(
+      isPreparedRuntimeDiscoveryPending(
+        getPreparedModelRuntimeSnapshot({
+          agentId: "beta-agent",
+          config,
+          agentDir: "/tmp/prepared-static-agent",
+          inheritedAuthDir: "/tmp/prepared-static-agent",
+          workspaceDir: "/tmp/prepared-static-workspace",
+        })!,
+      ),
+    ).toBe(false);
   });
 
   it("does not publish a static catalog generation superseded while its hook is running", async () => {
