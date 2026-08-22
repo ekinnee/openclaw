@@ -5752,6 +5752,8 @@ export const en: TranslationMap = {
       play: "Play",
       pause: "Pause",
       seek: "Seek media",
+      mute: "Mute",
+      unmute: "Unmute",
       volume: "Volume",
       download: "Download {filename}",
       preparing: "Preparing playback…",
