@@ -16,6 +16,7 @@ import {
   releaseChatAttachmentPayload,
 } from "../attachment-payload-store.ts";
 import { admitAttachmentFiles } from "./chat-attachment-admission.ts";
+import { renderAttachmentFileIcon } from "./chat-attachment-file-icon.ts";
 
 const CHAT_ATTACHMENT_ACCEPT =
   "image/*,audio/*,video/*,application/pdf,text/*,.csv,.json,.md,.txt,.zip," +
@@ -665,16 +666,28 @@ export function renderAttachmentPreview(props: ChatAttachmentControlsProps) {
                   .join(" ")}
               >
                 ${att.mimeType.startsWith("image/") && getChatAttachmentPreviewUrl(att)
-                  ? renderAttachmentImage(
-                      att,
-                      t("chat.composer.attachmentPreview"),
-                      att.fileName?.trim() || t("chat.imageLightbox.untitled"),
-                      props,
-                    )
+                  ? html`${renderAttachmentImage(
+                        att,
+                        t("chat.composer.attachmentPreview"),
+                        att.fileName?.trim() || t("chat.imageLightbox.untitled"),
+                        props,
+                      )}<span class="chat-attachment-image-file-icon"
+                        >${renderAttachmentFileIcon({
+                          filename: att.fileName ?? "image.png",
+                          mimeType: att.mimeType,
+                          mode: "preview-with-favicon",
+                        })}</span
+                      >`
                   : isLargePastedTextAttachment(att)
                     ? html`
                         <div class="chat-attachment-file chat-attachment-file--pasted-text">
-                          <span class="chat-attachment-file__icon">${icons.fileText}</span>
+                          <span class="chat-attachment-file__icon"
+                            >${renderAttachmentFileIcon({
+                              filename: att.fileName ?? "pasted-text.txt",
+                              mimeType: att.mimeType,
+                              mode: "preview-with-favicon",
+                            })}</span
+                          >
                           <span class="chat-attachment-file__body">
                             <span class="chat-attachment-file__name"
                               >${pastedTextPreview(att)}</span
@@ -697,7 +710,13 @@ export function renderAttachmentPreview(props: ChatAttachmentControlsProps) {
                           .content=${att.fileName ?? t("chat.attachments.attachedFile")}
                         >
                           <div class="chat-attachment-file">
-                            <span class="chat-attachment-file__icon">${icons.paperclip}</span>
+                            <span class="chat-attachment-file__icon"
+                              >${renderAttachmentFileIcon({
+                                filename: att.fileName ?? "attachment",
+                                mimeType: att.mimeType,
+                                mode: "large-placeholder",
+                              })}</span
+                            >
                             <span class="chat-attachment-file__name"
                               >${att.fileName ?? t("chat.attachments.attachedFile")}</span
                             >
