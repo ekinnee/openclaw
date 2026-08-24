@@ -50,7 +50,6 @@ const log = createSubsystemLogger("agents/harness/native-hook-relay");
 const { relays, relayBridges, invocations } = nativeHookRelayState;
 type RelayBinding = {
   registration: ActiveNativeHookRelayRegistration;
-  token: symbol;
   foregroundSubject?: string;
   childSubjects: Set<string>;
   retained?: ReturnType<typeof retainBeforeToolCallForNativeHookRelay>;
@@ -75,9 +74,9 @@ const relayLifetimes = (nativeHookRelayGlobals[RELAY_LIFETIMES] ??= new WeakMap(
 /** Private bundled-runtime callbacks for retained direct-child hook policy. */
 export type NativeHookRelayRetention = Readonly<{
   readClaim: (rawPayload: unknown) => string | undefined;
-  readForegroundSubject?: (rawPayload: unknown) => string | undefined;
+  readForegroundSubject: (rawPayload: unknown) => string | undefined;
   shouldRetainAfterForegroundClose: () => boolean;
-  awaitForegroundAdmission?: (claim: string) => Promise<(() => boolean) | undefined>;
+  awaitForegroundAdmission: (claim: string) => Promise<(() => boolean) | undefined>;
   onDispose: () => void;
 }>;
 
@@ -97,13 +96,6 @@ function readRelayLifetime(
   registration: ActiveNativeHookRelayRegistration,
 ): RelayLifetime | undefined {
   return relayLifetimes.get(registration);
-}
-
-function setRelayLifetime(
-  registration: ActiveNativeHookRelayRegistration,
-  lifetime: RelayLifetime,
-): void {
-  relayLifetimes.set(registration, lifetime);
 }
 
 function scheduleNativeHookRelayExpiry(
@@ -138,10 +130,6 @@ function scheduleNativeHookRelayExpiry(
       ...[...lifetime.bindings].map((binding) => binding.registration.expiresAtMs),
     );
     const remainingMs = earliestExpiry - now;
-    if (remainingMs < 0) {
-      rearm();
-      return;
-    }
     lifetime.expiryTimer = setTimeout(rearm, Math.min(remainingMs + 1, MAX_TIMER_TIMEOUT_MS));
     lifetime.expiryTimer.unref();
   };
@@ -271,11 +259,10 @@ function registerNativeHookRelayInternal(
     };
     const binding: RelayBinding = {
       registration,
-      token: Symbol("native-hook-relay-binding"),
       childSubjects: new Set(),
       ...(retention ? { retention } : {}),
     };
-    registerNativeHookRelayApprovalOwner(registration, binding.token);
+    registerNativeHookRelayApprovalOwner(registration, Symbol("native-hook-relay-binding"));
     const route = existingRoute ?? { ...registration };
     preparedRoute = route;
     preparedBinding = binding;
@@ -291,7 +278,7 @@ function registerNativeHookRelayInternal(
     lifetime.bindings.add(binding);
     if (!existingRoute) {
       relays.set(relayId, route);
-      setRelayLifetime(route, lifetime);
+      relayLifetimes.set(route, lifetime);
     }
     if (params.signal) {
       const abort = () => removeNativeHookRelayBinding(relayId, route, binding);
@@ -486,12 +473,7 @@ function deliverNativeHookRelayBindingDispose(relayId: string, binding: RelayBin
   try {
     binding.retention?.onDispose();
   } catch (error) {
-    try {
-      log.warn("native hook relay unregister callback failed", { error, relayId });
-    } catch {
-      // Teardown has already detached every identity-bound resource. Logging
-      // must not turn an observer callback failure into a cleanup failure.
-    }
+    log.warn("native hook relay unregister callback failed", { error, relayId });
   }
 }
 
@@ -531,14 +513,10 @@ function shouldRetainNativeHookRelayBinding(binding: RelayBinding): boolean {
   try {
     return binding.retention.shouldRetainAfterForegroundClose();
   } catch (error) {
-    try {
-      log.warn("native hook relay retention predicate failed", {
-        error,
-        relayId: binding.registration.relayId,
-      });
-    } catch {
-      // A logging failure cannot make a throwing retention predicate retain authority.
-    }
+    log.warn("native hook relay retention predicate failed", {
+      error,
+      relayId: binding.registration.relayId,
+    });
     return false;
   }
 }
@@ -583,7 +561,7 @@ export async function resolveNativeHookRelayInvocationBinding(
     if (!binding && event === "pre_tool_use") {
       const foreground = lifetime.foreground;
       const retention = foreground?.retention;
-      if (!foreground || !retention?.awaitForegroundAdmission) {
+      if (!foreground || !retention) {
         throw new Error("native hook relay retained invocation not allowed");
       }
       if (!foreground.registration.allowedEvents.includes(event)) {
@@ -630,12 +608,10 @@ export async function resolveNativeHookRelayInvocationBinding(
     return effectiveRegistration;
   }
   const foreground = lifetime.foreground;
-  const readForegroundSubject = subjectReader?.readForegroundSubject;
-  const foregroundSubject = readForegroundSubject?.(rawPayload);
+  const foregroundSubject = subjectReader?.readForegroundSubject(rawPayload);
   if (
     !foreground ||
-    (readForegroundSubject &&
-      (!foregroundSubject || foreground.foregroundSubject !== foregroundSubject))
+    (subjectReader && (!foregroundSubject || foreground.foregroundSubject !== foregroundSubject))
   ) {
     throw new Error("native hook relay foreground invocation not allowed");
   }

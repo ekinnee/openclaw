@@ -85,17 +85,11 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
           tool_use_id: "early-tool",
           tool_input: { command: "echo early" },
         },
-      }).then(
-        (value) => ({ value }),
-        (error: unknown) => ({ error }),
-      );
+      });
       resolveTurnStart(turnStartResult("turn-early"));
       await harness.completeTurn({ threadId: "thread-1", turnId: "turn-early" });
       await run;
-      if ("error" in earlyInvocation) {
-        throw earlyInvocation.error;
-      }
-      expect(JSON.parse(earlyInvocation.value.stdout)).toMatchObject({
+      expect(JSON.parse(earlyInvocation.stdout)).toMatchObject({
         hookSpecificOutput: {
           permissionDecision: "deny",
           permissionDecisionReason: "early turn policy denied",
@@ -354,6 +348,7 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
       name: "Codex multi-agent V1",
       bindBeforeClaim: false,
       hasDeliveryScope: true,
+      renewAfterExpiry: true,
       childThreadId: "child-v1",
       childClaim: {
         type: "collabAgentToolCall",
@@ -367,6 +362,7 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
       name: "Codex multi-agent V2",
       bindBeforeClaim: true,
       hasDeliveryScope: true,
+      renewAfterExpiry: false,
       childThreadId: "child-v2",
       childClaim: {
         type: "subAgentActivity",
@@ -379,6 +375,7 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
       name: "Codex multi-agent V2 without delivery scope",
       bindBeforeClaim: true,
       hasDeliveryScope: false,
+      renewAfterExpiry: false,
       childThreadId: "child-v2-no-delivery",
       childClaim: {
         type: "subAgentActivity",
@@ -389,7 +386,8 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
     },
   ] as const)(
     "retains and fences a live child through sessions_yield ($name)",
-    async ({ bindBeforeClaim, hasDeliveryScope, childThreadId, childClaim }) => {
+    async ({ bindBeforeClaim, hasDeliveryScope, renewAfterExpiry, childThreadId, childClaim }) => {
+      const useFakeTimers = renewAfterExpiry;
       const sessionFile = path.join(tempDir, `${childThreadId}-yield-session.jsonl`);
       const workspaceDir = path.join(tempDir, `${childThreadId}-yield-workspace`);
       let resolveTurnStart: ((value: undefined) => void) | undefined;
@@ -399,6 +397,16 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
       const harness = createStartedThreadHarness(async (method) => {
         if (method === "turn/start") {
           return await deferredTurnStart;
+        }
+        if (method === "thread/read") {
+          return {
+            thread: {
+              id: childThreadId,
+              parentThreadId: "thread-1",
+              status: { type: "active" },
+              turns: [],
+            },
+          };
         }
         return undefined;
       });
@@ -422,10 +430,15 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
         createMockPluginRegistry([{ hookName: "before_tool_call", handler: beforeToolCall }]),
       );
 
+      if (useFakeTimers) {
+        vi.useFakeTimers();
+        vi.setSystemTime(0);
+      }
       const run = runCodexAppServerAttempt(params, {
         nativeHookRelay: { enabled: true, events: ["pre_tool_use"] },
       });
       let relayId: string | undefined;
+      let originalExpiry: number | undefined;
       try {
         await harness.waitForMethod("turn/start");
         if (bindBeforeClaim) {
@@ -436,6 +449,13 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
         }
         const startRequest = harness.requests.find((request) => request.method === "thread/start");
         relayId = extractRelayIdFromThreadRequest(startRequest?.params);
+        if (useFakeTimers) {
+          originalExpiry =
+            nativeHookRelayTesting.getNativeHookRelayRegistrationForTests(relayId)?.expiresAtMs;
+          if (originalExpiry === undefined) {
+            throw new Error("Expected native hook relay expiry");
+          }
+        }
         const preDiscoveryPayload = {
           hook_event_name: "PreToolUse",
           agent_id: childThreadId,
@@ -574,9 +594,13 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
 
         // The app-server response intentionally exposes only protocol content; the internal
         // terminate marker schedules the turn release on the next macrotask.
-        await new Promise<void>((resolve) => {
-          setImmediate(resolve);
-        });
+        if (useFakeTimers) {
+          await vi.advanceTimersByTimeAsync(0);
+        } else {
+          await new Promise<void>((resolve) => {
+            setImmediate(resolve);
+          });
+        }
         await harness.completeTurn({ threadId: "thread-1", turnId: "turn-1" });
         const result = await run;
         expect(readAttemptTerminal(result)).toMatchObject({ aborted: false, promptError: null });
@@ -600,6 +624,13 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
         ).toBeDefined();
         fixture.closeHost();
         fixture.closeAdmission();
+        if (useFakeTimers) {
+          await vi.advanceTimersByTimeAsync(2_000);
+          const renewedExpiry =
+            nativeHookRelayTesting.getNativeHookRelayRegistrationForTests(relayId)?.expiresAtMs;
+          expect(renewedExpiry).toBeGreaterThan(originalExpiry ?? 0);
+          vi.setSystemTime(new Date((originalExpiry ?? 0) + 1));
+        }
         await expect(
           invokeNativeHookRelay({
             provider: "codex",
@@ -679,6 +710,9 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
       } finally {
         fixture.closeHost();
         fixture.closeAdmission();
+        if (useFakeTimers) {
+          vi.useRealTimers();
+        }
       }
     },
   );

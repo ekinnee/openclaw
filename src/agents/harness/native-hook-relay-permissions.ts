@@ -251,8 +251,11 @@ export async function runNativeHookRelayPermissionRequest(params: {
     return params.adapter.renderPermissionDecisionResponse("allow");
   }
   const pendingApproval = pendingPermissionApprovals.get(approvalKey);
+  const owner = approvalOwners.get(params.registration);
+  const pendingPromise =
+    pendingApproval && pendingApproval.owner === owner ? pendingApproval.promise : undefined;
   try {
-    const decision = await (pendingApproval?.promise ??
+    const decision = await (pendingPromise ??
       startNativeHookRelayPermissionApprovalWithBudget({
         registration: params.registration,
         approvalKey,

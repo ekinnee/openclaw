@@ -45,6 +45,7 @@ import {
   invokeNativeHookRelay,
   registerNativeHookRelay,
   resolveNativeHookRelayDeferredToolApproval,
+  type NativeHookRelayRetention,
 } from "./native-hook-relay.js";
 
 const NATIVE_HOOK_RELAY_EXEC_PREFIX = process.platform === "win32" ? "" : "exec ";
@@ -62,6 +63,11 @@ function readTestNativeTurnId(rawPayload: unknown): string | undefined {
   }
   return rawPayload.turn_id.trim() || undefined;
 }
+
+const defaultTestNativeHookRelayRetention = {
+  readForegroundSubject: readTestNativeTurnId,
+  awaitForegroundAdmission: async () => undefined,
+} satisfies Pick<NativeHookRelayRetention, "readForegroundSubject" | "awaitForegroundAdmission">;
 
 afterEach(() => {
   vi.useRealTimers();
@@ -438,11 +444,13 @@ describe("native hook relay registry", () => {
       runBeforeToolCall: hostCapabilities.runBeforeToolCall,
       assertActive: hostCapabilities.assertActive,
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => true,
         onDispose: () => {},
       },
     });
+    relay.bindForegroundSubject("turn-root");
     relay.bindRetainedSubject("child-thread");
     const invocation = invokeNativeHookRelay({
       provider: "codex",
@@ -451,6 +459,7 @@ describe("native hook relay registry", () => {
       rawPayload: {
         hook_event_name: "PreToolUse",
         openclaw_approval_mode: "report",
+        turn_id: "turn-root",
         tool_name: "Bash",
         tool_input: { command: "git status" },
       },
@@ -500,11 +509,13 @@ describe("native hook relay registry", () => {
       runBeforeToolCall: hostCapabilities.runBeforeToolCall,
       assertActive: hostCapabilities.assertActive,
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => retainChild,
         onDispose: () => {},
       },
     });
+    relay.bindForegroundSubject("turn-root");
     relay.bindRetainedSubject("child-thread");
 
     await expect(
@@ -512,7 +523,11 @@ describe("native hook relay registry", () => {
         provider: "codex",
         relayId: relay.relayId,
         event: "pre_tool_use",
-        rawPayload: { tool_name: "Bash", tool_input: { command: "true" } },
+        rawPayload: {
+          turn_id: "turn-root",
+          tool_name: "Bash",
+          tool_input: { command: "true" },
+        },
       }),
     ).resolves.toMatchObject({ exitCode: 0 });
 
@@ -661,8 +676,8 @@ describe("native hook relay registry", () => {
     const fixtureA = await createAdmittedHostCapabilityTestFixture({ runId: "run-a" });
     const fixtureB = await createAdmittedHostCapabilityTestFixture({ runId: "run-b" });
     const retention = {
+      ...defaultTestNativeHookRelayRetention,
       readClaim: readTestNativeAgentId,
-      readForegroundSubject: readTestNativeTurnId,
       shouldRetainAfterForegroundClose: () => true,
       onDispose: () => {},
     };
@@ -801,8 +816,8 @@ describe("native hook relay registry", () => {
       allowedEvents: ["post_tool_use"],
       composeWithExistingRoute: true,
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
-        readForegroundSubject: readTestNativeTurnId,
         shouldRetainAfterForegroundClose: () => false,
         onDispose: () => {},
       },
@@ -836,8 +851,8 @@ describe("native hook relay registry", () => {
     const fixtureB = await createAdmittedHostCapabilityTestFixture({ runId: "run-b" });
     vi.useFakeTimers();
     const retention = {
+      ...defaultTestNativeHookRelayRetention,
       readClaim: readTestNativeAgentId,
-      readForegroundSubject: readTestNativeTurnId,
       shouldRetainAfterForegroundClose: () => true,
       onDispose: () => {},
     };
@@ -899,8 +914,8 @@ describe("native hook relay registry", () => {
   it("keeps the previous foreground when composed route renewal fails", async () => {
     const relayId = uniqueNativeHookRelayIdForTests("composed-renewal-failure");
     const retention = {
+      ...defaultTestNativeHookRelayRetention,
       readClaim: readTestNativeAgentId,
-      readForegroundSubject: readTestNativeTurnId,
       shouldRetainAfterForegroundClose: () => false,
       onDispose: () => {},
     };
@@ -980,8 +995,8 @@ describe("native hook relay registry", () => {
         allowedEvents: ["post_tool_use"],
         ...(compose ? { composeWithExistingRoute: true } : {}),
         retention: {
+          ...defaultTestNativeHookRelayRetention,
           readClaim: readTestNativeAgentId,
-          readForegroundSubject: readTestNativeTurnId,
           shouldRetainAfterForegroundClose: () => false,
           onDispose,
         },
@@ -1016,8 +1031,8 @@ describe("native hook relay registry", () => {
       runBeforeToolCall: fixtureA.hostCapabilities.runBeforeToolCall,
       assertActive: fixtureA.hostCapabilities.assertActive,
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
-        readForegroundSubject: readTestNativeTurnId,
         shouldRetainAfterForegroundClose: () => true,
         onDispose: () => {},
       },
@@ -1034,8 +1049,8 @@ describe("native hook relay registry", () => {
       assertActive: fixtureB.hostCapabilities.assertActive,
       composeWithExistingRoute: true,
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
-        readForegroundSubject: readTestNativeTurnId,
         shouldRetainAfterForegroundClose: () => true,
         awaitForegroundAdmission,
         onDispose: () => {},
@@ -1104,6 +1119,7 @@ describe("native hook relay registry", () => {
       runId: "run-1",
       allowedEvents: ["pre_tool_use"],
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim,
         shouldRetainAfterForegroundClose: () => true,
         onDispose: () => {},
@@ -1129,20 +1145,21 @@ describe("native hook relay registry", () => {
     expect(readClaim).not.toHaveBeenCalled();
   });
 
-  it("removes only the released binding's pending permission decision", async () => {
+  it("does not share a pending permission approval across composed bindings", async () => {
     const relayId = uniqueNativeHookRelayIdForTests("binding-permission-owner");
     const fixtureA = await createAdmittedHostCapabilityTestFixture({ runId: "run-a" });
     const fixtureB = await createAdmittedHostCapabilityTestFixture({ runId: "run-b" });
-    const decisions = new Map<string, (decision: "allow") => void>();
+    const decisions: Array<(decision: "allow") => void> = [];
     testing.setNativeHookRelayPermissionApprovalRequesterForTests(
       (request) =>
         new Promise<"allow">((resolve) => {
-          decisions.set(request.runId, resolve);
+          void request;
+          decisions.push(resolve);
         }),
     );
     const retention = {
+      ...defaultTestNativeHookRelayRetention,
       readClaim: readTestNativeAgentId,
-      readForegroundSubject: readTestNativeTurnId,
       shouldRetainAfterForegroundClose: () => true,
       onDispose: () => {},
     };
@@ -1150,7 +1167,7 @@ describe("native hook relay registry", () => {
       provider: "codex",
       relayId,
       sessionId: "session-1",
-      runId: "run-a",
+      runId: "shared-run",
       runBeforeToolCall: fixtureA.hostCapabilities.runBeforeToolCall,
       assertActive: fixtureA.hostCapabilities.assertActive,
       retention,
@@ -1162,7 +1179,7 @@ describe("native hook relay registry", () => {
       relayId,
       generation: relayA.generation,
       sessionId: "session-1",
-      runId: "run-b",
+      runId: "shared-run",
       runBeforeToolCall: fixtureB.hostCapabilities.runBeforeToolCall,
       assertActive: fixtureB.hostCapabilities.assertActive,
       composeWithExistingRoute: true,
@@ -1183,20 +1200,27 @@ describe("native hook relay registry", () => {
           ...rawPayload,
         },
       });
-    const childDecision = invokePermission({ agent_id: "child-a", turn_id: "turn-a" });
-    const rootDecision = invokePermission({ turn_id: "turn-b" });
-    await vi.waitFor(() => expect(decisions.size).toBe(2));
+    try {
+      const childDecision = invokePermission({
+        agent_id: "child-a",
+        turn_id: "turn-a",
+      });
+      await vi.waitFor(() => expect(decisions).toHaveLength(1));
+      const rootDecision = invokePermission({
+        turn_id: "turn-b",
+      });
+      await vi.waitFor(() => expect(decisions).toHaveLength(2));
 
-    releaseChildA();
-
-    decisions.get("run-a")?.("allow");
-    decisions.get("run-b")?.("allow");
-    await expect(childDecision).rejects.toThrow("native hook relay registration is inactive");
-    await expect(rootDecision).resolves.toMatchObject({ exitCode: 0 });
-
-    relayB.unregister();
-    closeAdmittedRunDelegatedAuthority(fixtureA.admittedRunContext);
-    closeAdmittedRunDelegatedAuthority(fixtureB.admittedRunContext);
+      releaseChildA();
+      decisions[0]?.("allow");
+      decisions[1]?.("allow");
+      await expect(childDecision).rejects.toThrow("native hook relay registration is inactive");
+      await expect(rootDecision).resolves.toMatchObject({ exitCode: 0 });
+    } finally {
+      relayB.unregister();
+      closeAdmittedRunDelegatedAuthority(fixtureA.admittedRunContext);
+      closeAdmittedRunDelegatedAuthority(fixtureB.admittedRunContext);
+    }
   });
 
   it("rejects a late finalize result after its selected binding closes", async () => {
@@ -1259,6 +1283,7 @@ describe("native hook relay registry", () => {
         runBeforeToolCall: hostCapabilities.runBeforeToolCall,
         assertActive: hostCapabilities.assertActive,
         retention: {
+          ...defaultTestNativeHookRelayRetention,
           readClaim: readTestNativeAgentId,
           shouldRetainAfterForegroundClose: () => true,
           onDispose: () => {},
@@ -1319,6 +1344,7 @@ describe("native hook relay registry", () => {
       runBeforeToolCall: hostCapabilities.runBeforeToolCall,
       assertActive: hostCapabilities.assertActive,
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => true,
         onDispose: () => {},
@@ -1391,6 +1417,7 @@ describe("native hook relay registry", () => {
         ...(mode === "abort" ? { signal: controller.signal } : {}),
         ...(mode === "expiry" ? { ttlMs: 5 } : {}),
         retention: {
+          ...defaultTestNativeHookRelayRetention,
           readClaim: readTestNativeAgentId,
           shouldRetainAfterForegroundClose: () => false,
           onDispose: () => {
@@ -1435,6 +1462,7 @@ describe("native hook relay registry", () => {
       sessionId: "session-1",
       runId: "run-throwing-retain-predicate",
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
         onDispose: () => {},
         shouldRetainAfterForegroundClose: () => {
@@ -1455,6 +1483,7 @@ describe("native hook relay registry", () => {
       sessionId: "session-1",
       runId: "run-first",
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => false,
         onDispose: () => {
@@ -1482,6 +1511,7 @@ describe("native hook relay registry", () => {
       runId: "run-first",
       allowedEvents: ["post_tool_use"],
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => false,
         onDispose: () => {
@@ -1503,6 +1533,7 @@ describe("native hook relay registry", () => {
       runId: "run-replacement",
       allowedEvents: ["post_tool_use"],
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => false,
         onDispose: replacementUnregistered,
@@ -1537,6 +1568,7 @@ describe("native hook relay registry", () => {
       sessionId: "session-1",
       runId: "run-old",
       retention: {
+        ...defaultTestNativeHookRelayRetention,
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => false,
         onDispose: oldUnregistered,
@@ -1580,6 +1612,7 @@ describe("native hook relay registry", () => {
         runBeforeToolCall: hostCapabilities.runBeforeToolCall,
         assertActive: hostCapabilities.assertActive,
         retention: {
+          ...defaultTestNativeHookRelayRetention,
           readClaim: readTestNativeAgentId,
           shouldRetainAfterForegroundClose: () => true,
           onDispose: () => {},
@@ -3790,89 +3823,131 @@ describe("native hook relay registry", () => {
     expect(beforeToolCall).toHaveBeenCalledTimes(1);
   });
 
-  it("shares in-flight deferred PreToolUse approvals for duplicate app-server requests", async () => {
-    const beforeToolCall = vi.fn(async () => ({
-      requireApproval: {
-        title: "Needs approval",
-        description: "native command needs approval",
-      },
-    }));
+  it("cancels only the released composed binding's deferred PreToolUse approval", async () => {
+    const relayId = uniqueNativeHookRelayIdForTests("binding-deferred-approval-owner");
+    const fixtureA = await createAdmittedHostCapabilityTestFixture({ runId: "run-a" });
+    const fixtureB = await createAdmittedHostCapabilityTestFixture({ runId: "run-b" });
+    const childApprovalResolution = vi.fn();
+    const deferredResolutions = new Map<
+      string,
+      (outcome: { blocked: false; params: unknown; approvalResolution: "allow-once" }) => void
+    >();
     initializeGlobalHookRunner(
-      createMockPluginRegistry([{ hookName: "before_tool_call", handler: beforeToolCall }]),
-    );
-    const relay = registerNativeHookRelay({
-      provider: "codex",
-      agentId: "agent-1",
-      sessionId: "session-1",
-      sessionKey: "agent:main:session-1",
-      runId: "run-1",
-    });
-
-    await invokeNativeHookRelay({
-      provider: "codex",
-      relayId: relay.relayId,
-      event: "pre_tool_use",
-      rawPayload: {
-        hook_event_name: "PreToolUse",
-        openclaw_approval_mode: "report",
-        turn_id: "turn-a",
-        cwd: "/repo",
-        tool_name: "exec_command",
-        tool_use_id: "native-approval-report-duplicate",
-        tool_input: { cmd: "cat /tmp/private_key" },
-      },
-    });
-
-    let resolveApproval:
-      | ((value: { blocked: false; params: unknown; approvalResolution: "allow-once" }) => void)
-      | undefined;
-    const approvalRequester = vi.fn(
-      () =>
-        new Promise<{ blocked: false; params: unknown; approvalResolution: "allow-once" }>(
-          (resolve) => {
-            resolveApproval = resolve;
+      createMockPluginRegistry([
+        {
+          hookName: "before_tool_call",
+          handler: (event) => {
+            const command = (event as { params?: { command?: string } }).params?.command;
+            return {
+              requireApproval: {
+                title: "Needs approval",
+                description: "native command needs approval",
+                ...(command === "child-command" ? { onResolution: childApprovalResolution } : {}),
+              },
+            };
           },
-        ),
+        },
+      ]),
     );
-    testing.setNativeHookRelayDeferredToolApprovalRequesterForTests(approvalRequester);
+    testing.setNativeHookRelayDeferredToolApprovalRequesterForTests(
+      ({ deferredApproval }) =>
+        new Promise((resolve) => {
+          if (!deferredApproval.toolCallId) {
+            throw new Error("Expected native deferred approval tool id");
+          }
+          deferredResolutions.set(deferredApproval.toolCallId, resolve);
+        }),
+    );
+    const retention = {
+      ...defaultTestNativeHookRelayRetention,
+      readClaim: readTestNativeAgentId,
+      shouldRetainAfterForegroundClose: () => true,
+      onDispose: () => {},
+    };
+    const relayA = registerRetainedNativeHookRelay({
+      provider: "codex",
+      relayId,
+      sessionId: "session-1",
+      runId: "run-a",
+      allowedEvents: ["pre_tool_use"],
+      runBeforeToolCall: fixtureA.hostCapabilities.runBeforeToolCall,
+      assertActive: fixtureA.hostCapabilities.assertActive,
+      retention,
+    });
+    relayA.bindForegroundSubject("turn-a");
+    const releaseChildA = relayA.bindRetainedSubject("child-a");
+    const relayB = registerRetainedNativeHookRelay({
+      provider: "codex",
+      relayId,
+      generation: relayA.generation,
+      sessionId: "session-1",
+      runId: "run-b",
+      allowedEvents: ["pre_tool_use"],
+      runBeforeToolCall: fixtureB.hostCapabilities.runBeforeToolCall,
+      assertActive: fixtureB.hostCapabilities.assertActive,
+      composeWithExistingRoute: true,
+      retention,
+    });
+    relayB.bindForegroundSubject("turn-b");
+    relayB.activateForegroundBinding();
+    const invokeDeferredApproval = (toolUseId: string, command: string, payload: object) =>
+      invokeNativeHookRelay({
+        provider: "codex",
+        relayId,
+        event: "pre_tool_use",
+        rawPayload: {
+          hook_event_name: "PreToolUse",
+          openclaw_approval_mode: "report",
+          tool_name: "Bash",
+          tool_use_id: toolUseId,
+          tool_input: { command },
+          ...payload,
+        },
+      });
 
-    await expect(
-      resolveNativeHookRelayDeferredToolApproval({
-        relayId: relay.relayId,
+    try {
+      await expect(
+        invokeDeferredApproval("child-tool", "child-command", {
+          agent_id: "child-a",
+          turn_id: "child-turn",
+        }),
+      ).resolves.toMatchObject({ exitCode: 0 });
+      await expect(
+        invokeDeferredApproval("root-tool", "root-command", { turn_id: "turn-b" }),
+      ).resolves.toMatchObject({ exitCode: 0 });
+
+      const childApproval = resolveNativeHookRelayDeferredToolApproval({
+        relayId,
+        turnId: "child-turn",
+        toolUseId: "child-tool",
+      });
+      const rootApproval = resolveNativeHookRelayDeferredToolApproval({
+        relayId,
         turnId: "turn-b",
-        toolUseId: "native-approval-report-duplicate",
-      }),
-    ).resolves.toBeUndefined();
+        toolUseId: "root-tool",
+      });
+      await vi.waitFor(() => expect(deferredResolutions.size).toBe(2));
 
-    const firstApproval = resolveNativeHookRelayDeferredToolApproval({
-      relayId: relay.relayId,
-      turnId: "turn-a",
-      toolUseId: "native-approval-report-duplicate",
-    });
-    const duplicateApproval = resolveNativeHookRelayDeferredToolApproval({
-      relayId: relay.relayId,
-      turnId: "turn-a",
-      toolUseId: "native-approval-report-duplicate",
-    });
+      releaseChildA();
+      await vi.waitFor(() => expect(childApprovalResolution).toHaveBeenCalledWith("cancelled"));
+      deferredResolutions.get("child-tool")?.({
+        blocked: false,
+        params: { command: "child-command" },
+        approvalResolution: "allow-once",
+      });
+      deferredResolutions.get("root-tool")?.({
+        blocked: false,
+        params: { command: "root-command" },
+        approvalResolution: "allow-once",
+      });
 
-    await vi.waitFor(() => expect(approvalRequester).toHaveBeenCalledTimes(1));
-    resolveApproval?.({
-      blocked: false,
-      params: { cmd: "cat /tmp/private_key", command: "cat /tmp/private_key" },
-      approvalResolution: "allow-once",
-    });
-
-    await expect(Promise.all([firstApproval, duplicateApproval])).resolves.toEqual([
-      { handled: true, outcome: "approved-once" },
-      { handled: true, outcome: "approved-once" },
-    ]);
-    await expect(
-      resolveNativeHookRelayDeferredToolApproval({
-        relayId: relay.relayId,
-        turnId: "turn-a",
-        toolUseId: "native-approval-report-duplicate",
-      }),
-    ).resolves.toBeUndefined();
+      await expect(childApproval).rejects.toThrow("native hook relay registration is inactive");
+      await expect(rootApproval).resolves.toEqual({ handled: true, outcome: "approved-once" });
+    } finally {
+      relayB.unregister();
+      closeAdmittedRunDelegatedAuthority(fixtureA.admittedRunContext);
+      closeAdmittedRunDelegatedAuthority(fixtureB.admittedRunContext);
+    }
   });
 
   it("preserves deferred native approval cancellation as a terminal disposition", async () => {

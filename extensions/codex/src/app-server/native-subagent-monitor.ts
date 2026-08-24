@@ -99,8 +99,10 @@ type ChildState = {
   deliveringCompletion: boolean;
   deliveryOwnerKey?: string;
   settledWithoutCompletion: boolean;
-  releaseDirectChild?: () => void;
-  renewDirectChild?: () => void;
+  directChildClaim?: {
+    release: () => void;
+    renew?: () => void;
+  };
 };
 
 type ChildAssistantMessages = {
@@ -1030,7 +1032,7 @@ class Monitor {
     if (!state) {
       return false;
     }
-    const renewDirectChild = childState.renewDirectChild;
+    const directChildClaim = childState.directChildClaim;
     const statusRead = this.retainThreadStatusRevision(childState.childThreadId);
     try {
       const recovery = await this.readThreadRecovery(childState.childThreadId);
@@ -1055,13 +1057,12 @@ class Monitor {
       }
       if (recovery.threadState === "active" && !recovery.resumable) {
         if (
-          renewDirectChild &&
+          directChildClaim?.renew &&
           !childState.terminal &&
           !childState.settledWithoutCompletion &&
-          childState.releaseDirectChild &&
-          childState.renewDirectChild === renewDirectChild
+          childState.directChildClaim === directChildClaim
         ) {
-          renewDirectChild();
+          directChildClaim.renew();
         }
         this.observeActiveChild(childState);
         return false;
@@ -1396,15 +1397,15 @@ class Monitor {
       options.claimDirectChild &&
       !childState.terminal &&
       !childState.settledWithoutCompletion &&
-      !childState.releaseDirectChild
+      !childState.directChildClaim
     ) {
       const releaseDirectChild = options.claimDirectChild(childThreadId);
       if (releaseDirectChild) {
         const renewDirectChild = options.renewDirectChild;
-        childState.releaseDirectChild = releaseDirectChild;
-        childState.renewDirectChild = renewDirectChild
-          ? () => renewDirectChild(childThreadId)
-          : undefined;
+        childState.directChildClaim = {
+          release: releaseDirectChild,
+          ...(renewDirectChild ? { renew: () => renewDirectChild(childThreadId) } : {}),
+        };
       }
     }
     this.registerAgentPath(childState, childThreadId);
@@ -1596,10 +1597,9 @@ class Monitor {
   }
 
   private releaseDirectChild(childState: ChildState): void {
-    const release = childState.releaseDirectChild;
-    childState.releaseDirectChild = undefined;
-    childState.renewDirectChild = undefined;
-    release?.();
+    const claim = childState.directChildClaim;
+    childState.directChildClaim = undefined;
+    claim?.release();
   }
 
   private rejectPendingDirectChild(
