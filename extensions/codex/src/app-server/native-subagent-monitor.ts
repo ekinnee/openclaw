@@ -1400,9 +1400,10 @@ class Monitor {
     ) {
       const releaseDirectChild = options.claimDirectChild(childThreadId);
       if (releaseDirectChild) {
+        const renewDirectChild = options.renewDirectChild;
         childState.releaseDirectChild = releaseDirectChild;
-        childState.renewDirectChild = options.renewDirectChild
-          ? () => options.renewDirectChild?.(childThreadId)
+        childState.renewDirectChild = renewDirectChild
+          ? () => renewDirectChild(childThreadId)
           : undefined;
       }
     }

@@ -262,9 +262,7 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
       } as unknown as CodexServerNotification);
 
       nativeHookRelayUnregisterQueue.flush();
-      let childDenied: Awaited<ReturnType<typeof invokeNativeHookRelay>> | undefined;
-      let childError: unknown;
-      void invokeNativeHookRelay({
+      const childDenied = await invokeNativeHookRelay({
         provider: "codex",
         relayId,
         generation: generationA,
@@ -279,26 +277,7 @@ describe("runCodexAppServerAttempt native hook relay retention", () => {
           tool_use_id: "child-a-tool",
           tool_input: { command: "deny-run-a" },
         },
-      }).then(
-        (response) => {
-          childDenied = response;
-        },
-        (error: unknown) => {
-          childError = error;
-        },
-      );
-      await vi.waitFor(() => {
-        expect(childDenied !== undefined || childError !== undefined).toBe(true);
       });
-      if (childError !== undefined) {
-        throw childError instanceof Error
-          ? childError
-          : new Error("Child A hook failed", { cause: childError });
-      }
-      if (!childDenied) {
-        throw new Error("Expected child A hook response");
-      }
-      expect(childDenied.stdout).toContain("run-a policy denied");
       expect(JSON.parse(childDenied.stdout)).toMatchObject({
         hookSpecificOutput: {
           permissionDecision: "deny",

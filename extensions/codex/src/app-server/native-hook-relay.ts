@@ -274,7 +274,6 @@ export function createCodexNativeHookRelay(params: {
       // separately authorizes its lifetime beyond foreground closure.
       shouldRetainAfterForegroundClose: () =>
         successfulYieldRetentionAuthorized && directChildClaims.size > 0,
-      allowPreToolUse: (childThreadId) => directChildClaims.has(childThreadId),
       awaitForegroundAdmission: (childThreadId) => {
         if (foregroundClosed) {
           return Promise.reject(new Error("native hook relay foreground admission unavailable"));
@@ -321,7 +320,6 @@ export function createCodexNativeHookRelay(params: {
   return {
     ...relay,
     unregister,
-    activateForegroundBinding: relay.activateForegroundBinding,
     authorizeRetentionAfterSuccessfulYield: () => {
       successfulYieldRetentionAuthorized = true;
     },

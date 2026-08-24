@@ -440,7 +440,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => true,
-        allowPreToolUse: () => false,
         onDispose: () => {},
       },
     });
@@ -503,7 +502,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => retainChild,
-        allowPreToolUse: (claim) => claim === "child-thread",
         onDispose: () => {},
       },
     });
@@ -666,7 +664,6 @@ describe("native hook relay registry", () => {
       readClaim: readTestNativeAgentId,
       readForegroundSubject: readTestNativeTurnId,
       shouldRetainAfterForegroundClose: () => true,
-      allowPreToolUse: (claim: string) => claim === "child-a",
       onDispose: () => {},
     };
     const relayA = registerRetainedNativeHookRelay({
@@ -678,6 +675,20 @@ describe("native hook relay registry", () => {
       assertActive: fixtureA.hostCapabilities.assertActive,
       retention,
     });
+    await expect(
+      invokeNativeHookRelay({
+        provider: "codex",
+        relayId,
+        event: "post_tool_use",
+        rawPayload: {
+          hook_event_name: "PostToolUse",
+          tool_name: "Bash",
+          tool_input: {},
+          tool_response: {},
+          tool_use_id: "pre-bind-tool",
+        },
+      }),
+    ).rejects.toThrow("foreground invocation not allowed");
     relayA.bindForegroundSubject("turn-a");
     const releaseChildA = relayA.bindRetainedSubject("child-a");
     const relayB = registerRetainedNativeHookRelay({
@@ -793,7 +804,6 @@ describe("native hook relay registry", () => {
         readClaim: readTestNativeAgentId,
         readForegroundSubject: readTestNativeTurnId,
         shouldRetainAfterForegroundClose: () => false,
-        allowPreToolUse: () => false,
         onDispose: () => {},
       },
     });
@@ -820,13 +830,78 @@ describe("native hook relay registry", () => {
     relay.unregister();
   });
 
+  it("does not extend an earlier binding when a successor extends the route", async () => {
+    const relayId = uniqueNativeHookRelayIdForTests("binding-expiry-isolation");
+    const fixtureA = await createAdmittedHostCapabilityTestFixture({ runId: "run-a" });
+    const fixtureB = await createAdmittedHostCapabilityTestFixture({ runId: "run-b" });
+    vi.useFakeTimers();
+    const retention = {
+      readClaim: readTestNativeAgentId,
+      readForegroundSubject: readTestNativeTurnId,
+      shouldRetainAfterForegroundClose: () => true,
+      onDispose: () => {},
+    };
+    const relayA = registerRetainedNativeHookRelay({
+      provider: "codex",
+      relayId,
+      sessionId: "session-1",
+      runId: "run-a",
+      ttlMs: 10,
+      allowedEvents: ["post_tool_use"],
+      runBeforeToolCall: fixtureA.hostCapabilities.runBeforeToolCall,
+      assertActive: fixtureA.hostCapabilities.assertActive,
+      retention,
+    });
+    relayA.bindForegroundSubject("turn-a");
+    relayA.bindRetainedSubject("child-a");
+    const relayB = registerRetainedNativeHookRelay({
+      provider: "codex",
+      relayId,
+      generation: relayA.generation,
+      sessionId: "session-1",
+      runId: "run-b",
+      ttlMs: 60_000,
+      allowedEvents: ["post_tool_use"],
+      runBeforeToolCall: fixtureB.hostCapabilities.runBeforeToolCall,
+      assertActive: fixtureB.hostCapabilities.assertActive,
+      composeWithExistingRoute: true,
+      retention,
+    });
+    relayB.bindForegroundSubject("turn-b");
+    relayB.activateForegroundBinding();
+
+    await vi.advanceTimersByTimeAsync(11);
+    const invoke = (rawPayload: Record<string, unknown>) =>
+      invokeNativeHookRelay({
+        provider: "codex",
+        relayId,
+        event: "post_tool_use",
+        rawPayload: {
+          hook_event_name: "PostToolUse",
+          tool_name: "Bash",
+          tool_input: {},
+          tool_response: {},
+          tool_use_id: "expiry-isolation-tool",
+          ...rawPayload,
+        },
+      });
+
+    await expect(invoke({ agent_id: "child-a", turn_id: "turn-a" })).rejects.toThrow(
+      "retained invocation not allowed",
+    );
+    await expect(invoke({ turn_id: "turn-b" })).resolves.toMatchObject({ exitCode: 0 });
+
+    relayB.unregister();
+    closeAdmittedRunDelegatedAuthority(fixtureA.admittedRunContext);
+    closeAdmittedRunDelegatedAuthority(fixtureB.admittedRunContext);
+  });
+
   it("keeps the previous foreground when composed route renewal fails", async () => {
     const relayId = uniqueNativeHookRelayIdForTests("composed-renewal-failure");
     const retention = {
       readClaim: readTestNativeAgentId,
       readForegroundSubject: readTestNativeTurnId,
       shouldRetainAfterForegroundClose: () => false,
-      allowPreToolUse: () => false,
       onDispose: () => {},
     };
     const relayA = registerRetainedNativeHookRelay({
@@ -908,7 +983,6 @@ describe("native hook relay registry", () => {
           readClaim: readTestNativeAgentId,
           readForegroundSubject: readTestNativeTurnId,
           shouldRetainAfterForegroundClose: () => false,
-          allowPreToolUse: () => false,
           onDispose,
         },
       });
@@ -945,7 +1019,6 @@ describe("native hook relay registry", () => {
         readClaim: readTestNativeAgentId,
         readForegroundSubject: readTestNativeTurnId,
         shouldRetainAfterForegroundClose: () => true,
-        allowPreToolUse: (claim) => claim === "child-a",
         onDispose: () => {},
       },
     });
@@ -964,7 +1037,6 @@ describe("native hook relay registry", () => {
         readClaim: readTestNativeAgentId,
         readForegroundSubject: readTestNativeTurnId,
         shouldRetainAfterForegroundClose: () => true,
-        allowPreToolUse: () => false,
         awaitForegroundAdmission,
         onDispose: () => {},
       },
@@ -1034,7 +1106,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim,
         shouldRetainAfterForegroundClose: () => true,
-        allowPreToolUse: () => true,
         onDispose: () => {},
       },
     });
@@ -1073,7 +1144,6 @@ describe("native hook relay registry", () => {
       readClaim: readTestNativeAgentId,
       readForegroundSubject: readTestNativeTurnId,
       shouldRetainAfterForegroundClose: () => true,
-      allowPreToolUse: (claim: string) => claim === "child-a",
       onDispose: () => {},
     };
     const relayA = registerRetainedNativeHookRelay({
@@ -1129,62 +1199,43 @@ describe("native hook relay registry", () => {
     closeAdmittedRunDelegatedAuthority(fixtureB.admittedRunContext);
   });
 
-  it.each(["permission_request", "before_agent_finalize"] as const)(
-    "rejects a late %s result after its selected binding closes",
-    async (event) => {
-      let active = true;
-      let settle: (() => void) | undefined;
-      if (event === "permission_request") {
-        testing.setNativeHookRelayPermissionApprovalRequesterForTests(
-          () =>
-            new Promise<"allow">((resolve) => {
-              settle = () => resolve("allow");
+  it("rejects a late finalize result after its selected binding closes", async () => {
+    let active = true;
+    let settle: (() => void) | undefined;
+    initializeGlobalHookRunner(
+      createMockPluginRegistry([
+        {
+          hookName: "before_agent_finalize",
+          handler: () =>
+            new Promise<undefined>((resolve) => {
+              settle = () => resolve(undefined);
             }),
-        );
-      } else {
-        initializeGlobalHookRunner(
-          createMockPluginRegistry([
-            {
-              hookName: "before_agent_finalize",
-              handler: () =>
-                new Promise<undefined>((resolve) => {
-                  settle = () => resolve(undefined);
-                }),
-            },
-          ]),
-        );
-      }
-      const relay = registerNativeHookRelay({
-        provider: "codex",
-        sessionId: "session-1",
-        runId: `run-late-${event}`,
-        allowedEvents: [event],
-        assertActive: () => {
-          if (!active) {
-            throw new Error("selected binding closed");
-          }
         },
-      });
-      const invocation = invokeNativeHookRelay({
-        provider: "codex",
-        relayId: relay.relayId,
-        event,
-        rawPayload:
-          event === "permission_request"
-            ? {
-                hook_event_name: "PermissionRequest",
-                tool_name: "mcp__test__tool",
-                tool_input: {},
-              }
-            : { hook_event_name: "Stop", turn_id: "turn-1" },
-      });
-      await vi.waitFor(() => expect(settle).toBeTypeOf("function"));
-      active = false;
-      settle?.();
+      ]),
+    );
+    const relay = registerNativeHookRelay({
+      provider: "codex",
+      sessionId: "session-1",
+      runId: "run-late-finalize",
+      allowedEvents: ["before_agent_finalize"],
+      assertActive: () => {
+        if (!active) {
+          throw new Error("selected binding closed");
+        }
+      },
+    });
+    const invocation = invokeNativeHookRelay({
+      provider: "codex",
+      relayId: relay.relayId,
+      event: "before_agent_finalize",
+      rawPayload: { hook_event_name: "Stop", turn_id: "turn-1" },
+    });
+    await vi.waitFor(() => expect(settle).toBeTypeOf("function"));
+    active = false;
+    settle?.();
 
-      await expect(invocation).rejects.toThrow("selected binding closed");
-    },
-  );
+    await expect(invocation).rejects.toThrow("selected binding closed");
+  });
 
   it.each(["abort", "expiry"] as const)(
     "physically releases active retained child authority on %s",
@@ -1210,7 +1261,6 @@ describe("native hook relay registry", () => {
         retention: {
           readClaim: readTestNativeAgentId,
           shouldRetainAfterForegroundClose: () => true,
-          allowPreToolUse: (claim) => claim === "child-thread",
           onDispose: () => {},
         },
         ...(cause === "abort" ? { signal: controller.signal } : { ttlMs: 5 }),
@@ -1271,7 +1321,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => true,
-        allowPreToolUse: (claim) => claim === "child-thread",
         onDispose: () => {},
       },
     });
@@ -1307,7 +1356,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => true,
-        allowPreToolUse: () => true,
         onDispose,
       },
     } as unknown as Parameters<typeof registerNativeHookRelay>[0]);
@@ -1345,7 +1393,6 @@ describe("native hook relay registry", () => {
         retention: {
           readClaim: readTestNativeAgentId,
           shouldRetainAfterForegroundClose: () => false,
-          allowPreToolUse: () => false,
           onDispose: () => {
             throw new Error("teardown observer failed");
           },
@@ -1389,7 +1436,6 @@ describe("native hook relay registry", () => {
       runId: "run-throwing-retain-predicate",
       retention: {
         readClaim: readTestNativeAgentId,
-        allowPreToolUse: () => false,
         onDispose: () => {},
         shouldRetainAfterForegroundClose: () => {
           throw new Error("predicate failed");
@@ -1411,7 +1457,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => false,
-        allowPreToolUse: () => false,
         onDispose: () => {
           registerNativeHookRelay({
             provider: "codex",
@@ -1439,7 +1484,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => false,
-        allowPreToolUse: () => false,
         onDispose: () => {
           callbackSuccessor = registerNativeHookRelay({
             provider: "codex",
@@ -1461,7 +1505,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => false,
-        allowPreToolUse: () => false,
         onDispose: replacementUnregistered,
       },
     });
@@ -1496,7 +1539,6 @@ describe("native hook relay registry", () => {
       retention: {
         readClaim: readTestNativeAgentId,
         shouldRetainAfterForegroundClose: () => false,
-        allowPreToolUse: () => false,
         onDispose: oldUnregistered,
       },
     });
@@ -1540,7 +1582,6 @@ describe("native hook relay registry", () => {
         retention: {
           readClaim: readTestNativeAgentId,
           shouldRetainAfterForegroundClose: () => true,
-          allowPreToolUse: () => false,
           onDispose: () => {},
         },
       }),
@@ -1615,22 +1656,18 @@ describe("native hook relay registry", () => {
   });
 
   it("does not remember allow-always approvals when expiry would exceed Date range", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(8_639_999_999_999_999));
     const relay = registerNativeHookRelay({
       provider: "codex",
       relayId: "codex-permission-overflow-session",
       sessionId: "session-1",
       runId: "run-1",
+      ttlMs: 1,
     });
     const approvalRequester = vi.fn(async () => "allow-always" as const);
     testing.setNativeHookRelayPermissionApprovalRequesterForTests(approvalRequester);
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(8_640_000_000_000_000));
     const state = getNativeHookRelaySharedStateForTests();
-    const registration = state.relays.get(relay.relayId) as { expiresAtMs?: number } | undefined;
-    if (!registration) {
-      throw new Error("Expected native hook relay registration");
-    }
-    registration.expiresAtMs = 8_640_000_000_000_000;
 
     await expect(
       invokeNativeHookRelay({

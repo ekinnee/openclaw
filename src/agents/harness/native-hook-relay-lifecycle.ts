@@ -51,7 +51,6 @@ const { relays, relayBridges, invocations } = nativeHookRelayState;
 type RelayBinding = {
   registration: ActiveNativeHookRelayRegistration;
   token: symbol;
-  foregroundOpen: boolean;
   foregroundSubject?: string;
   childSubjects: Set<string>;
   retained?: ReturnType<typeof retainBeforeToolCallForNativeHookRelay>;
@@ -78,7 +77,6 @@ export type NativeHookRelayRetention = Readonly<{
   readClaim: (rawPayload: unknown) => string | undefined;
   readForegroundSubject?: (rawPayload: unknown) => string | undefined;
   shouldRetainAfterForegroundClose: () => boolean;
-  allowPreToolUse: (claim: string) => boolean;
   awaitForegroundAdmission?: (claim: string) => Promise<(() => boolean) | undefined>;
   onDispose: () => void;
 }>;
@@ -274,12 +272,11 @@ function registerNativeHookRelayInternal(
     const binding: RelayBinding = {
       registration,
       token: Symbol("native-hook-relay-binding"),
-      foregroundOpen: false,
       childSubjects: new Set(),
       ...(retention ? { retention } : {}),
     };
     registerNativeHookRelayApprovalOwner(registration, binding.token);
-    const route = existingRoute ?? registration;
+    const route = existingRoute ?? { ...registration };
     preparedRoute = route;
     preparedBinding = binding;
     const lifetime = existingRoute
@@ -321,7 +318,6 @@ function registerNativeHookRelayInternal(
         if (previous === binding) {
           continue;
         }
-        previous.foregroundOpen = false;
         if (!shouldRetainNativeHookRelayBinding(previous)) {
           removeNativeHookRelayBinding(relayId, route, previous);
         }
@@ -332,7 +328,6 @@ function registerNativeHookRelayInternal(
       if (!binding.retained && params.runBeforeToolCall && retention) {
         binding.retained = retainBeforeToolCallForNativeHookRelay(params.runBeforeToolCall);
       }
-      binding.foregroundOpen = true;
       lifetime.foreground = binding;
     };
     const handle: RetainedNativeHookRelayHandle = {
@@ -403,7 +398,7 @@ function registerNativeHookRelayInternal(
             lifetime.childBindings.delete(subject);
           }
           binding.childSubjects.delete(subject);
-          if (!binding.foregroundOpen && binding.childSubjects.size === 0) {
+          if (lifetime.foreground !== binding && binding.childSubjects.size === 0) {
             removeNativeHookRelayBinding(relayId, route, binding);
           }
         };
@@ -512,7 +507,6 @@ function removeNativeHookRelayBinding(
   if (lifetime.foreground === binding) {
     lifetime.foreground = undefined;
   }
-  binding.foregroundOpen = false;
   for (const subject of binding.childSubjects) {
     if (lifetime.childBindings.get(subject) === binding) {
       lifetime.childBindings.delete(subject);
@@ -561,7 +555,6 @@ function deactivateNativeHookRelayForeground(
   if (!lifetime?.bindings.has(binding)) {
     return;
   }
-  binding.foregroundOpen = false;
   if (lifetime.foreground === binding) {
     lifetime.foreground = undefined;
   }
@@ -590,7 +583,7 @@ export async function resolveNativeHookRelayInvocationBinding(
     if (!binding && event === "pre_tool_use") {
       const foreground = lifetime.foreground;
       const retention = foreground?.retention;
-      if (!foreground?.foregroundOpen || !retention?.awaitForegroundAdmission) {
+      if (!foreground || !retention?.awaitForegroundAdmission) {
         throw new Error("native hook relay retained invocation not allowed");
       }
       if (!foreground.registration.allowedEvents.includes(event)) {
@@ -624,7 +617,7 @@ export async function resolveNativeHookRelayInvocationBinding(
       if (assertAdmission && !assertAdmission()) {
         throw new Error("native hook relay retained invocation not allowed");
       }
-      if (lifetime.childBindings.get(claim) !== selected || !retention.allowPreToolUse(claim)) {
+      if (lifetime.childBindings.get(claim) !== selected) {
         throw new Error("native hook relay retained invocation not allowed");
       }
     };
@@ -637,11 +630,15 @@ export async function resolveNativeHookRelayInvocationBinding(
     return effectiveRegistration;
   }
   const foreground = lifetime.foreground;
-  const foregroundSubject = subjectReader?.readForegroundSubject?.(rawPayload);
-  if (!foreground?.foregroundOpen || foreground.foregroundSubject !== foregroundSubject) {
+  const readForegroundSubject = subjectReader?.readForegroundSubject;
+  const foregroundSubject = readForegroundSubject?.(rawPayload);
+  if (
+    !foreground ||
+    (readForegroundSubject &&
+      (!foregroundSubject || foreground.foregroundSubject !== foregroundSubject))
+  ) {
     throw new Error("native hook relay foreground invocation not allowed");
   }
-  const foregroundToken = foreground.token;
   const assertActive = () => {
     if (
       relays.get(route.relayId) !== route ||
@@ -652,11 +649,7 @@ export async function resolveNativeHookRelayInvocationBinding(
     }
     foreground.registration.signal?.throwIfAborted();
     foreground.registration.assertActive?.();
-    if (
-      lifetime.foreground !== foreground ||
-      !foreground.foregroundOpen ||
-      foreground.token !== foregroundToken
-    ) {
+    if (lifetime.foreground !== foreground) {
       throw new Error("native hook relay foreground invocation not allowed");
     }
   };

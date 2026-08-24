@@ -13,9 +13,7 @@ function getNativeHookRelaySharedState(): NativeHookRelaySharedState {
     invocations: [],
     approvalOwners: new WeakMap(),
     pendingPermissionApprovals: new Map(),
-    pendingPermissionApprovalOwners: new Map(),
     pendingPreToolUseApprovals: new Map(),
-    pendingPreToolUseApprovalOwners: new Map(),
     permissionApprovalWindows: new Map(),
     permissionAllowAlwaysApprovals: new Map(),
   };
