@@ -31,6 +31,7 @@ import { shouldHandleNavigationClick } from "../../../lib/navigation-click.ts";
 import { openInlineChatImage } from "./chat-image-lightbox.ts";
 import { safeAttachmentHref } from "./chat-attachment-href.ts";
 import "./chat-audio-player.ts";
+import "./chat-video-player.ts";
 import { openResolvedImage } from "./chat-message-image-open.ts";
 import type { SidebarContent } from "./chat-sidebar-content-types.ts";
 import { renderSidebarFile, type FileViewControls } from "./chat-sidebar-file-view.ts";
@@ -50,7 +51,15 @@ function renderSidebarAttachment(
     </div>`;
   }
   if (mimeType.startsWith("video/")) {
-    return html`<video class="sidebar-attachment-preview__media" src=${src} controls></video>`;
+    return html`<openclaw-chat-video-player
+      .src=${src}
+      .sourceIdentity=${content.sourceIdentity ?? content.src}
+      .label=${content.title}
+      .mimeType=${content.mimeType ?? ""}
+      .playback=${content.playback ?? "native"}
+      .authToken=${content.authToken ?? null}
+      .sizeBytes=${content.sizeBytes}
+    ></openclaw-chat-video-player>`;
   }
   if (mimeType.startsWith("audio/")) {
     return html`<openclaw-chat-audio-player
