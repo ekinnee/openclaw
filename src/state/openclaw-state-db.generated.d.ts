@@ -1582,11 +1582,13 @@ export interface VoicewakeTriggers {
 export interface WebPushSubscriptions {
   auth: string;
   created_at_ms: number;
+  device_id: string | null;
   endpoint: string;
   endpoint_hash: string;
   p256dh: string;
   subscription_id: string;
   updated_at_ms: number;
+  user_profile_id: string | null;
 }
 
 export interface WebPushVapidKeys {
