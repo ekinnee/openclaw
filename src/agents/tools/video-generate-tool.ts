@@ -445,7 +445,7 @@ const defaultScheduleVideoGenerateBackgroundWork = createDefaultMediaGenerateBac
 async function loadReferenceAssets(params: {
   inputs: string[];
   expectedKind: "image" | "video" | "audio";
-  maxBytes?: number;
+  maxBytes: number;
   workspaceDir?: string;
   sandboxConfig: { root: string; bridge: SandboxFsBridge; workspaceOnly: boolean } | null;
   ssrfPolicy?: SsrFPolicy;

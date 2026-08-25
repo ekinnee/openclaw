@@ -530,7 +530,7 @@ type ImageGenerateSandboxConfig = {
 
 async function loadReferenceImages(params: {
   imageInputs: string[];
-  maxBytes?: number;
+  maxBytes: number;
   workspaceDir?: string;
   sandboxConfig: { root: string; bridge: SandboxFsBridge; workspaceOnly: boolean } | null;
   ssrfPolicy?: SsrFPolicy;

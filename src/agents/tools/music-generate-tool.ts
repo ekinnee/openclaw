@@ -270,7 +270,7 @@ const defaultScheduleMusicGenerateBackgroundWork = createDefaultMediaGenerateBac
 
 async function loadReferenceImages(params: {
   inputs: string[];
-  maxBytes?: number;
+  maxBytes: number;
   workspaceDir?: string;
   sandboxConfig: { root: string; bridge: SandboxFsBridge; workspaceOnly: boolean } | null;
   ssrfPolicy?: SsrFPolicy;

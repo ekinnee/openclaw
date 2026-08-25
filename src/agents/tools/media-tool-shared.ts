@@ -623,7 +623,7 @@ export async function loadMediaToolReferences<T>(params: {
   expectedKind: "image" | "video" | "audio";
   sandbox: SandboxedBridgeMediaPathConfig | null;
   workspaceDir?: string;
-  maxBytes?: number;
+  maxBytes: number;
   ssrfPolicy?: SsrFPolicy;
   timeoutMs?: number;
   signal?: AbortSignal;
