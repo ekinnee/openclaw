@@ -1,16 +1,24 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { makeAttemptResult } from "./run.overflow-compaction.fixture.js";
 import {
   loadRunOverflowCompactionHarness,
   mockedRunEmbeddedAttempt,
   overflowBaseRunParams,
+  resetSharedRunIntegrationHarnessMocks,
+  type TestRunEmbeddedAgent,
+  warmRunOverflowCompactionHarness,
 } from "./run.overflow-compaction.harness.js";
 
-const { runEmbeddedAgent } = await loadRunOverflowCompactionHarness();
-
 describe("embedded run session permissions", () => {
+  let runEmbeddedAgent: TestRunEmbeddedAgent;
+
+  beforeAll(async () => {
+    ({ runEmbeddedAgent } = await loadRunOverflowCompactionHarness());
+    await warmRunOverflowCompactionHarness(runEmbeddedAgent);
+  });
+
   beforeEach(() => {
-    mockedRunEmbeddedAttempt.mockReset();
+    resetSharedRunIntegrationHarnessMocks();
   });
 
   it("prepares the exec mode with plugin-owned permission facts", async () => {
