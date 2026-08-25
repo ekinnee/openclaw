@@ -1931,6 +1931,45 @@ describe("getApiKeyForModelCore", () => {
 });
 
 describe("resolveApiKeyForProviderCore — per-entry apiKey as profile ID reference", () => {
+  it("rejects a profile retired by an already-loaded external provider", async () => {
+    const { createEmptyPluginRegistry } = await import("../plugins/registry.js");
+    const { resetPluginRuntimeStateForTest, setActivePluginRegistry } =
+      await import("../plugins/runtime.js");
+    const registry = createEmptyPluginRegistry();
+    registry.providers.push({
+      pluginId: "external-provider",
+      provider: {
+        id: "external-provider",
+        label: "External Provider",
+        auth: [],
+        deprecatedProfileIds: ["external-provider:legacy"],
+      },
+      source: "test",
+    });
+    setActivePluginRegistry(registry, "startup-registry", "gateway-bindable");
+
+    try {
+      await expect(
+        resolveApiKeyForProviderCore({
+          provider: "external-provider",
+          profileId: "external-provider:legacy",
+          store: {
+            version: 1,
+            profiles: {
+              "external-provider:legacy": {
+                type: "api_key",
+                provider: "external-provider",
+                key: "legacy-key",
+              },
+            },
+          },
+        }),
+      ).rejects.toThrow(/external-provider:legacy.*retired.*doctor --fix/);
+    } finally {
+      resetPluginRuntimeStateForTest();
+    }
+  });
+
   it("rejects a retired profile reference before resolving its copied credential", async () => {
     await expect(
       resolveApiKeyForProviderCore({

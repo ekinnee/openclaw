@@ -5,6 +5,7 @@ import { formatCliCommand } from "../cli/command-format.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
+import { resolveLoadedProviderRuntimePlugin } from "../plugins/provider-hook-runtime.js";
 import { resolveProviderDeprecatedAuthProfileIds } from "../plugins/provider-public-artifacts.js";
 import {
   buildProviderMissingAuthMessageWithPlugin,
@@ -119,8 +120,22 @@ export async function resolveApiKeyForProviderCore(params: {
 }): Promise<ResolvedProviderAuth> {
   const { provider, cfg, profileId, preferredProfile } = params;
   let deprecatedProfileIds: ReadonlySet<string> | undefined;
-  const getDeprecatedProfileIds = () =>
-    (deprecatedProfileIds ??= new Set(resolveProviderDeprecatedAuthProfileIds(provider)));
+  const getDeprecatedProfileIds = () => {
+    if (deprecatedProfileIds) {
+      return deprecatedProfileIds;
+    }
+    const metadataProfileIds = resolveProviderDeprecatedAuthProfileIds(provider);
+    deprecatedProfileIds = new Set(
+      metadataProfileIds.length > 0
+        ? metadataProfileIds
+        : (resolveLoadedProviderRuntimePlugin({
+            provider,
+            config: cfg,
+            workspaceDir: params.workspaceDir,
+          })?.deprecatedProfileIds ?? []),
+    );
+    return deprecatedProfileIds;
+  };
   const agentDir = params.agentDir?.trim() || (cfg ? resolveDefaultAgentDir(cfg) : undefined);
   // Pending credential files own this agent's auth route until Doctor commits
   // and archives them; do not fall through to env/config credentials.

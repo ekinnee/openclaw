@@ -6,12 +6,19 @@ import {
   loadPluginManifestRegistryCore,
   type PluginManifestRegistry,
 } from "./manifest-registry.js";
+import { registerPluginMetadataProcessMemoLifecycleClear } from "./plugin-metadata-lifecycle.js";
 import {
   resolveDirectBundledProviderPolicySurface,
   resolveTrustedExternalProviderPolicySurface,
   type BundledProviderPolicySurface,
   type ProviderPolicySurface,
 } from "./provider-policy-surface.js";
+
+const deprecatedAuthProfileIdsByProvider = new Map<string, readonly string[]>();
+
+registerPluginMetadataProcessMemoLifecycleClear(() => {
+  deprecatedAuthProfileIdsByProvider.clear();
+});
 
 function resolveBundledProviderPolicyPlugin(
   providerId: string,
@@ -128,5 +135,17 @@ export function resolveProviderPolicySurface(
 
 /** Resolves static auth-profile retirement policy without activating provider runtime. */
 export function resolveProviderDeprecatedAuthProfileIds(providerId: string): readonly string[] {
-  return resolveBundledProviderPolicyPlugin(providerId)?.deprecatedAuthProfileIds ?? [];
+  const normalizedProviderId = normalizeProviderId(providerId);
+  if (!normalizedProviderId) {
+    return [];
+  }
+  const cacheKey = `${resolveBundledPluginsDir() ?? ""}\0${normalizedProviderId}`;
+  const cached = deprecatedAuthProfileIdsByProvider.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+  const profileIds =
+    resolveBundledProviderPolicyPlugin(normalizedProviderId)?.deprecatedAuthProfileIds ?? [];
+  deprecatedAuthProfileIdsByProvider.set(cacheKey, profileIds);
+  return profileIds;
 }
