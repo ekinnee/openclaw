@@ -1277,7 +1277,7 @@ describe("session history HTTP endpoints", () => {
     await withGatewayHarness(async (harness) => {
       const history = await readSessionHistoryBody(harness.port, sessionKey);
       expect(history.messages?.map(sessionHistoryRowIdentity)).toEqual(expectedRows);
-      expect(history.messages?.map((message) => message.__openclaw?.turnBoundary)).toEqual([
+      expect(history.messages?.map((message) => message["__openclaw"]?.turnBoundary)).toEqual([
         undefined,
         undefined,
         undefined,
