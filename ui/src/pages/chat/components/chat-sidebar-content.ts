@@ -59,7 +59,7 @@ function renderSidebarAttachment(
   if (content.attachmentKind === "video" || mimeType.startsWith("video/")) {
     return html`<openclaw-chat-video-player
       .src=${src}
-      .sourceIdentity=${content.sourceIdentity ?? content.src}
+      .sourceIdentity=${content.sourceIdentity ?? content.src ?? src}
       .label=${content.title}
       .mimeType=${content.mimeType ?? ""}
       .playback=${source?.playback ?? content.playback ?? "native"}
@@ -70,7 +70,7 @@ function renderSidebarAttachment(
   if (content.attachmentKind === "audio" || mimeType.startsWith("audio/")) {
     return html`<openclaw-chat-audio-player
       .src=${src}
-      .sourceIdentity=${content.sourceIdentity ?? content.src}
+      .sourceIdentity=${content.sourceIdentity ?? content.src ?? src}
       .label=${content.title}
       .mimeType=${content.mimeType ?? ""}
       .playback=${source?.playback ?? content.playback ?? "native"}
