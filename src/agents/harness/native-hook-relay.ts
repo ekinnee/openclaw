@@ -29,6 +29,7 @@ import {
   permissionRequestContentFingerprint,
   permissionRequestToolInputKeyFingerprint,
   clearNativeHookRelayPermissionsForTests,
+  resolveUnscopedNativeHookRelayDeferredToolApproval,
   setNativeHookRelayDeferredToolApprovalRequesterForTests as setNativeHookRelayDeferredToolApprovalRequesterForTestsImpl,
   setNativeHookRelayPermissionApprovalRequesterForTests as setNativeHookRelayPermissionApprovalRequesterForTestsImpl,
 } from "./native-hook-relay-permissions.js";
@@ -42,6 +43,7 @@ import type {
   ActiveNativeHookRelayRegistrationHandle,
   InvokeNativeHookRelayParams,
   NativeHookRelayEvent,
+  NativeHookRelayDeferredApprovalOutcome,
   NativeHookRelayInvocation,
   NativeHookRelayPermissionApprovalRequester,
   NativeHookRelayProcessResponse,
@@ -56,7 +58,6 @@ import {
   snapshotNativeHookRelayPayload,
 } from "./native-hook-relay-utils.js";
 export { buildNativeHookRelayCommand } from "./native-hook-relay-command.js";
-export { resolveNativeHookRelayDeferredToolApproval } from "./native-hook-relay-permissions.js";
 export type { NativeHookRelayRetention } from "./native-hook-relay-lifecycle.js";
 export type {
   NativeHookRelayEvent,
@@ -74,6 +75,11 @@ export function registerNativeHookRelay(
   return registerNativeHookRelayLifecycle(params, invokeNativeHookRelay);
 }
 
+/** Bundled-only normal relay entrypoint retaining the private approval resolver. */
+export function registerNativeHookRelayForBundledRuntime(params: RegisterNativeHookRelayParams) {
+  return registerNativeHookRelayLifecycle(params, invokeNativeHookRelay);
+}
+
 type RetainedNativeHookRelayParams = RegisterNativeHookRelayParams & {
   composeWithExistingRoute?: boolean;
   retention: NativeHookRelayRetention;
@@ -81,6 +87,18 @@ type RetainedNativeHookRelayParams = RegisterNativeHookRelayParams & {
 
 export function registerRetainedNativeHookRelay(params: RetainedNativeHookRelayParams) {
   return registerRetainedNativeHookRelayLifecycle(params, invokeNativeHookRelay);
+}
+
+/**
+ * Compatibility entrypoint for the shipped SDK resolver. Binding-owned callers
+ * use the registration handle; this lookup fails closed when a match is ambiguous.
+ */
+export function resolveNativeHookRelayDeferredToolApproval(params: {
+  relayId: string;
+  toolUseId?: string;
+  signal?: AbortSignal;
+}): Promise<NativeHookRelayDeferredApprovalOutcome | undefined> {
+  return resolveUnscopedNativeHookRelayDeferredToolApproval(params);
 }
 
 export async function invokeNativeHookRelay(

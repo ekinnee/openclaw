@@ -24,6 +24,7 @@ import {
   inheritNativeHookRelayApprovalOwner,
   pruneNativeHookRelayPermissionAllowAlways,
   registerNativeHookRelayApprovalOwner,
+  resolveOwnedNativeHookRelayDeferredToolApproval,
   removeNativeHookRelayPendingApprovalsForOwner,
   removeNativeHookRelayPermissionState,
   removeNativeHookRelayPreToolUseApprovals,
@@ -34,6 +35,7 @@ import type {
   ActiveNativeHookRelayRegistrationHandle,
   InvokeNativeHookRelayParams,
   NativeHookRelayEvent,
+  NativeHookRelayDeferredApprovalOutcome,
   NativeHookRelayProcessResponse,
   NativeHookRelayRegistration,
   RegisterNativeHookRelayParams,
@@ -90,6 +92,11 @@ type RetainedNativeHookRelayHandle = ActiveNativeHookRelayRegistrationHandle & {
   bindForegroundSubject: (subject: string) => void;
   bindRetainedSubject: (subject: string) => () => void;
   renewRetainedSubject: (subject: string, ttlMs?: number) => void;
+  resolveDeferredToolApproval: (params: {
+    turnId?: string;
+    toolUseId?: string;
+    signal?: AbortSignal;
+  }) => Promise<NativeHookRelayDeferredApprovalOutcome | undefined>;
 };
 
 function readRelayLifetime(
@@ -176,7 +183,7 @@ function resolveNativeHookRelayExpiresAtMs(ttlMs: number | undefined): number | 
 export function registerNativeHookRelayLifecycle(
   params: RegisterNativeHookRelayParams,
   invokeRelay: NativeHookRelayInvoker,
-): ActiveNativeHookRelayRegistrationHandle {
+): RetainedNativeHookRelayHandle {
   return registerNativeHookRelayInternal(params, undefined, false, invokeRelay);
 }
 
@@ -262,7 +269,8 @@ function registerNativeHookRelayInternal(
       childSubjects: new Set(),
       ...(retention ? { retention } : {}),
     };
-    registerNativeHookRelayApprovalOwner(registration, Symbol("native-hook-relay-binding"));
+    const approvalOwner = Symbol("native-hook-relay-binding");
+    registerNativeHookRelayApprovalOwner(registration, approvalOwner);
     const route = existingRoute ?? { ...registration };
     preparedRoute = route;
     preparedBinding = binding;
@@ -319,6 +327,21 @@ function registerNativeHookRelayInternal(
     };
     const handle: RetainedNativeHookRelayHandle = {
       ...registration,
+      resolveDeferredToolApproval: (approvalParams) => {
+        if (
+          relays.get(relayId) !== route ||
+          !lifetime.bindings.has(binding) ||
+          Date.now() > registration.expiresAtMs
+        ) {
+          throw new Error("native hook relay registration is inactive");
+        }
+        registration.signal?.throwIfAborted();
+        return resolveOwnedNativeHookRelayDeferredToolApproval({
+          ...approvalParams,
+          relayId,
+          approvalOwner,
+        });
+      },
       shouldRelayEvent: (event) => nativeHookRelayEventHasLocalWork(registration, event),
       toolMatcherForEvent: (event) => nativeHookRelayEventToolMatcher(registration, event),
       commandForEvent: (event, options) =>

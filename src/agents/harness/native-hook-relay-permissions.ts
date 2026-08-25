@@ -105,33 +105,51 @@ export function setNativeHookRelayPreToolUseApproval(params: {
   deferredApproval: DeferredPluginToolApproval;
   originalParamsFingerprint: string;
 }): boolean {
+  const turnId = params.turnId?.trim();
+  const toolUseId = params.toolUseId?.trim();
   const key = nativeHookRelayPreToolUseApprovalKey({
     relayId: params.registration.relayId,
-    turnId: params.turnId,
-    toolUseId: params.toolUseId,
+    turnId,
+    toolUseId,
   });
   const owner = approvalOwners.get(params.registration);
-  if (!key || !owner) {
+  if (!key || !owner || !turnId || !toolUseId) {
     return false;
   }
-  const previousApproval = pendingPreToolUseApprovals.get(key);
+  let approvalsForKey = pendingPreToolUseApprovals.get(key);
+  if (!approvalsForKey) {
+    approvalsForKey = new Map();
+    pendingPreToolUseApprovals.set(key, approvalsForKey);
+  }
+  const previousApproval = approvalsForKey.get(owner);
   if (previousApproval) {
     cancelDeferredPluginToolApproval(previousApproval.deferredApproval);
   }
-  pendingPreToolUseApprovals.set(key, {
-    owner,
+  approvalsForKey.set(owner, {
+    relayId: params.registration.relayId,
+    turnId,
+    toolUseId,
     deferredApproval: params.deferredApproval,
     originalParamsFingerprint: params.originalParamsFingerprint,
     ...(params.registration.assertActive ? { assertActive: params.registration.assertActive } : {}),
   });
-  if (pendingPreToolUseApprovals.size > MAX_NATIVE_HOOK_RELAY_INVOCATIONS) {
+  let approvalCount = 0;
+  for (const approvals of pendingPreToolUseApprovals.values()) {
+    approvalCount += approvals.size;
+  }
+  if (approvalCount > MAX_NATIVE_HOOK_RELAY_INVOCATIONS) {
     const oldestKey = pendingPreToolUseApprovals.keys().next().value;
-    if (oldestKey) {
-      const oldestApproval = pendingPreToolUseApprovals.get(oldestKey);
+    const oldestApprovals = oldestKey ? pendingPreToolUseApprovals.get(oldestKey) : undefined;
+    const oldestOwner = oldestApprovals?.keys().next().value;
+    if (oldestKey && oldestApprovals && oldestOwner) {
+      const oldestApproval = oldestApprovals.get(oldestOwner);
       if (oldestApproval) {
         cancelDeferredPluginToolApproval(oldestApproval.deferredApproval);
       }
-      pendingPreToolUseApprovals.delete(oldestKey);
+      oldestApprovals.delete(oldestOwner);
+      if (oldestApprovals.size === 0) {
+        pendingPreToolUseApprovals.delete(oldestKey);
+      }
     }
   }
   return true;
@@ -139,15 +157,18 @@ export function setNativeHookRelayPreToolUseApproval(params: {
 
 export function removeNativeHookRelayPreToolUseApprovals(relayId: string): void {
   const prefix = `${relayId}:`;
-  for (const [key, pendingApproval] of pendingPreToolUseApprovals) {
+  for (const [key, approvalsForKey] of pendingPreToolUseApprovals) {
     if (key.startsWith(prefix)) {
-      cancelDeferredPluginToolApproval(pendingApproval.deferredApproval);
+      for (const pendingApproval of approvalsForKey.values()) {
+        cancelDeferredPluginToolApproval(pendingApproval.deferredApproval);
+      }
       pendingPreToolUseApprovals.delete(key);
     }
   }
 }
 
-export async function resolveNativeHookRelayDeferredToolApproval(params: {
+export async function resolveOwnedNativeHookRelayDeferredToolApproval(params: {
+  approvalOwner: symbol;
   relayId: string;
   turnId?: string;
   toolUseId?: string;
@@ -157,16 +178,75 @@ export async function resolveNativeHookRelayDeferredToolApproval(params: {
   if (!pendingApprovalKey) {
     return undefined;
   }
-  const pendingApproval = pendingPreToolUseApprovals.get(pendingApprovalKey);
-  if (!pendingApproval) {
+  const owner = params.approvalOwner;
+  const approvalsForKey = pendingPreToolUseApprovals.get(pendingApprovalKey);
+  const pendingApproval = approvalsForKey?.get(owner);
+  if (!approvalsForKey || !pendingApproval) {
     return undefined;
   }
+  return resolvePendingNativeHookRelayDeferredToolApproval({
+    approvalsForKey,
+    owner,
+    pendingApproval,
+    pendingApprovalKey,
+    signal: params.signal,
+  });
+}
+
+export async function resolveUnscopedNativeHookRelayDeferredToolApproval(params: {
+  relayId: string;
+  toolUseId?: string;
+  signal?: AbortSignal;
+}): Promise<NativeHookRelayDeferredApprovalOutcome | undefined> {
+  const toolUseId = params.toolUseId?.trim();
+  if (!toolUseId) {
+    return undefined;
+  }
+  let selected:
+    | {
+        approvalsForKey: Map<symbol, NativeHookRelayPreToolUseApproval>;
+        owner: symbol;
+        pendingApproval: NativeHookRelayPreToolUseApproval;
+        pendingApprovalKey: string;
+      }
+    | undefined;
+  for (const [pendingApprovalKey, approvalsForKey] of pendingPreToolUseApprovals) {
+    for (const [owner, pendingApproval] of approvalsForKey) {
+      if (pendingApproval.relayId !== params.relayId || pendingApproval.toolUseId !== toolUseId) {
+        continue;
+      }
+      if (selected) {
+        return undefined;
+      }
+      selected = { approvalsForKey, owner, pendingApproval, pendingApprovalKey };
+    }
+  }
+  if (!selected) {
+    return undefined;
+  }
+  return resolvePendingNativeHookRelayDeferredToolApproval({
+    ...selected,
+    signal: params.signal,
+  });
+}
+
+function resolvePendingNativeHookRelayDeferredToolApproval(params: {
+  approvalsForKey: Map<symbol, NativeHookRelayPreToolUseApproval>;
+  owner: symbol;
+  pendingApproval: NativeHookRelayPreToolUseApproval;
+  pendingApprovalKey: string;
+  signal?: AbortSignal;
+}): Promise<NativeHookRelayDeferredApprovalOutcome> {
+  const { approvalsForKey, owner, pendingApproval, pendingApprovalKey } = params;
   pendingApproval.resolutionPromise ??= resolveNativeHookRelayPreToolUseApproval(
     pendingApproval,
     params.signal,
   ).finally(() => {
-    if (pendingPreToolUseApprovals.get(pendingApprovalKey) === pendingApproval) {
-      pendingPreToolUseApprovals.delete(pendingApprovalKey);
+    if (approvalsForKey.get(owner) === pendingApproval) {
+      approvalsForKey.delete(owner);
+      if (approvalsForKey.size === 0) {
+        pendingPreToolUseApprovals.delete(pendingApprovalKey);
+      }
     }
   });
   return pendingApproval.resolutionPromise;
@@ -176,6 +256,7 @@ async function resolveNativeHookRelayPreToolUseApproval(
   pendingApproval: NativeHookRelayPreToolUseApproval,
   signal?: AbortSignal,
 ): Promise<NativeHookRelayDeferredApprovalOutcome> {
+  pendingApproval.assertActive?.();
   const outcome = await nativeHookRelayDeferredToolApprovalRequester({
     deferredApproval: pendingApproval.deferredApproval,
     signal,
@@ -336,10 +417,16 @@ export function removeNativeHookRelayPendingApprovalsForOwner(
     return;
   }
   const prefix = `${relayId}:`;
-  for (const [key, pendingApproval] of pendingPreToolUseApprovals) {
-    if (key.startsWith(prefix) && pendingApproval.owner === owner) {
-      cancelDeferredPluginToolApproval(pendingApproval.deferredApproval);
-      pendingPreToolUseApprovals.delete(key);
+  for (const [key, approvalsForKey] of pendingPreToolUseApprovals) {
+    if (key.startsWith(prefix)) {
+      const pendingApproval = approvalsForKey.get(owner);
+      if (pendingApproval) {
+        cancelDeferredPluginToolApproval(pendingApproval.deferredApproval);
+        approvalsForKey.delete(owner);
+        if (approvalsForKey.size === 0) {
+          pendingPreToolUseApprovals.delete(key);
+        }
+      }
     }
   }
   for (const [key, pendingApproval] of pendingPermissionApprovals) {
@@ -614,8 +701,10 @@ export function setNativeHookRelayDeferredToolApprovalRequesterForTests(
 
 export function clearNativeHookRelayPermissionsForTests(): void {
   pendingPermissionApprovals.clear();
-  for (const pendingApproval of pendingPreToolUseApprovals.values()) {
-    cancelDeferredPluginToolApproval(pendingApproval.deferredApproval);
+  for (const approvalsForKey of pendingPreToolUseApprovals.values()) {
+    for (const pendingApproval of approvalsForKey.values()) {
+      cancelDeferredPluginToolApproval(pendingApproval.deferredApproval);
+    }
   }
   pendingPreToolUseApprovals.clear();
   permissionApprovalWindows.clear();

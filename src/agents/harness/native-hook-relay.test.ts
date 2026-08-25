@@ -44,6 +44,7 @@ import {
   hasNativeHookRelayInvocation,
   invokeNativeHookRelay,
   registerNativeHookRelay,
+  registerNativeHookRelayForBundledRuntime,
   resolveNativeHookRelayDeferredToolApproval,
   type NativeHookRelayRetention,
 } from "./native-hook-relay.js";
@@ -3823,15 +3824,15 @@ describe("native hook relay registry", () => {
     expect(beforeToolCall).toHaveBeenCalledTimes(1);
   });
 
-  it("cancels only the released composed binding's deferred PreToolUse approval", async () => {
+  it("isolates identical deferred PreToolUse approval ids across composed bindings", async () => {
     const relayId = uniqueNativeHookRelayIdForTests("binding-deferred-approval-owner");
     const fixtureA = await createAdmittedHostCapabilityTestFixture({ runId: "run-a" });
     const fixtureB = await createAdmittedHostCapabilityTestFixture({ runId: "run-b" });
     const childApprovalResolution = vi.fn();
-    const deferredResolutions = new Map<
-      string,
+    const rootApprovalResolution = vi.fn();
+    const deferredResolutions: Array<
       (outcome: { blocked: false; params: unknown; approvalResolution: "allow-once" }) => void
-    >();
+    > = [];
     initializeGlobalHookRunner(
       createMockPluginRegistry([
         {
@@ -3842,7 +3843,9 @@ describe("native hook relay registry", () => {
               requireApproval: {
                 title: "Needs approval",
                 description: "native command needs approval",
-                ...(command === "child-command" ? { onResolution: childApprovalResolution } : {}),
+                ...(command === "child-command"
+                  ? { onResolution: childApprovalResolution }
+                  : { onResolution: rootApprovalResolution }),
               },
             };
           },
@@ -3855,7 +3858,7 @@ describe("native hook relay registry", () => {
           if (!deferredApproval.toolCallId) {
             throw new Error("Expected native deferred approval tool id");
           }
-          deferredResolutions.set(deferredApproval.toolCallId, resolve);
+          deferredResolutions.push(resolve);
         }),
     );
     const retention = {
@@ -3890,6 +3893,7 @@ describe("native hook relay registry", () => {
     });
     relayB.bindForegroundSubject("turn-b");
     relayB.activateForegroundBinding();
+    const releaseChildB = relayB.bindRetainedSubject("child-b");
     const invokeDeferredApproval = (toolUseId: string, command: string, payload: object) =>
       invokeNativeHookRelay({
         provider: "codex",
@@ -3907,35 +3911,42 @@ describe("native hook relay registry", () => {
 
     try {
       await expect(
-        invokeDeferredApproval("child-tool", "child-command", {
+        invokeDeferredApproval("shared-tool", "child-command", {
           agent_id: "child-a",
-          turn_id: "child-turn",
+          turn_id: "shared-turn",
         }),
       ).resolves.toMatchObject({ exitCode: 0 });
       await expect(
-        invokeDeferredApproval("root-tool", "root-command", { turn_id: "turn-b" }),
+        invokeDeferredApproval("shared-tool", "root-command", {
+          agent_id: "child-b",
+          turn_id: "shared-turn",
+        }),
       ).resolves.toMatchObject({ exitCode: 0 });
+      expect(childApprovalResolution).not.toHaveBeenCalled();
+      expect(rootApprovalResolution).not.toHaveBeenCalled();
+      await expect(
+        resolveNativeHookRelayDeferredToolApproval({ relayId, toolUseId: "shared-tool" }),
+      ).resolves.toBeUndefined();
 
-      const childApproval = resolveNativeHookRelayDeferredToolApproval({
-        relayId,
-        turnId: "child-turn",
-        toolUseId: "child-tool",
+      const childApproval = relayA.resolveDeferredToolApproval({
+        turnId: "shared-turn",
+        toolUseId: "shared-tool",
       });
-      const rootApproval = resolveNativeHookRelayDeferredToolApproval({
-        relayId,
-        turnId: "turn-b",
-        toolUseId: "root-tool",
+      const rootApproval = relayB.resolveDeferredToolApproval({
+        turnId: "shared-turn",
+        toolUseId: "shared-tool",
       });
-      await vi.waitFor(() => expect(deferredResolutions.size).toBe(2));
+      await vi.waitFor(() => expect(deferredResolutions).toHaveLength(2));
 
       releaseChildA();
       await vi.waitFor(() => expect(childApprovalResolution).toHaveBeenCalledWith("cancelled"));
-      deferredResolutions.get("child-tool")?.({
+      expect(rootApprovalResolution).not.toHaveBeenCalled();
+      deferredResolutions[0]?.({
         blocked: false,
         params: { command: "child-command" },
         approvalResolution: "allow-once",
       });
-      deferredResolutions.get("root-tool")?.({
+      deferredResolutions[1]?.({
         blocked: false,
         params: { command: "root-command" },
         approvalResolution: "allow-once",
@@ -3944,6 +3955,7 @@ describe("native hook relay registry", () => {
       await expect(childApproval).rejects.toThrow("native hook relay registration is inactive");
       await expect(rootApproval).resolves.toEqual({ handled: true, outcome: "approved-once" });
     } finally {
+      releaseChildB();
       relayB.unregister();
       closeAdmittedRunDelegatedAuthority(fixtureA.admittedRunContext);
       closeAdmittedRunDelegatedAuthority(fixtureB.admittedRunContext);
@@ -3960,7 +3972,7 @@ describe("native hook relay registry", () => {
     initializeGlobalHookRunner(
       createMockPluginRegistry([{ hookName: "before_tool_call", handler: beforeToolCall }]),
     );
-    const relay = registerNativeHookRelay({
+    const relay = registerNativeHookRelayForBundledRuntime({
       provider: "codex",
       agentId: "agent-1",
       sessionId: "session-1",
@@ -3992,7 +4004,6 @@ describe("native hook relay registry", () => {
     await expect(
       resolveNativeHookRelayDeferredToolApproval({
         relayId: relay.relayId,
-        turnId: "turn-a",
         toolUseId: "native-approval-cancelled",
       }),
     ).resolves.toEqual({

@@ -573,7 +573,8 @@ describe("CodexNativeSubagentMonitor", () => {
     const client = createClient();
     const runtime = createRuntime();
     const monitor = new CodexNativeSubagentMonitor(client as never, runtime);
-    const claimDirectChild = vi.fn(() => () => undefined);
+    const releaseDirectChild = vi.fn();
+    const claimDirectChild = vi.fn(() => releaseDirectChild);
     const owner = monitor.registerParent({
       parentThreadId: "parent-thread",
       requesterSessionKey: "agent:main:main",
@@ -613,6 +614,21 @@ describe("CodexNativeSubagentMonitor", () => {
       },
     });
     expect(claimDirectChild).toHaveBeenCalledOnce();
+    await client.notify({
+      method: "item/completed",
+      params: {
+        threadId: "parent-thread",
+        turnId: "turn-1",
+        item: {
+          type: "subAgentActivity",
+          id: "activity-interrupted",
+          kind: "interrupted",
+          agentThreadId: "child-v2",
+          agentPath: "/root/researcher",
+        },
+      },
+    });
+    expect(releaseDirectChild).toHaveBeenCalledOnce();
     await client.notify(
       nativeCompletionNotification({
         agentPath: "/root/researcher",

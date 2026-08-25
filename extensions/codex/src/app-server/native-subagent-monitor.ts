@@ -536,6 +536,7 @@ class Monitor {
       }
     }
     if (state) {
+      this.handleInterruptedChild(notification, state);
       this.handleClosedChild(notification, state);
     }
     const childState = threadId ? this.childStates.get(threadId) : undefined;
@@ -941,6 +942,30 @@ class Monitor {
         this.updateChildThreadOwnership("release", childThreadId, this.releaseChildThread);
       }
     }
+  }
+
+  private handleInterruptedChild(notification: CodexServerNotification, state: ParentState): void {
+    if (notification.method !== "item/completed") {
+      return;
+    }
+    const params = isJsonObject(notification.params) ? notification.params : undefined;
+    const item = isJsonObject(params?.item) ? params.item : undefined;
+    if (
+      readString(item, "type") !== "subAgentActivity" ||
+      normalizeIdentifier(readString(item, "kind")) !== "interrupted"
+    ) {
+      return;
+    }
+    const childThreadId = readString(item, "agentThreadId")?.trim();
+    const childState = childThreadId ? this.childStates.get(childThreadId) : undefined;
+    if (!childState || childState.parentThreadId !== state.parentThreadId) {
+      return;
+    }
+    // Codex emits this only after interrupt_agent has awaited the target. Revoke
+    // executable authority now; child turn/completed can arrive after tool return.
+    this.removePendingDirectSpawnEvidenceForChild(childState.childThreadId);
+    this.rejectPendingDirectChild(state, childState.childThreadId, "Codex child turn interrupted");
+    this.settleResumableChild(childState);
   }
 
   private retireChild(state: ParentState, childState: ChildState, summary: string): void {

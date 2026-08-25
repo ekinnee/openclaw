@@ -227,7 +227,9 @@ export type NativeHookRelayPermissionApprovalRequester = (
 ) => Promise<NativeHookRelayPermissionApprovalResult>;
 
 export type NativeHookRelayPreToolUseApproval = {
-  owner: symbol;
+  relayId: string;
+  turnId: string;
+  toolUseId: string;
   deferredApproval: DeferredPluginToolApproval;
   originalParamsFingerprint: string;
   assertActive?: () => void;
@@ -262,7 +264,7 @@ export type NativeHookRelaySharedState = {
     string,
     { promise: Promise<NativeHookRelayPermissionApprovalResult>; owner: symbol }
   >;
-  pendingPreToolUseApprovals: Map<string, NativeHookRelayPreToolUseApproval>;
+  pendingPreToolUseApprovals: Map<string, Map<symbol, NativeHookRelayPreToolUseApproval>>;
   permissionApprovalWindows: Map<string, number[]>;
   permissionAllowAlwaysApprovals: Map<string, { expiresAtMs: number }>;
 };

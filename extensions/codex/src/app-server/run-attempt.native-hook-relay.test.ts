@@ -143,10 +143,7 @@ describe("runCodexAppServerAttempt native hook relay", () => {
     const harness = createStartedThreadHarness();
 
     const run = runCodexAppServerAttempt(createParams(sessionFile, workspaceDir), {
-      nativeHookRelay: {
-        enabled: true,
-        events: ["post_tool_use"],
-      },
+      nativeHookRelay: { enabled: true, events: ["post_tool_use"] },
     });
     await harness.waitForMethod("turn/start");
     const startRequest = harness.requests.find((request) => request.method === "thread/start");
