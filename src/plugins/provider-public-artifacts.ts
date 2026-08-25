@@ -125,3 +125,8 @@ export function resolveProviderPolicySurface(
   }
   return null;
 }
+
+/** Resolves static auth-profile retirement policy without activating provider runtime. */
+export function resolveProviderDeprecatedAuthProfileIds(providerId: string): readonly string[] {
+  return resolveBundledProviderPolicyPlugin(providerId)?.deprecatedAuthProfileIds ?? [];
+}

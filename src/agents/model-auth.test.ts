@@ -85,7 +85,6 @@ vi.mock("../plugins/provider-runtime.js", () => {
   return {
     buildProviderMissingAuthMessageWithPlugin: () => undefined,
     resolveExternalAuthProfilesWithPlugins: () => [],
-    resolveProviderDeprecatedAuthProfileIds: () => [],
     shouldDeferProviderSyntheticProfileAuthWithPlugin: (params: {
       context?: { resolvedApiKey?: string };
     }) => params.context?.resolvedApiKey === "synthetic-defer",
@@ -169,6 +168,10 @@ vi.mock("../plugins/provider-runtime.js", () => {
     },
   };
 });
+
+vi.mock("../plugins/provider-public-artifacts.js", () => ({
+  resolveProviderDeprecatedAuthProfileIds: () => [],
+}));
 
 let applyAuthHeaderOverride: typeof import("./model-auth.js").applyAuthHeaderOverride;
 let applyLocalNoAuthHeaderOverride: typeof import("./model-auth.js").applyLocalNoAuthHeaderOverride;

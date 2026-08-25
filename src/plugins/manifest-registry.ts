@@ -249,6 +249,7 @@ export type PluginManifestRecord = {
   commandAliases?: PluginManifestCommandAlias[];
   cliCommands?: PluginManifest["cliCommands"];
   providerUsageAuthEnvVars?: Record<string, string[]>;
+  deprecatedAuthProfileIds?: string[];
   providerAuthAliases?: Record<string, string>;
   providerAuthChoices?: PluginManifest["providerAuthChoices"];
   activation?: PluginManifestActivation;
@@ -607,6 +608,7 @@ function buildRecord(params: {
     commandAliases: params.manifest.commandAliases,
     cliCommands: params.manifest.cliCommands,
     providerUsageAuthEnvVars: params.manifest.providerUsageAuthEnvVars,
+    deprecatedAuthProfileIds: params.manifest.deprecatedAuthProfileIds,
     providerAuthAliases: params.manifest.providerAuthAliases,
     providerAuthChoices: params.manifest.providerAuthChoices,
     activation: params.manifest.activation,

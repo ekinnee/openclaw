@@ -218,8 +218,6 @@ vi.mock("../plugins/provider-runtime.js", () => ({
   },
   formatProviderAuthProfileApiKeyWithPlugin: async () => undefined,
   refreshProviderOAuthCredentialWithPlugin: async () => null,
-  resolveProviderDeprecatedAuthProfileIds: ({ provider }: { provider: string }) =>
-    provider === "anthropic" || provider === "claude-cli" ? ["anthropic:claude-cli"] : [],
   resolveProviderSyntheticAuthWithPlugin: (params: {
     provider: string;
     context: { providerConfig?: { api?: string; baseUrl?: string; models?: unknown[] } };
@@ -249,6 +247,11 @@ vi.mock("../plugins/provider-runtime.js", () => ({
     const expectedMarker = params.provider === "demo-local" ? "demo-local" : undefined;
     return Boolean(expectedMarker && params.context.resolvedApiKey?.trim() === expectedMarker);
   },
+}));
+
+vi.mock("../plugins/provider-public-artifacts.js", () => ({
+  resolveProviderDeprecatedAuthProfileIds: (provider: string) =>
+    provider === "anthropic" || provider === "claude-cli" ? ["anthropic:claude-cli"] : [],
 }));
 
 vi.mock("../plugins/providers.js", () => ({

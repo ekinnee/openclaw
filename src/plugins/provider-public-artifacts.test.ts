@@ -8,6 +8,7 @@ import type { ModelProviderConfig } from "../config/types.models.js";
 import { resolveDirectBundledProviderPolicySurface } from "./provider-policy-surface.js";
 import {
   resolveBundledProviderPolicySurface,
+  resolveProviderDeprecatedAuthProfileIds,
   resolveProviderPolicySurface,
 } from "./provider-public-artifacts.js";
 
@@ -57,6 +58,12 @@ describe("provider public artifacts", () => {
     vi.doUnmock("./manifest-registry.js");
     vi.doUnmock("./public-surface-loader.js");
     vi.resetModules();
+  });
+
+  it("resolves retired auth profiles from manifest metadata without provider runtime", () => {
+    expect(resolveProviderDeprecatedAuthProfileIds("anthropic")).toEqual(["anthropic:claude-cli"]);
+    expect(resolveProviderDeprecatedAuthProfileIds("claude-cli")).toEqual(["anthropic:claude-cli"]);
+    expect(resolveProviderDeprecatedAuthProfileIds("openai")).toEqual([]);
   });
 
   it.each(["my-ngc:nvidia", "my-ngc/nvidia", "my-ngc\\nvidia", ".", ".."])(

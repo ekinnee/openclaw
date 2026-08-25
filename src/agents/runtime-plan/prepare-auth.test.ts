@@ -15,9 +15,12 @@ import {
 // coverage; keep those runtimes out of this focused planner test.
 vi.mock("../../plugins/provider-runtime.js", () => ({
   buildProviderMissingAuthMessageWithPlugin: () => undefined,
-  resolveProviderDeprecatedAuthProfileIds: () => [],
   resolveProviderSyntheticAuthWithPlugin: () => undefined,
   shouldDeferProviderSyntheticProfileAuthWithPlugin: () => undefined,
+}));
+
+vi.mock("../../plugins/provider-public-artifacts.js", () => ({
+  resolveProviderDeprecatedAuthProfileIds: () => [],
 }));
 
 function prepareAgentRuntimeAuthPlan(params: Parameters<typeof prepareAgentRuntimeAuth>[0]) {

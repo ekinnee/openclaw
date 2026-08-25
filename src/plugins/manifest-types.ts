@@ -395,6 +395,8 @@ export type PluginManifest = {
   cliCommands?: PluginManifestCliCommand[];
   /** Usage/billing credentials excluded from inference auth but included in secret scrubbing. */
   providerUsageAuthEnvVars?: Record<string, string[]>;
+  /** Legacy auth profile ids generic auth must ignore before provider runtime loads. */
+  deprecatedAuthProfileIds?: string[];
   /** Provider ids that should reuse another provider id for auth lookup. */
   providerAuthAliases?: Record<string, string>;
   /**

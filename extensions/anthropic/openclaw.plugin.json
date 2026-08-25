@@ -22,6 +22,7 @@
   "providerUsageAuthEnvVars": {
     "anthropic": ["ANTHROPIC_ADMIN_KEY", "ANTHROPIC_ADMIN_API_KEY"]
   },
+  "deprecatedAuthProfileIds": ["anthropic:claude-cli"],
   "providerCatalogEntry": "./provider-discovery.ts",
   "modelCatalog": {
     "runtimeAugment": true,

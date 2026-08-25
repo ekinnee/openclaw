@@ -88,9 +88,12 @@ vi.mock("../../plugins/provider-runtime.runtime.js", () => ({
 vi.mock("../../plugins/provider-runtime.js", () => ({
   buildProviderMissingAuthMessageWithPlugin: () => undefined,
   resolveExternalAuthProfilesWithPlugins: () => [],
-  resolveProviderDeprecatedAuthProfileIds: () => [],
   resolveProviderSyntheticAuthWithPlugin: () => undefined,
   shouldDeferProviderSyntheticProfileAuthWithPlugin: () => false,
+}));
+
+vi.mock("../../plugins/provider-public-artifacts.js", () => ({
+  resolveProviderDeprecatedAuthProfileIds: () => [],
 }));
 
 afterAll(() => {

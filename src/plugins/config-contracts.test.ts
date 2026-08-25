@@ -74,6 +74,7 @@ function createPluginRecord(
     providers: [],
     modelSupport: undefined,
     cliBackends: [],
+    deprecatedAuthProfileIds: undefined,
     providerAuthAliases: undefined,
     providerAuthChoices: undefined,
     skills: [],

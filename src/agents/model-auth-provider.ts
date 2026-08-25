@@ -5,9 +5,9 @@ import { formatCliCommand } from "../cli/command-format.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
+import { resolveProviderDeprecatedAuthProfileIds } from "../plugins/provider-public-artifacts.js";
 import {
   buildProviderMissingAuthMessageWithPlugin,
-  resolveProviderDeprecatedAuthProfileIds,
   shouldDeferProviderSyntheticProfileAuthWithPlugin,
 } from "../plugins/provider-runtime.js";
 import { resolveOwningPluginIdsForProviderRef } from "../plugins/providers.js";
@@ -120,9 +120,7 @@ export async function resolveApiKeyForProviderCore(params: {
   const { provider, cfg, profileId, preferredProfile } = params;
   let deprecatedProfileIds: ReadonlySet<string> | undefined;
   const getDeprecatedProfileIds = () =>
-    (deprecatedProfileIds ??= new Set(
-      resolveProviderDeprecatedAuthProfileIds({ provider, config: cfg }),
-    ));
+    (deprecatedProfileIds ??= new Set(resolveProviderDeprecatedAuthProfileIds(provider)));
   const agentDir = params.agentDir?.trim() || (cfg ? resolveDefaultAgentDir(cfg) : undefined);
   // Pending credential files own this agent's auth route until Doctor commits
   // and archives them; do not fall through to env/config credentials.

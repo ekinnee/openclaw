@@ -265,6 +265,7 @@ export function loadPluginManifest(
     providerUsageAuthEnvVars: capabilityNormalizers.normalizeStringListRecord(
       raw.providerUsageAuthEnvVars,
     ),
+    deprecatedAuthProfileIds: normalizeTrimmedStringList(raw.deprecatedAuthProfileIds),
     providerAuthAliases: capabilityNormalizers.normalizeManifestStringRecord(
       raw.providerAuthAliases,
     ),
