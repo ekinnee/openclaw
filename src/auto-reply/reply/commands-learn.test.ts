@@ -104,7 +104,7 @@ describe("learn command", () => {
     await handleLearnCommand(params, true);
     const instruction = (params.ctx as { BodyForAgent?: string }).BodyForAgent ?? "";
 
-    expect(instruction).toContain(buildLearnPrompt(request));
+    expect(instruction).toBe(buildLearnPrompt(request));
   });
 
   it("replies without continuing when the workshop is unavailable", async () => {
