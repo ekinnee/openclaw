@@ -126,6 +126,31 @@ describe("chat pane header state", () => {
     expect(onPaneSessionChange).toHaveBeenCalledWith("single", "agent:main:forked");
   });
 
+  it.each([
+    ["pin", { kind: "toggle-pin" } as const, { pinned: true }],
+    ["unread", { kind: "toggle-unread" } as const, { unread: true }],
+    ["icon", { kind: "set-icon", icon: "🦞" } as const, { icon: "🦞" }],
+    ["group", { kind: "move-to-group", category: "Projects" } as const, { category: "Projects" }],
+  ])("patches the active session from the header %s action", async (_name, action, expected) => {
+    const patch = vi.fn(async () => ({}));
+    const sessions = createSessionCapabilityFixture({
+      patch,
+      state: { error: null, groups: ["Projects"] },
+    });
+    const { pane } = createTestChatPane({ client: createGatewayBrowserClientFixture(), sessions });
+    const session = {
+      key: "agent:main:current",
+      kind: "direct",
+      updatedAt: 0,
+      pinned: false,
+      unread: false,
+    } satisfies GatewaySessionRow;
+
+    await pane.handleHeaderSessionAction(action, session);
+
+    expect(patch).toHaveBeenCalledWith(session.key, expected, { agentId: "main" });
+  });
+
   it("aborts a stale header delete confirm and shows a retry notice when the connection is replaced while it is open", async () => {
     const restoreDialogPolyfill = installDialogPolyfill();
     try {

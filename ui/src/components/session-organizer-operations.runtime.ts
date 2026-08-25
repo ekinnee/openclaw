@@ -29,7 +29,7 @@ import {
   sessionRowAgentId,
 } from "./session-organizer-batch-mutations.ts";
 import type { SessionActionHost, SessionActionRow } from "./session-organizer-batch-mutations.ts";
-import { rememberSessionGroup } from "./session-organizer-catalog.ts";
+import { rememberSessionGroup, type SessionGroupActionHost } from "./session-organizer-catalog.ts";
 import type { SessionOrganizerControllerHost } from "./session-organizer-controller.ts";
 import type { SessionOwnerOption } from "./session-owner-chip.ts";
 
@@ -471,8 +471,8 @@ export async function createSessionGroup(
 }
 
 export async function assignSessionCategory(
-  host: SessionOrganizerControllerHost,
-  session: SidebarRecentSession,
+  host: SessionGroupActionHost,
+  session: SessionActionRow,
   category: string | null,
   scope: SidebarSessionMutationScope,
   patch: { pinned?: boolean } = {},

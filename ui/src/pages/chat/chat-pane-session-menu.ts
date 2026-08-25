@@ -17,7 +17,9 @@ import { openEditor } from "../../lib/editor-links.ts";
 import { formatUiError } from "../../lib/format-error.ts";
 import { isGatewayMethodAdvertised } from "../../lib/gateway-methods.ts";
 import { readSessionMethodAccess } from "../../lib/session-method-access.ts";
+import { collectKnownSessionGroups } from "../../lib/sessions/grouping.ts";
 import { parseAgentSessionKey } from "../../lib/sessions/session-key.ts";
+import { showToast } from "../../lib/toast.ts";
 import { ChatPaneContext } from "./chat-pane-context.ts";
 import { headerPlatformByClient } from "./chat-pane-shared.ts";
 import { patchChatSessionLabel } from "./chat-state-route.ts";
@@ -63,6 +65,11 @@ export abstract class ChatPaneSessionMenu extends ChatPaneContext {
       this.beginHeaderRename(row);
       return;
     }
+    if (action.kind === "copy-session-id") {
+      const copied = row.sessionId ? await copyToClipboard(row.sessionId) : false;
+      showToast({ message: t(copied ? "common.copied" : "common.copyFailed") });
+      return;
+    }
     if (action.kind === "continue-in-terminal") {
       this.openContinueInTerminalDialog(row);
       return;
@@ -87,7 +94,7 @@ export abstract class ChatPaneSessionMenu extends ChatPaneContext {
     try {
       const operations = await (this.headerSessionOperationsLoad ??=
         import("../../components/session-organizer-operations.runtime.ts"));
-      const host: SessionActionHost = {
+      const host: SessionActionHost & { knownSessionGroups(): string[] } = {
         sessionData: {
           isSessionMutationScopeCurrent: (candidate) =>
             this.isHeaderSessionActionCurrent(candidate, owner),
@@ -110,14 +117,46 @@ export abstract class ChatPaneSessionMenu extends ChatPaneContext {
         replaceCurrentSession: (key) => this.onPaneSessionChange?.(this.paneId, key),
         selectSession: (key) => this.onPaneSessionChange?.(this.paneId, key),
         sidebarSessionStatusFilter: () => "active",
+        knownSessionGroups: () =>
+          collectKnownSessionGroups(
+            scope.sessions.state.groups,
+            scope.sessions.state.result?.sessions ?? [],
+          ),
       };
       switch (action.kind) {
+        case "toggle-pin":
+          await operations.patchSession(host, session, { pinned: !session.pinned }, scope);
+          break;
+        case "toggle-unread":
+          await operations.patchSession(host, session, { unread: row.unread !== true }, scope);
+          break;
+        case "set-icon":
+          await operations.patchSession(host, session, { icon: action.icon }, scope);
+          break;
         case "assign-owner":
           await operations.assignSessionOwner(host, session, action.owner, scope);
           break;
         case "fork":
           await operations.forkSession(host, session, scope);
           break;
+        case "move-to-group":
+          if ((row.category ?? null) !== action.category) {
+            await operations.assignSessionCategory(host, session, action.category, scope);
+          }
+          break;
+        case "new-group": {
+          const { showInputDialog } = await import("../../components/input-dialog.ts");
+          const name = await showInputDialog({
+            title: t("sessionsView.newGroupTitle"),
+            label: t("sessionsView.newGroupPrompt"),
+            submitLabel: t("sessionsView.newGroupCreate"),
+            requireValue: true,
+          });
+          if (name && this.isHeaderSessionActionCurrent(scope, owner)) {
+            await operations.assignSessionCategory(host, session, name, scope);
+          }
+          break;
+        }
         case "toggle-archived":
           if (session.archived) {
             await operations.patchSession(host, session, { archived: false }, scope);
@@ -128,6 +167,8 @@ export abstract class ChatPaneSessionMenu extends ChatPaneContext {
         case "delete":
           await operations.deleteSession(host, session, scope);
           break;
+        default:
+          action satisfies never;
       }
     } catch (error) {
       if (this.isHeaderSessionActionCurrent(scope, owner)) {

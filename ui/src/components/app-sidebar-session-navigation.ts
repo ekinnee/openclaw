@@ -7,7 +7,10 @@ import { serializeSidebarEntry } from "../app-navigation.ts";
 import { isSessionRouteId } from "../app-route-paths.ts";
 import { t } from "../i18n/index.ts";
 import { shouldHandleNavigationClick } from "../lib/navigation-click.ts";
-import type { SidebarSessionsGrouping } from "../lib/sessions/grouping.ts";
+import {
+  collectKnownSessionGroups,
+  type SidebarSessionsGrouping,
+} from "../lib/sessions/grouping.ts";
 import { filterVisibleSessionRows, sessionMatchesArchivedFilter } from "../lib/sessions/index.ts";
 import { runSessionNavigationIntent } from "../lib/sessions/navigation-handoff.ts";
 import {
@@ -41,7 +44,6 @@ import {
   collectSidebarSessionCandidateRows,
   compareSidebarSessionRowsByMode,
   collectKnownSidebarSessionCatalogIds,
-  collectKnownSidebarSessionGroups,
   extendSidebarSessionSelection,
   findSidebarMainSessionRow,
   findProjectedSidebarSession,
@@ -561,7 +563,7 @@ export class AppSidebarSessionNavigationElement extends AppSidebarBase {
   }
 
   knownSessionGroups(): string[] {
-    return collectKnownSidebarSessionGroups(
+    return collectKnownSessionGroups(
       this.context?.sessions.state.groups ?? [],
       this.sessionData.sessionsResult?.sessions ?? [],
     );
