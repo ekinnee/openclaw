@@ -10,6 +10,7 @@ describe("buildLearnPrompt", () => {
     expect(prompt).toContain("SOURCES and REQUIREMENTS");
     expect(prompt).toContain("never fetch only the first source");
     expect(prompt).toContain("update the best Workshop-owned skill before creating anything new");
+    expect(prompt).toContain("Make at most one proposal mutation.");
     expect(prompt).toContain("no durable reusable procedure");
     expect(prompt).not.toContain("NEVER capture");
     expect(buildLearnPrompt(" ")).toContain(DEFAULT_LEARN_REQUEST);
