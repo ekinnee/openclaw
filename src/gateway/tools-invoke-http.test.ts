@@ -247,8 +247,8 @@ vi.mock("../agents/openclaw-tools.js", async () => {
   ];
 
   return {
-    createOpenClawTools: (ctx: Record<string, unknown>, pluginToolHostAuthority?: unknown) => {
-      lastCreateOpenClawToolsContext = { ...ctx, pluginToolHostAuthority };
+    createOpenClawTools: (ctx: Record<string, unknown>) => {
+      lastCreateOpenClawToolsContext = ctx;
       const selected = ctx.disablePluginTools
         ? tools.filter((tool) => tool.name !== "browser")
         : tools;
