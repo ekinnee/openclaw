@@ -1,3 +1,4 @@
+import { isPromiseLike } from "@openclaw/normalization-core/promise-like";
 /** Builds agent tools registered by plugins, preserving plugin scope around callbacks and descriptors. */
 import { isRecord } from "@openclaw/normalization-core/record-coerce";
 import {
@@ -54,6 +55,7 @@ import {
   writeCachedPluginToolDescriptors,
 } from "./tool-descriptor-cache.js";
 import { isPluginToolAllowed } from "./tool-grant-allowlist.js";
+import type { OpenClawPluginToolHostAuthority } from "./tool-types.js";
 import type { OpenClawPluginToolContext } from "./types.js";
 
 /** MCP bridge metadata attached to plugin tools surfaced through agent tool lists. */
@@ -166,70 +168,68 @@ function wrapPluginToolCallbacks(
   entry: PluginToolRegistration,
   pluginRegistry: PluginRegistry | undefined,
   tool: AnyAgentTool,
+  authority?: OpenClawPluginToolHostAuthority,
 ): AnyAgentTool {
   const key = pluginToolScopeKey(entry, pluginRegistry);
-  const scopedByKey = scopedPluginTools.get(tool);
+  const scopedByKey = authority ? undefined : scopedPluginTools.get(tool);
   const cached = scopedByKey?.get(key);
   if (cached) {
     return cached;
   }
 
-  const prepareArguments = tool.prepareArguments;
-  const scopedPrepareArguments = prepareArguments
-    ? (args: unknown) =>
-        runWithPluginToolScope(entry, pluginRegistry, () =>
-          Reflect.apply(prepareArguments, tool, [args]),
-        )
-    : undefined;
-  const scopedExecute = (
-    toolCallId: string,
-    params: unknown,
-    signal?: AbortSignal,
-    onUpdate?: unknown,
-  ) =>
-    runWithPluginToolScope(
-      entry,
-      pluginRegistry,
-      () =>
-        Reflect.apply(tool.execute, tool, [toolCallId, params, signal, onUpdate]) as ReturnType<
-          AnyAgentTool["execute"]
-        >,
-    );
+  const callbacks = new Map<PropertyKey, (...args: unknown[]) => unknown>();
+  const callbackProperties = authority
+    ? ([
+        "execute",
+        "prepareArguments",
+        "prepareBeforeToolCallParams",
+        "finalizeBeforeToolCallParams",
+      ] as const)
+    : (["execute", "prepareArguments"] as const);
+  for (const property of callbackProperties) {
+    const callback = Reflect.get(tool, property, tool);
+    if (typeof callback !== "function") {
+      continue;
+    }
+    callbacks.set(property, (...args: unknown[]) => {
+      authority?.assertActive();
+      const result = runWithPluginToolScope(entry, pluginRegistry, () =>
+        Reflect.apply(callback, tool, args),
+      );
+      if (isPromiseLike(result)) {
+        return Promise.resolve(result).then((value) => {
+          authority?.assertActive();
+          return value;
+        });
+      }
+      authority?.assertActive();
+      return result;
+    });
+  }
   const wrapped = new Proxy<AnyAgentTool>(tool, {
-    get(target, prop) {
-      if (prop === "prepareArguments" && scopedPrepareArguments) {
-        return scopedPrepareArguments;
-      }
-      if (prop === "execute") {
-        return scopedExecute;
-      }
-      return Reflect.get(target, prop, target);
+    get(target, property) {
+      return callbacks.get(property) ?? Reflect.get(target, property, target);
     },
-    getOwnPropertyDescriptor(target, prop) {
-      if (prop === "prepareArguments" && scopedPrepareArguments) {
+    getOwnPropertyDescriptor(target, property) {
+      const callback = callbacks.get(property);
+      if (callback) {
         return {
           configurable: true,
-          enumerable: Object.prototype.propertyIsEnumerable.call(target, prop),
-          value: scopedPrepareArguments,
+          enumerable: Object.prototype.propertyIsEnumerable.call(target, property),
+          value: callback,
           writable: true,
         };
       }
-      if (prop === "execute") {
-        return {
-          configurable: true,
-          enumerable: Object.prototype.propertyIsEnumerable.call(target, prop),
-          value: scopedExecute,
-          writable: true,
-        };
-      }
-      return Reflect.getOwnPropertyDescriptor(target, prop);
+      return Reflect.getOwnPropertyDescriptor(target, property);
     },
   });
 
   copyPluginToolMeta(tool, wrapped);
-  const nextScopedByKey = scopedByKey ?? new Map<string, AnyAgentTool>();
-  nextScopedByKey.set(key, wrapped);
-  scopedPluginTools.set(tool, nextScopedByKey);
+  if (!authority) {
+    const nextScopedByKey = scopedByKey ?? new Map<string, AnyAgentTool>();
+    nextScopedByKey.set(key, wrapped);
+    scopedPluginTools.set(tool, nextScopedByKey);
+  }
   return wrapped;
 }
 
@@ -237,13 +237,32 @@ function wrapPluginToolFactoryResult(
   entry: PluginToolRegistration,
   pluginRegistry: PluginRegistry | undefined,
   result: PluginToolFactoryResult,
+  authority?: OpenClawPluginToolHostAuthority,
 ): PluginToolFactoryResult {
   if (Array.isArray(result)) {
     return result.map((tool) =>
-      isAgentTool(tool) ? wrapPluginToolCallbacks(entry, pluginRegistry, tool) : tool,
+      isAgentTool(tool) ? wrapPluginToolCallbacks(entry, pluginRegistry, tool, authority) : tool,
     );
   }
-  return isAgentTool(result) ? wrapPluginToolCallbacks(entry, pluginRegistry, result) : result;
+  return isAgentTool(result)
+    ? wrapPluginToolCallbacks(entry, pluginRegistry, result, authority)
+    : result;
+}
+
+function isPluginToolHostAuthority(value: unknown): value is OpenClawPluginToolHostAuthority {
+  return (
+    isRecord(value) &&
+    value.kind === "plugin-tool-host-authority" &&
+    value.version === 1 &&
+    typeof value.assertActive === "function"
+  );
+}
+
+function resolvePluginToolHostAuthority(
+  ctx: OpenClawPluginToolContext,
+): OpenClawPluginToolHostAuthority | undefined {
+  const authority = "hostAuthority" in ctx ? ctx.hostAuthority : undefined;
+  return isPluginToolHostAuthority(authority) ? authority : undefined;
 }
 
 function resolvePluginToolFactory(
@@ -251,9 +270,22 @@ function resolvePluginToolFactory(
   pluginRegistry: PluginRegistry | undefined,
   ctx: OpenClawPluginToolContext,
 ) {
-  return runWithPluginToolScope(entry, pluginRegistry, () =>
-    wrapPluginToolFactoryResult(entry, pluginRegistry, entry.factory(ctx)),
-  );
+  if (entry.contextVersion !== 2) {
+    return runWithPluginToolScope(entry, pluginRegistry, () =>
+      wrapPluginToolFactoryResult(entry, pluginRegistry, entry.factory(ctx)),
+    );
+  }
+  const authority = resolvePluginToolHostAuthority(ctx);
+  if (!authority) {
+    return undefined;
+  }
+  const resolved = runWithPluginToolScope(entry, pluginRegistry, () => {
+    authority.assertActive();
+    const result = entry.factory({ ...ctx, hostAuthority: authority });
+    authority.assertActive();
+    return wrapPluginToolFactoryResult(entry, pluginRegistry, result, authority);
+  });
+  return resolved;
 }
 
 function blocksHostRestrictedConversationReadTool(params: {

@@ -124,6 +124,7 @@ export function createPluginRegistry(registryParams: PluginRegistryParams) {
     rollbackPluginGlobalSideEffects,
     pushDiagnostic: state.pushDiagnostic,
     registerTool: registrars.registerTool,
+    registerToolV2: registrars.registerToolV2,
     registerChannel: registrars.registerChannel,
     registerHostedMediaResolver: registrars.registerHostedMediaResolver,
     registerWidgetPresenter: registrars.registerWidgetPresenter,

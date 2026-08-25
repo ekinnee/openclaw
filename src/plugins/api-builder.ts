@@ -21,6 +21,7 @@ type BuildPluginApiParams = {
     Pick<
       OpenClawPluginApi,
       | "registerTool"
+      | "registerToolV2"
       | "registerHook"
       | "registerHttpRoute"
       | "registerHostedMediaResolver"
@@ -91,6 +92,7 @@ type BuildPluginApiParams = {
 };
 
 const noopRegisterTool: OpenClawPluginApi["registerTool"] = () => {};
+const noopRegisterToolV2: OpenClawPluginApi["registerToolV2"] = () => {};
 const noopRegisterHook: OpenClawPluginApi["registerHook"] = () => {};
 const noopRegisterHttpRoute: OpenClawPluginApi["registerHttpRoute"] = () => {};
 const noopRegisterHostedMediaResolver: OpenClawPluginApi["registerHostedMediaResolver"] = () => {};
@@ -202,6 +204,7 @@ export function buildPluginApi(params: BuildPluginApiParams): OpenClawPluginApi 
     runtime: params.runtime,
     logger: params.logger,
     registerTool: handlers.registerTool ?? noopRegisterTool,
+    registerToolV2: handlers.registerToolV2 ?? noopRegisterToolV2,
     registerHook: handlers.registerHook ?? noopRegisterHook,
     registerHttpRoute: handlers.registerHttpRoute ?? noopRegisterHttpRoute,
     registerHostedMediaResolver:

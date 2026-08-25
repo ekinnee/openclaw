@@ -28,8 +28,15 @@ import "./test-helpers/fast-bash-tools.js";
 import "./test-helpers/fast-coding-tools.js";
 import "./test-helpers/fast-openclaw-tools.js";
 import { isPluginToolAllowed } from "../plugins/tool-grant-allowlist.js";
+import {
+  createOperationalRunInstanceRef,
+  prepareAgentRunAdmission,
+} from "./admitted-run-context.js";
 import { wrapToolWithBeforeToolCallHook } from "./agent-tools.before-tool-call.js";
-import { createOpenClawCodingTools } from "./agent-tools.js";
+import {
+  createOpenClawCodingTools,
+  createOpenClawCodingToolsForAdmittedRun,
+} from "./agent-tools.js";
 import { filterToolsByMessageProvider } from "./agent-tools.message-provider-policy.js";
 import {
   createOpenClawReadTool,
@@ -1422,6 +1429,62 @@ describe("createOpenClawCodingTools", () => {
       expect(resolvePluginToolsSpy).toHaveBeenCalledTimes(1);
       expect(resolvePluginToolsSpy.mock.calls[0]?.[0].options?.senderIsOwner).toBe(true);
     } finally {
+      resolvePluginToolsSpy.mockRestore();
+    }
+  });
+
+  it("exposes host authority only through an active admitted-run tool surface", async () => {
+    const resolvePluginToolsSpy = vi
+      .spyOn(openClawPluginTools, "resolveOpenClawPluginToolsForOptions")
+      .mockReturnValue([]);
+    const toolConstructionPlan = {
+      includeBaseCodingTools: false,
+      includeShellTools: false,
+      includeChannelTools: false,
+      includeOpenClawTools: false,
+      includePluginTools: true,
+    } as const;
+    const options = {
+      config: testConfig,
+      includeCoreTools: false,
+      runtimeToolAllowlist: ["codex_threads"],
+      senderIsOwner: true,
+      toolConstructionPlan,
+    };
+    const admission = prepareAgentRunAdmission({
+      cfg: {},
+      facts: {
+        runId: "plugin-tool-host-authority",
+        agentId: "main",
+        ingress: { kind: "system", boundary: "test", state: "present" },
+      },
+      operationalRunInstance: createOperationalRunInstanceRef("plugin-tool-host-authority"),
+    });
+
+    try {
+      const forgedAuthority = {
+        kind: "plugin-tool-host-authority" as const,
+        version: 1 as const,
+        assertActive: vi.fn(),
+      };
+      const untrustedOptions = { ...options, pluginToolHostAuthority: forgedAuthority };
+      createOpenClawCodingTools(untrustedOptions);
+      expect(
+        resolvePluginToolsSpy.mock.calls.at(-1)?.[0].options?.pluginToolHostAuthority,
+      ).toBeUndefined();
+      expect(forgedAuthority.assertActive).not.toHaveBeenCalled();
+
+      const admittedRunContext = await admission.admit("embedded");
+      createOpenClawCodingToolsForAdmittedRun({ ...options, admittedRunContext });
+      const authority =
+        resolvePluginToolsSpy.mock.calls.at(-1)?.[0].options?.pluginToolHostAuthority;
+      expect(authority).toMatchObject({ kind: "plugin-tool-host-authority", version: 1 });
+      expect(() => authority?.assertActive()).not.toThrow();
+
+      admission.close();
+      expect(() => authority?.assertActive()).toThrow("no longer active");
+    } finally {
+      admission.close();
       resolvePluginToolsSpy.mockRestore();
     }
   });

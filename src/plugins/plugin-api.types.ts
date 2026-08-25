@@ -89,7 +89,9 @@ import type { SessionCatalogProvider } from "./session-catalog.js";
 import type {
   OpenClawPluginHookOptions,
   OpenClawPluginToolFactory,
+  OpenClawPluginToolFactoryV2,
   OpenClawPluginToolOptions,
+  OpenClawPluginToolOptionsV2,
 } from "./tool-types.js";
 import type { OpenClawPluginNodeHostCommand } from "./types.node-host.js";
 import type { WebFetchProviderPlugin, WebSearchProviderPlugin } from "./web-provider-types.js";
@@ -205,6 +207,8 @@ export type OpenClawPluginApi = {
     tool: AnyAgentTool | OpenClawPluginToolFactory,
     opts?: OpenClawPluginToolOptions,
   ) => void;
+  /** Registers a tool factory that requires a live, closure-bound host context. */
+  registerToolV2: (tool: OpenClawPluginToolFactoryV2, opts: OpenClawPluginToolOptionsV2) => void;
   registerHook: (
     events: string | string[],
     handler: InternalHookHandler,

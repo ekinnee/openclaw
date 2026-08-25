@@ -4,6 +4,7 @@ import { createShowWidgetTool, hasRegisteredShowWidgetKinds } from "../canvas/wi
 import { selectApplicableRuntimeConfig } from "../config/config.js";
 import { resolveControlUiSessionLinkBase } from "../config/control-ui-link-base.js";
 import { isEmbeddedMode } from "../infra/embedded-mode.js";
+import type { OpenClawPluginToolHostAuthority } from "../plugins/tool-types.js";
 import { getActiveSecretsRuntimeConfigSnapshot } from "../secrets/runtime-state.js";
 import { getActiveRuntimeWebToolsMetadataFromState } from "../secrets/runtime-web-tools-state.js";
 import { isCronRunSessionKey } from "../sessions/session-key-utils.js";
@@ -86,7 +87,11 @@ import { createWebFetchTool, createWebSearchTool } from "./tools/web-tools.js";
 import { resolveWorkspaceRoot } from "./workspace-dir.js";
 
 export { filterToolsByClientCaps } from "./openclaw-tools.client-caps.js";
-export function createOpenClawTools(options?: OpenClawToolsOptions): AnyAgentTool[] {
+type OpenClawToolsRuntimeOptions = OpenClawToolsOptions & {
+  pluginToolHostAuthority?: OpenClawPluginToolHostAuthority;
+};
+
+export function createOpenClawTools(options?: OpenClawToolsRuntimeOptions): AnyAgentTool[] {
   const resolvedConfig = options?.config;
   const activeProjectKeys = options?.preparedModelRuntime?.activeProjectKeys ?? [];
   const runtimeSnapshot = getActiveSecretsRuntimeConfigSnapshot();

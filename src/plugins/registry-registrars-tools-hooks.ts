@@ -31,6 +31,7 @@ import {
   normalizePluginToolNames,
 } from "./tool-contracts.js";
 import { normalizePluginToolMatcher } from "./tool-hook-matcher.js";
+import type { OpenClawPluginToolFactoryV2, OpenClawPluginToolOptionsV2 } from "./tool-types.js";
 import {
   isConversationHookName,
   isPluginHookAgentTrigger,
@@ -220,14 +221,23 @@ export function createToolHookRegistrars(state: PluginRegistryState) {
     registry.agentToolResultMiddlewares.push(registration);
   };
 
-  const registerTool = (
-    record: PluginRecord,
-    tool: AnyAgentTool | OpenClawPluginToolFactory,
-    opts?: OpenClawPluginToolOptions,
-  ) => {
+  type ToolRegistrationInput =
+    | {
+        tool: OpenClawPluginToolFactoryV2;
+        opts: OpenClawPluginToolOptionsV2;
+        contextVersion: 2;
+      }
+    | {
+        tool: AnyAgentTool | OpenClawPluginToolFactory;
+        opts?: OpenClawPluginToolOptions;
+        contextVersion?: undefined;
+      };
+
+  const registerToolInternal = (record: PluginRecord, input: ToolRegistrationInput) => {
     if (pluginsWithChannelRegistrationConflict.has(record.id)) {
       return;
     }
+    const { tool, opts } = input;
     const declaredNames = normalizePluginToolContractNames(record.contracts);
     if (declaredNames.length === 0) {
       pushDiagnostic({
@@ -240,8 +250,6 @@ export function createToolHookRegistrars(state: PluginRegistryState) {
     }
     const names = [...(opts?.names ?? []), ...(opts?.name ? [opts.name] : [])];
     const optional = opts?.optional === true;
-    const factory: OpenClawPluginToolFactory =
-      typeof tool === "function" ? tool : (_ctx: OpenClawPluginToolContext) => tool;
     if (typeof tool !== "function") {
       names.push(tool.name);
     }
@@ -259,18 +267,42 @@ export function createToolHookRegistrars(state: PluginRegistryState) {
     if (normalized.length > 0) {
       record.toolNames.push(...normalized);
     }
-    registry.tools.push({
+    const registration = {
       pluginId: record.id,
       pluginName: record.name,
-      factory,
       names: normalized,
       declaredNames,
       optional,
       origin: record.origin,
       source: record.source,
       rootDir: record.rootDir,
+    };
+    if (input.contextVersion === 2) {
+      registry.tools.push({ ...registration, factory: input.tool, contextVersion: 2 });
+      return;
+    }
+    if (typeof input.tool === "function") {
+      registry.tools.push({ ...registration, factory: input.tool });
+      return;
+    }
+    const staticTool = input.tool;
+    registry.tools.push({
+      ...registration,
+      factory: (_ctx: OpenClawPluginToolContext) => staticTool,
     });
   };
+
+  const registerTool = (
+    record: PluginRecord,
+    tool: AnyAgentTool | OpenClawPluginToolFactory,
+    opts?: OpenClawPluginToolOptions,
+  ) => registerToolInternal(record, { tool, opts });
+
+  const registerToolV2 = (
+    record: PluginRecord,
+    tool: OpenClawPluginToolFactoryV2,
+    opts: OpenClawPluginToolOptionsV2,
+  ) => registerToolInternal(record, { tool, opts, contextVersion: 2 });
 
   const registerHook = (
     record: PluginRecord,
@@ -464,6 +496,7 @@ export function createToolHookRegistrars(state: PluginRegistryState) {
     registerCodexAppServerExtensionFactory,
     registerAgentToolResultMiddleware,
     registerTool,
+    registerToolV2,
     registerHook,
     registerTypedHook,
   };

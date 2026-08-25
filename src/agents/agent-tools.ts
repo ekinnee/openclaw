@@ -24,6 +24,7 @@ import type {
   PluginHookToolRequesterContext,
 } from "../plugins/hook-types.js";
 import { appendRuntimePluginToolGrant } from "../plugins/tool-grant-allowlist.js";
+import type { OpenClawPluginToolHostAuthority } from "../plugins/tool-types.js";
 import { getPluginToolMeta } from "../plugins/tools.js";
 import { getActiveSecretsRuntimeConfigSnapshot } from "../secrets/runtime-state.js";
 import { GATEWAY_OWNER_ONLY_CORE_TOOLS } from "../security/dangerous-tools.js";
@@ -31,7 +32,7 @@ import type { InputProvenance } from "../sessions/input-provenance.js";
 import type { SkillSnapshot, SkillUsagePath } from "../skills/types.js";
 import type { SkillWorkshopRunOptions } from "../skills/workshop/types.js";
 import { resolveGatewayMessageChannel } from "../utils/message-channel.js";
-import type { OperationalRunInstanceRef } from "./admitted-run-context.js";
+import type { AdmittedRunContext, OperationalRunInstanceRef } from "./admitted-run-context.js";
 import type { ToolOutcomeObserver } from "./agent-tools.before-tool-call.js";
 import { finalizeAgentTools } from "./agent-tools.finalize.js";
 import { filterToolsByMessageProvider } from "./agent-tools.message-provider-policy.js";
@@ -72,6 +73,7 @@ import { createMemoryWriteProvenanceObserver } from "./memory-write-provenance.j
 import type { ModelAuthMode } from "./model-auth.js";
 import { resolveOpenClawPluginToolsForOptions } from "./openclaw-plugin-tools.js";
 import { createOpenClawTools, filterToolsByClientCaps } from "./openclaw-tools.js";
+import { resolveOpenClawPluginToolHostAuthority } from "./openclaw-tools.plugin-context.js";
 import type { PreparedModelRuntimeSnapshot } from "./prepared-model-runtime.js";
 import type { SandboxContext } from "./sandbox.js";
 import {
@@ -378,7 +380,10 @@ type OpenClawCodingToolsOptions = {
   scheduledToolPolicy?: ScheduledToolPolicyContext;
 };
 
-function createOpenClawCodingToolsInternal(options?: OpenClawCodingToolsOptions): AnyAgentTool[] {
+function createOpenClawCodingToolsInternal(
+  options?: OpenClawCodingToolsOptions,
+  pluginToolHostAuthority?: OpenClawPluginToolHostAuthority,
+): AnyAgentTool[] {
   const sandbox = options?.sandbox?.enabled ? options.sandbox : undefined;
   const isMemoryFlushRun = options?.trigger === "memory";
   if (isMemoryFlushRun && !options?.memoryFlushWritePath) {
@@ -738,6 +743,7 @@ function createOpenClawCodingToolsInternal(options?: OpenClawCodingToolsOptions)
             clientCaps: options?.clientCaps,
             toolBindings: options?.toolBindings,
             authProfileStore: options?.authProfileStore,
+            pluginToolHostAuthority,
           },
           resolvedConfig: options?.config,
         }),
@@ -847,6 +853,7 @@ function createOpenClawCodingToolsInternal(options?: OpenClawCodingToolsOptions)
             requesterSenderId: options?.senderId,
             senderIsOwner: options?.senderIsOwner,
             authProfileStore: options?.authProfileStore,
+            pluginToolHostAuthority,
             sessionId: options?.sessionId,
             conversationRecall: options?.conversationRecall,
             oneShotCliRun: options?.oneShotCliRun,
@@ -1021,5 +1028,17 @@ function createOpenClawCodingToolsInternal(options?: OpenClawCodingToolsOptions)
 /** Build the runtime tool list exposed through the public agent harness SDK. */
 export function createOpenClawCodingTools(options?: OpenClawCodingToolsOptions): AnyAgentTool[] {
   return createOpenClawCodingToolsInternal(options);
+}
+
+/** Internal admitted-run path; public SDK callers cannot mint this authority. */
+export function createOpenClawCodingToolsForAdmittedRun(
+  options: OpenClawCodingToolsOptions & { admittedRunContext: AdmittedRunContext },
+): AnyAgentTool[] {
+  const { admittedRunContext, ...toolOptions } = options;
+  const pluginToolHostAuthority = resolveOpenClawPluginToolHostAuthority({
+    admittedRunContext,
+    signal: toolOptions.abortSignal,
+  });
+  return createOpenClawCodingToolsInternal(toolOptions, pluginToolHostAuthority);
 }
 /* oxlint-disable max-lines -- TODO: split this grandfathered oversized file. */

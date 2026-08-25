@@ -4,6 +4,7 @@ import {
   readPositiveIntegerParam,
 } from "openclaw/plugin-sdk/channel-actions";
 import type { ChannelAgentTool } from "openclaw/plugin-sdk/channel-contract";
+import type { OpenClawPluginApi, OpenClawPluginToolContextV2 } from "openclaw/plugin-sdk/core";
 import { hasNonEmptyString } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { Type } from "typebox";
 import { startWebLoginWithQr, waitForWebLogin } from "../login-qr-api.js";
@@ -14,7 +15,14 @@ function readLoginStringPreservingWhitespace(value: unknown): string | undefined
   return hasNonEmptyString(value) ? value : undefined;
 }
 
-export function createWhatsAppLoginTool(): ChannelAgentTool {
+export function createWhatsAppLoginTool(
+  context: OpenClawPluginToolContextV2,
+): ChannelAgentTool | null {
+  if (context.senderIsOwner !== true) {
+    return null;
+  }
+  const authority = context.hostAuthority;
+  authority.assertActive();
   return {
     label: "WhatsApp Login",
     name: "whatsapp_login",
@@ -34,6 +42,8 @@ export function createWhatsAppLoginTool(): ChannelAgentTool {
       ),
     }),
     execute: async (_toolCallId, args) => {
+      authority.assertActive();
+      const beforeCredentialPersistence = async () => authority.assertActive();
       const renderQrReply = (params: {
         message: string;
         qrDataUrl: string;
@@ -84,6 +94,7 @@ export function createWhatsAppLoginTool(): ChannelAgentTool {
       const result = await startWebLoginWithQr({
         accountId,
         timeoutMs,
+        beforeCredentialPersistence,
         force:
           typeof (args as { force?: unknown }).force === "boolean"
             ? (args as { force?: boolean }).force
@@ -109,4 +120,11 @@ export function createWhatsAppLoginTool(): ChannelAgentTool {
       });
     },
   };
+}
+
+export function registerWhatsAppLoginTool(api: OpenClawPluginApi): void {
+  api.registerToolV2((context) => createWhatsAppLoginTool(context), {
+    name: "whatsapp_login",
+    contextVersion: 2,
+  });
 }

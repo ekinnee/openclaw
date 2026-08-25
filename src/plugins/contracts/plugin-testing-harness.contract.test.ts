@@ -71,6 +71,9 @@ describe("plugin testing harness contracts", () => {
       const registration = registry.registry.tools[0];
       expect(registration?.pluginId).toBe("fixture-echo");
       expect(registration?.names).toEqual(["fixture_echo"]);
+      if (registration?.contextVersion === 2) {
+        throw new Error("expected a legacy tool registration");
+      }
       const tool = registration?.factory({ workspaceDir: home });
       if (!tool || Array.isArray(tool)) {
         throw new Error("expected one registered fixture tool");

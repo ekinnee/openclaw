@@ -4,9 +4,56 @@
  */
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { resolveOpenClawPluginToolInputs } from "./openclaw-tools.plugin-context.js";
+import {
+  resetAgentRunRegistryForTest,
+  rotateAgentRunRegistryLifecycleGeneration,
+} from "../infra/agent-run-registry.js";
+import {
+  createOperationalRunInstanceRef,
+  prepareAgentRunAdmission,
+} from "./admitted-run-context.js";
+import {
+  resolveOpenClawPluginToolHostAuthority,
+  resolveOpenClawPluginToolInputs,
+} from "./openclaw-tools.plugin-context.js";
 
 describe("openclaw plugin tool context", () => {
+  it("revokes host authority on run replacement and lifecycle rotation", async () => {
+    const prepare = (runId: string) =>
+      prepareAgentRunAdmission({
+        cfg: {},
+        facts: {
+          runId,
+          agentId: "main",
+          ingress: { kind: "system", boundary: "test", state: "present" },
+        },
+        operationalRunInstance: createOperationalRunInstanceRef(runId),
+      });
+    const first = prepare("plugin-tool-authority");
+    const second = prepare("plugin-tool-authority");
+    try {
+      const firstContext = await first.admit("embedded");
+      const firstAuthority = resolveOpenClawPluginToolHostAuthority({
+        admittedRunContext: firstContext,
+      });
+      expect(() => firstAuthority?.assertActive()).not.toThrow();
+
+      const secondContext = await second.admit("embedded");
+      const secondAuthority = resolveOpenClawPluginToolHostAuthority({
+        admittedRunContext: secondContext,
+      });
+      expect(() => firstAuthority?.assertActive()).toThrow("no longer active");
+      expect(() => secondAuthority?.assertActive()).not.toThrow();
+
+      rotateAgentRunRegistryLifecycleGeneration();
+      expect(() => secondAuthority?.assertActive()).toThrow("no longer active");
+    } finally {
+      first.close();
+      second.close();
+      resetAgentRunRegistryForTest();
+    }
+  });
+
   it("forwards trusted requester sender identity", () => {
     const result = resolveOpenClawPluginToolInputs({
       options: {

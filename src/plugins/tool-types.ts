@@ -18,6 +18,14 @@ export type OpenClawPluginToolDelivery = {
   send: (params: { text?: string; mediaUrl?: string }) => Promise<void>;
 };
 
+/** Opaque lifecycle authority for one live host-owned tool invocation. */
+export type OpenClawPluginToolHostAuthority = Readonly<{
+  kind: "plugin-tool-host-authority";
+  version: 1;
+  /** Fails closed after the owning run or direct request loses authority. */
+  assertActive: () => void;
+}>;
+
 /** Trusted execution context passed to plugin-owned agent tool factories. */
 export type OpenClawPluginToolContext = {
   config?: OpenClawConfig;
@@ -82,10 +90,23 @@ export type OpenClawPluginToolFactory = (
   ctx: OpenClawPluginToolContext,
 ) => AnyAgentTool | AnyAgentTool[] | null | undefined;
 
+/** Current factory context for tools that require live host authority. */
+export type OpenClawPluginToolContextV2 = OpenClawPluginToolContext & {
+  hostAuthority: OpenClawPluginToolHostAuthority;
+};
+
+export type OpenClawPluginToolFactoryV2 = (
+  ctx: OpenClawPluginToolContextV2,
+) => AnyAgentTool | AnyAgentTool[] | null | undefined;
+
 export type OpenClawPluginToolOptions = {
   name?: string;
   names?: string[];
   optional?: boolean;
+};
+
+export type OpenClawPluginToolOptionsV2 = OpenClawPluginToolOptions & {
+  contextVersion: 2;
 };
 
 export type OpenClawPluginHookOptions = {

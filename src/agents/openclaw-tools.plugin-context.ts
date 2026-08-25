@@ -8,7 +8,12 @@ import {
  * Normalizes workspace, delivery, browser, sandbox, and active-model inputs before plugin tool invocation.
  */
 import type { OpenClawConfig } from "../config/types.openclaw.js";
+import type { OpenClawPluginToolHostAuthority } from "../plugins/tool-types.js";
 import { normalizeDeliveryContext } from "../utils/delivery-context.shared.js";
+import {
+  resolveAdmittedRunActiveAssertion,
+  type AdmittedRunContext,
+} from "./admitted-run-context.js";
 import { resolveAgentWorkspaceDir, resolveSessionAgentIds } from "./agent-scope.js";
 import type { ConversationRecallContext } from "./conversation-recall.types.js";
 import { modelKey } from "./model-ref-shared.js";
@@ -54,6 +59,23 @@ export type OpenClawPluginToolOptions = {
   toolBindings?: Readonly<Record<string, unknown>>;
   activeProjectKeys?: readonly string[];
 };
+
+/** Mints plugin-visible authority only from the exact live run admission. */
+export function resolveOpenClawPluginToolHostAuthority(params: {
+  admittedRunContext: AdmittedRunContext;
+  signal?: AbortSignal;
+}): OpenClawPluginToolHostAuthority | undefined {
+  const assertActive = resolveAdmittedRunActiveAssertion(params.admittedRunContext, params.signal);
+  if (!assertActive) {
+    return undefined;
+  }
+  assertActive();
+  return Object.freeze({
+    kind: "plugin-tool-host-authority" as const,
+    version: 1 as const,
+    assertActive,
+  });
+}
 
 /** Resolves plugin-tool context inputs from runtime options and config state. */
 export function resolveOpenClawPluginToolInputs(params: {

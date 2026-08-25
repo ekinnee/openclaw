@@ -15,7 +15,10 @@ import {
   getPluginRuntimeGatewayRequestScope,
   withPluginRuntimeRegistryScope,
 } from "../plugins/runtime/gateway-request-scope.js";
-import type { OpenClawPluginToolDelivery } from "../plugins/tool-types.js";
+import type {
+  OpenClawPluginToolDelivery,
+  OpenClawPluginToolHostAuthority,
+} from "../plugins/tool-types.js";
 import { resolvePluginTools } from "../plugins/tools.js";
 import type { OpenClawPluginToolContext } from "../plugins/types.js";
 import { createLazyRuntimeModule } from "../shared/lazy-runtime.js";
@@ -38,6 +41,8 @@ import type { AnyAgentTool } from "./tools/common.js";
 import { hasProviderAuthForTool } from "./tools/model-config.helpers.js";
 
 type ResolveOpenClawPluginToolsOptions = OpenClawPluginToolOptions & {
+  /** Core-minted authority for versioned privileged plugin tool factories. */
+  pluginToolHostAuthority?: OpenClawPluginToolHostAuthority;
   preparedModelRuntime?: PreparedModelRuntimeSnapshot;
   pluginToolAllowlist?: string[];
   pluginToolDenylist?: string[];
@@ -293,6 +298,9 @@ export function resolveOpenClawPluginToolsForOptions(params: {
     ...pluginToolInputs,
     context: {
       ...pluginToolInputs.context,
+      ...(params.options?.pluginToolHostAuthority
+        ? { hostAuthority: params.options.pluginToolHostAuthority }
+        : {}),
       ...(delivery ? { delivery } : {}),
       ...(hasAuthForProvider ? { hasAuthForProvider } : {}),
       ...(resolveApiKeyForProvider ? { resolveApiKeyForProvider } : {}),

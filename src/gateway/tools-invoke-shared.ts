@@ -22,6 +22,7 @@ import { formatErrorMessage } from "../infra/errors.js";
 import { logWarn } from "../logger.js";
 import { isTestDefaultMemorySlotDisabled } from "../plugins/config-state.js";
 import { defaultSlotIdForKey } from "../plugins/slots.js";
+import type { OpenClawPluginToolHostAuthority } from "../plugins/tool-types.js";
 import { getPluginToolMeta } from "../plugins/tools.js";
 import {
   AGENT_HARNESS_SESSION_KEY_RESERVED_MESSAGE,
@@ -169,8 +170,7 @@ function resolveToolSource(tool: AnyAgentTool): "core" | "plugin" | "channel" {
   return "core";
 }
 
-/** Resolves, authorizes, and invokes one gateway-visible core/plugin/channel tool. */
-export async function invokeGatewayTool(params: {
+type InvokeGatewayToolParams = {
   cfg: OpenClawConfig;
   input: ToolsInvokeInput;
   messageChannel?: string;
@@ -185,7 +185,13 @@ export async function invokeGatewayTool(params: {
   toolCallIdPrefix: string;
   approvalMode?: "request" | "report";
   signal?: AbortSignal;
-}): Promise<ToolsInvokeOutcome> {
+};
+
+async function invokeGatewayToolWithAuthority(
+  params: InvokeGatewayToolParams & {
+    pluginToolHostAuthority: OpenClawPluginToolHostAuthority;
+  },
+): Promise<ToolsInvokeOutcome> {
   const conversationReadOrigin = normalizeConversationReadInvocationOrigin(
     params.conversationReadOrigin,
   );
@@ -351,6 +357,7 @@ export async function invokeGatewayTool(params: {
       allowMediaInvokeCommands: true,
       surface: "http",
       disablePluginTools,
+      pluginToolHostAuthority: params.pluginToolHostAuthority,
       gatewayRequestedTools,
     });
 
@@ -455,5 +462,26 @@ export async function invokeGatewayTool(params: {
       toolName,
       error: { type: "tool_error", message: "tool execution failed" },
     };
+  }
+}
+
+/** Resolves, authorizes, and invokes one gateway-visible core/plugin/channel tool. */
+export async function invokeGatewayTool(
+  params: InvokeGatewayToolParams,
+): Promise<ToolsInvokeOutcome> {
+  let active = true;
+  const pluginToolHostAuthority: OpenClawPluginToolHostAuthority = Object.freeze({
+    kind: "plugin-tool-host-authority",
+    version: 1,
+    assertActive: () => {
+      if (!active || params.signal?.aborted) {
+        throw new Error("plugin tool host authority is no longer active");
+      }
+    },
+  });
+  try {
+    return await invokeGatewayToolWithAuthority({ ...params, pluginToolHostAuthority });
+  } finally {
+    active = false;
   }
 }

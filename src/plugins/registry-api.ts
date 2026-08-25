@@ -53,6 +53,7 @@ export function createPluginApiFactory(
     state;
   const {
     registerTool,
+    registerToolV2,
     registerHook,
     registerHttpRoute,
     registerHostedMediaResolver,
@@ -178,6 +179,7 @@ export function createPluginApiFactory(
         ...(registrationCapabilities.capabilityHandlers
           ? {
               registerTool: (tool, opts) => registerTool(record, tool, opts),
+              registerToolV2: (tool, opts) => registerToolV2(record, tool, opts),
               registerHook: (events, handler, opts) =>
                 registerHook(record, events, handler, opts, params.config, params.pluginConfig),
               registerHttpRoute: (routeParams) => registerHttpRoute(record, routeParams),

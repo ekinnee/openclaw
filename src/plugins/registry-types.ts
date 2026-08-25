@@ -82,6 +82,7 @@ type OpenClawPluginSecurityAuditCollector =
   import("./types.js").OpenClawPluginSecurityAuditCollector;
 type OpenClawPluginService = import("./types.js").OpenClawPluginService;
 type OpenClawPluginToolFactory = import("./types.js").OpenClawPluginToolFactory;
+type OpenClawPluginToolFactoryV2 = import("./tool-types.js").OpenClawPluginToolFactoryV2;
 type PluginConversationBindingResolvedEvent =
   import("./types.js").PluginConversationBindingResolvedEvent;
 type TypedPluginHookRegistration = import("./types.js").PluginHookRegistration;
@@ -99,11 +100,9 @@ type WebSearchProviderPlugin = import("./types.js").WebSearchProviderPlugin;
 type WorkerProvider = import("./types.js").WorkerProvider;
 type UnifiedModelCatalogProviderPlugin = import("./types.js").UnifiedModelCatalogProviderPlugin;
 
-/** Agent tool factory registered by one plugin runtime. */
-export type PluginToolRegistration = {
+type PluginToolRegistrationBase = {
   pluginId: string;
   pluginName?: string;
-  factory: OpenClawPluginToolFactory;
   names: string[];
   declaredNames?: string[];
   optional: boolean;
@@ -112,6 +111,19 @@ export type PluginToolRegistration = {
   source: string;
   rootDir?: string;
 };
+
+/** Agent tool factory registered by one plugin runtime. */
+export type PluginToolRegistration = PluginToolRegistrationBase &
+  (
+    | {
+        factory: OpenClawPluginToolFactoryV2;
+        contextVersion: 2;
+      }
+    | {
+        factory: OpenClawPluginToolFactory;
+        contextVersion?: never;
+      }
+  );
 type PluginCliRegistration = {
   pluginId: string;
   pluginName?: string;

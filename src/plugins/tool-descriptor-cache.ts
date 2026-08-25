@@ -8,7 +8,7 @@ import { registerPluginMetadataProcessMemoLifecycleClear } from "./plugin-metada
 import type { PluginRegistry } from "./registry-types.js";
 import type { OpenClawPluginToolContext } from "./types.js";
 
-const PLUGIN_TOOL_DESCRIPTOR_CACHE_VERSION = 3;
+const PLUGIN_TOOL_DESCRIPTOR_CACHE_VERSION = 4;
 const PLUGIN_TOOL_DESCRIPTOR_CACHE_LIMIT = 256;
 
 /** Cached display descriptor for one plugin-created tool. */
@@ -117,6 +117,7 @@ function buildDescriptorContextCacheKey(params: {
     deliveryAvailable: ctx.delivery !== undefined,
     requesterSenderId: ctx.requesterSenderId ?? null,
     senderIsOwner: ctx.senderIsOwner ?? null,
+    hostAuthorityAvailable: "hostAuthority" in ctx,
     sandboxed: ctx.sandboxed ?? null,
   });
 }

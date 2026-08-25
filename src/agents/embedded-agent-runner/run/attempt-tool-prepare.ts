@@ -11,7 +11,10 @@ import {
 import { extractModelCompat } from "../../../plugins/provider-model-compat.js";
 import { getPluginToolMeta } from "../../../plugins/tools.js";
 import { isSubagentSessionKey } from "../../../routing/session-key.js";
-import { createOpenClawCodingTools } from "../../agent-tools.js";
+import {
+  createOpenClawCodingTools,
+  createOpenClawCodingToolsForAdmittedRun,
+} from "../../agent-tools.js";
 import { getChannelAgentToolMeta } from "../../channel-tools.js";
 import type { CodeModeSkill } from "../../code-mode-skills.js";
 import { resolveConversationCapabilityProfile } from "../../conversation-capability-profile.js";
@@ -242,7 +245,7 @@ export function prepareEmbeddedAttemptToolBase(params: {
   const constructedToolsRaw = !shouldConstructTools
     ? []
     : (() => {
-        const allTools = createOpenClawCodingTools({
+        const allTools = createOpenClawCodingToolsForAdmittedRun({
           agentId: params.sessionAgentId,
           ...buildEmbeddedAttemptToolRunContext({ ...attempt, trace: params.runTrace }),
           messageChannel: attempt.messageChannel,
@@ -364,6 +367,7 @@ export function prepareEmbeddedAttemptToolBase(params: {
           conversationCapabilityProfile: runtimeCapabilityProfile,
           scheduledToolPolicy: attempt.scheduledToolPolicy,
           onYield: params.onYield,
+          admittedRunContext: attempt.admittedRunContext,
         });
         // The built-in harness retains its existing authoritative wrappers.
         // Only plugin harnesses receive and require the projected host capability.

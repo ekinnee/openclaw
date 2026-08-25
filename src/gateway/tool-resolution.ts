@@ -49,6 +49,7 @@ import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { resolveEventSessionRoutingPolicy } from "../infra/event-session-routing.js";
 import { logWarn } from "../logger.js";
 import type { PluginHookChannelContext } from "../plugins/hook-types.js";
+import type { OpenClawPluginToolHostAuthority } from "../plugins/tool-types.js";
 import { getPluginToolMeta } from "../plugins/tools.js";
 import {
   DEFAULT_GATEWAY_HTTP_TOOL_DENY,
@@ -101,6 +102,8 @@ export function resolveGatewayScopedTools(params: {
   /** Server-minted coding tools that must be mediated through the loopback surface. */
   mediatedToolNames?: Iterable<string>;
   disablePluginTools?: boolean;
+  /** Request- or run-bound authority for V2 plugin tool factories. */
+  pluginToolHostAuthority?: OpenClawPluginToolHostAuthority;
   gatewayRequestedTools?: string[];
   /** Add the CLI-only, node-forced exec tool before applying the shared policy pipeline. */
   includeNodeExecTool?: boolean;
@@ -312,6 +315,7 @@ export function resolveGatewayScopedTools(params: {
     skillWorkshop: params.skillWorkshop,
     allowMediaInvokeCommands: params.allowMediaInvokeCommands,
     disablePluginTools: params.disablePluginTools,
+    pluginToolHostAuthority: params.pluginToolHostAuthority,
     wrapBeforeToolCallHook: false,
     config: params.cfg,
     agentDir: params.agentDir,

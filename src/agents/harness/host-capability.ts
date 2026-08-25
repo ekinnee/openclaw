@@ -14,7 +14,7 @@ import {
   rewrapToolWithBeforeToolCallHook,
   runBeforeToolCallHook,
 } from "../agent-tools.before-tool-call.js";
-import { createOpenClawCodingTools } from "../agent-tools.js";
+import { createOpenClawCodingToolsForAdmittedRun } from "../agent-tools.js";
 import type { EmbeddedRunAttemptParams } from "../embedded-agent-runner/run/types.js";
 import { prepareGitHubToolEnvironment } from "../github-tool-identity.js";
 import {
@@ -343,7 +343,11 @@ export function createAgentHarnessHostCapabilities(params: {
     createToolSurface: (options, bindingOptions) => {
       assertActive();
       return bindToolSurface(
-        createOpenClawCodingTools({ ...options, operationalRunInstance }),
+        createOpenClawCodingToolsForAdmittedRun({
+          ...options,
+          operationalRunInstance,
+          admittedRunContext: attempt.admittedRunContext,
+        }),
         bindingOptions,
       );
     },

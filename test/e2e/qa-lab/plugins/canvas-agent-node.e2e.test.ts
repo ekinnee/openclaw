@@ -225,6 +225,9 @@ describe("Canvas agent tool over a paired macOS node", () => {
         const toolRegistration = registry.registry.tools.find(
           (entry) => entry.pluginId === "canvas",
         );
+        if (toolRegistration?.contextVersion === 2) {
+          throw new Error("expected legacy Canvas tool registration");
+        }
         const registeredTools = toolRegistration?.factory({
           config,
           runtimeConfig: config,

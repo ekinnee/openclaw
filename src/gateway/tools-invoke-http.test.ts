@@ -42,6 +42,9 @@ const sessionEntries = vi.hoisted(() => new Map<string, Record<string, unknown>>
 
 let cfg: Record<string, unknown> = {};
 let lastCreateOpenClawToolsContext: Record<string, unknown> | undefined;
+let retainedPluginToolHostAuthority:
+  | { assertActive: () => void; kind: string; version: number }
+  | undefined;
 
 // Perf: keep this suite pure unit. Mock heavyweight config/session modules.
 vi.mock("../config/config.js", () => ({
@@ -204,6 +207,12 @@ vi.mock("../agents/openclaw-tools.js", async () => {
       },
       execute: async (_toolCallId: string, args: unknown) => {
         const mode = (args as { mode?: unknown })?.mode;
+        if (mode === "authority") {
+          retainedPluginToolHostAuthority =
+            lastCreateOpenClawToolsContext?.pluginToolHostAuthority as typeof retainedPluginToolHostAuthority;
+          retainedPluginToolHostAuthority?.assertActive();
+          return { ok: true };
+        }
         if (mode === "input") {
           throw toolInputError("mode invalid");
         }
@@ -238,8 +247,8 @@ vi.mock("../agents/openclaw-tools.js", async () => {
   ];
 
   return {
-    createOpenClawTools: (ctx: Record<string, unknown>) => {
-      lastCreateOpenClawToolsContext = ctx;
+    createOpenClawTools: (ctx: Record<string, unknown>, pluginToolHostAuthority?: unknown) => {
+      lastCreateOpenClawToolsContext = { ...ctx, pluginToolHostAuthority };
       const selected = ctx.disablePluginTools
         ? tools.filter((tool) => tool.name !== "browser")
         : tools;
@@ -325,6 +334,7 @@ beforeEach(() => {
   pluginHttpHandlers = [];
   cfg = {};
   lastCreateOpenClawToolsContext = undefined;
+  retainedPluginToolHostAuthority = undefined;
   pluginToolMetaState.clear();
   sessionEntries.clear();
   pluginToolMetaState.set("plugin_doctor", { pluginId: "test-plugin", optional: true });
@@ -1408,6 +1418,23 @@ describe("tools.invoke Gateway RPC", () => {
     expect(hookCtx.config).toBe(cfg);
     expect(hookCtx.sessionKey).toBe("agent:main:main");
     expect(lastCreateOpenClawToolsContext?.conversationReadOrigin).toBe("delegated");
+  });
+
+  it("revokes plugin tool host authority when the direct request settles", async () => {
+    setMainAllowedTools({ allow: ["tools_invoke_test"] });
+
+    const call = await invokeToolsRpc({
+      name: "tools_invoke_test",
+      args: { mode: "authority" },
+      sessionKey: "main",
+    });
+
+    expect(call?.[1]?.ok).toBe(true);
+    expect(retainedPluginToolHostAuthority).toMatchObject({
+      kind: "plugin-tool-host-authority",
+      version: 1,
+    });
+    expect(() => retainedPluginToolHostAuthority?.assertActive()).toThrow("no longer active");
   });
 
   it("opens terminal against the current persisted session generation", async () => {

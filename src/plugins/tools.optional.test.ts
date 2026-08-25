@@ -12,11 +12,12 @@ import { appendRuntimePluginToolGrant } from "./tool-grant-allowlist.js";
 type MockRegistryToolEntry = {
   pluginId: string;
   optional: boolean;
+  contextVersion?: 2;
   origin?: "bundled" | "global" | "workspace" | "config";
   source: string;
   names: string[];
   declaredNames?: string[];
-  factory: (ctx: unknown) => unknown;
+  factory: (...args: never[]) => unknown;
 };
 
 const loadOpenClawPluginsMock = vi.fn();
@@ -676,6 +677,60 @@ describe("resolvePluginTools optional tools", () => {
         pluginSource: "/tmp/optional-demo.js",
       },
     ]);
+  });
+
+  it("fails V2 factories closed without host authority and revokes retained callbacks", async () => {
+    let active = true;
+    let finishExecution: (() => void) | undefined;
+    const executionPending = new Promise<void>((resolve) => {
+      finishExecution = resolve;
+    });
+    const hostAuthority = {
+      kind: "plugin-tool-host-authority" as const,
+      version: 1 as const,
+      assertActive: () => {
+        if (!active) {
+          throw new Error("plugin tool host authority is no longer active");
+        }
+      },
+    };
+    const factory = vi.fn((context: { hostAuthority?: typeof hostAuthority }) => {
+      expect(context.hostAuthority).toBe(hostAuthority);
+      return {
+        name: "authority_tool",
+        description: "authority tool",
+        parameters: { type: "object", properties: {} },
+        prepareArguments: (args: unknown) => args,
+        execute: async () => {
+          await executionPending;
+          return { content: [{ type: "text", text: "ok" }] };
+        },
+      };
+    });
+    setRegistry([
+      {
+        pluginId: "authority",
+        optional: false,
+        contextVersion: 2,
+        source: "/tmp/authority.js",
+        names: ["authority_tool"],
+        factory,
+      },
+    ]);
+
+    expect(resolvePluginTools(createResolveToolsParams())).toEqual([]);
+    expect(factory).not.toHaveBeenCalled();
+
+    const [tool] = resolvePluginTools(
+      createResolveToolsParams({ context: { ...createContext(), hostAuthority } }),
+    );
+    expect(tool?.prepareArguments?.({ allowed: true })).toEqual({ allowed: true });
+    const execution = tool?.execute("authority-call", {}, undefined);
+    active = false;
+    finishExecution?.();
+
+    expect(() => tool?.prepareArguments?.({})).toThrow("no longer active");
+    await expect(execution).rejects.toThrow("no longer active");
   });
 
   it("wraps every array tool callback and restores caller scope after errors", async () => {
