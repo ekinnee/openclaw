@@ -146,7 +146,7 @@ describe("noteAuthProfileHealth", () => {
     expect(fs.existsSync(sharedPath)).toBe(true);
   });
 
-  it("does not warn while Claude CLI owns refresh of an expiring access token", async () => {
+  it("warns for a retired stored Claude CLI OAuth credential", async () => {
     const now = 1_700_000_000_000;
     vi.spyOn(Date, "now").mockReturnValue(now);
     const mainDir = path.join(tempDir, "main-agent");
@@ -170,7 +170,12 @@ describe("noteAuthProfileHealth", () => {
       } as OpenClawConfig,
     });
 
-    expect(findings).toEqual([]);
+    expect(findings).toEqual([
+      expect.objectContaining({
+        message: "Auth profile anthropic:claude-cli is expiring (3h).",
+        target: "anthropic:claude-cli",
+      }),
+    ]);
   });
 
   it("keeps expiring warnings for static and custom Claude CLI profiles", async () => {
@@ -329,7 +334,7 @@ describe("noteAuthProfileHealth", () => {
           provider: "claude-cli",
           access: "secret",
           refresh: "secret",
-          expires: now + 60_000,
+          expires: now + 365 * 24 * 60 * 60_000,
         },
       },
       usageStats: {

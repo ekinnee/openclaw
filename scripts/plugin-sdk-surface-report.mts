@@ -312,7 +312,8 @@ export function readPluginSdkSurfaceBudgets(env: NodeJS.ProcessEnv = process.env
       // +2: conversation-binding inspection result and runtime inspector.
       // +2: restore shipped channel setup helpers until stable packages migrate.
       // +1: canonical untrusted audio-transcript formatter for channel plugins.
-      4340,
+      // +2: retired Claude CLI credential types retained through the v2026.10 compatibility window.
+      4342,
       env,
     ),
     publicFunctionExports: readPluginSdkSurfaceBudgetEnv(
