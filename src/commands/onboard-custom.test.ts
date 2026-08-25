@@ -332,9 +332,14 @@ describe("promptCustomApiConfig", () => {
       select: ["plaintext", "openai", "model"],
     });
 
+    let notifyFetchStarted: () => void = () => undefined;
+    const fetchStarted = new Promise<void>((resolve) => {
+      notifyFetchStarted = resolve;
+    });
     const fetchMock = vi
       .fn()
       .mockImplementationOnce((_url: string, init?: { signal?: AbortSignal }) => {
+        notifyFetchStarted();
         return new Promise((_resolve, reject) => {
           init?.signal?.addEventListener("abort", () => reject(new Error("AbortError")));
         });
@@ -344,6 +349,7 @@ describe("promptCustomApiConfig", () => {
 
     const promise = runPromptCustomApi(prompter);
 
+    await fetchStarted;
     await vi.advanceTimersByTimeAsync(30_000);
     await promise;
 
