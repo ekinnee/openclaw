@@ -1,5 +1,5 @@
 // Onboard custom config tests cover provider-specific config merging and context-window bounds.
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CONTEXT_WINDOW_HARD_MIN_TOKENS } from "../agents/context-window-guard.js";
 import type { OpenClawConfig } from "../config/config.js";
 import {
@@ -7,10 +7,31 @@ import {
   buildAnthropicVerificationProbeRequest,
   buildOpenAiVerificationProbeRequest,
   parseNonInteractiveCustomApiFlags,
+  resolveCustomModelAliasError,
   resolveCustomModelImageInputInference,
 } from "./onboard-custom-config.js";
 
+const getCurrentPluginMetadataSnapshotMock = vi.hoisted(() => vi.fn(() => ({ plugins: [] })));
+const loadManifestMetadataSnapshotMock = vi.hoisted(() => vi.fn(() => ({ plugins: [] })));
+const normalizeProviderModelIdWithRuntimeMock = vi.hoisted(() => vi.fn(() => undefined));
+
+vi.mock("../plugins/current-plugin-metadata-snapshot.js", () => ({
+  getCurrentPluginMetadataSnapshot: getCurrentPluginMetadataSnapshotMock,
+}));
+
+vi.mock("../plugins/manifest-contract-eligibility.js", () => ({
+  loadManifestMetadataSnapshot: loadManifestMetadataSnapshotMock,
+}));
+
+vi.mock("../agents/provider-model-normalization.runtime.js", () => ({
+  normalizeProviderModelIdWithRuntime: normalizeProviderModelIdWithRuntimeMock,
+}));
+
 const EXPECTED_CUSTOM_PROVIDER_DEFAULT_CONTEXT_WINDOW_TOKENS = 128_000;
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 function buildCustomProviderConfig(contextWindow?: number) {
   if (contextWindow === undefined) {
@@ -118,6 +139,26 @@ it("rejects custom aliases already used by the selected agent", () => {
       target: { agentId: "ops", agentDir: "/tmp/ops-agent", workspaceDir: "/tmp/ops-workspace" },
     }),
   ).toThrow("Alias Operations already points to openai/ops.");
+});
+
+it("checks custom alias collisions without loading plugin normalization", () => {
+  expect(
+    resolveCustomModelAliasError({
+      raw: "Operations",
+      cfg: {
+        agents: {
+          ownership: "explicit",
+          defaults: { systemAgent: { agentId: "ops" } },
+          entries: { ops: { models: { "openai/ops": { alias: "Operations" } } } },
+        },
+      },
+      modelRef: "custom/foo-large",
+      agentId: "ops",
+    }),
+  ).toBe("Alias Operations already points to openai/ops.");
+  expect(getCurrentPluginMetadataSnapshotMock).not.toHaveBeenCalled();
+  expect(loadManifestMetadataSnapshotMock).not.toHaveBeenCalled();
+  expect(normalizeProviderModelIdWithRuntimeMock).not.toHaveBeenCalled();
 });
 
 it("preserves a list-form roster when applying custom-provider model state", () => {
