@@ -5,7 +5,7 @@ import { formatCliCommand } from "../cli/command-format.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
 import { formatErrorMessage } from "../infra/errors.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
-import { resolveLoadedProviderRuntimePlugin } from "../plugins/provider-hook-runtime.js";
+import { resolveLoadedProviderDeprecatedAuthProfileIds } from "../plugins/provider-loaded-auth-policy.js";
 import { resolveProviderDeprecatedAuthProfileIds } from "../plugins/provider-public-artifacts.js";
 import {
   buildProviderMissingAuthMessageWithPlugin,
@@ -128,11 +128,11 @@ export async function resolveApiKeyForProviderCore(params: {
     deprecatedProfileIds = new Set(
       metadataProfileIds.length > 0
         ? metadataProfileIds
-        : (resolveLoadedProviderRuntimePlugin({
+        : resolveLoadedProviderDeprecatedAuthProfileIds({
             provider,
             config: cfg,
             workspaceDir: params.workspaceDir,
-          })?.deprecatedProfileIds ?? []),
+          }),
     );
     return deprecatedProfileIds;
   };

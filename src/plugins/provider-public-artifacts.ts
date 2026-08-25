@@ -1,7 +1,10 @@
 import path from "node:path";
 // Extracts provider public artifacts from plugin metadata.
 import { normalizeProviderId } from "@openclaw/model-catalog-core/provider-id";
+import { isRecord } from "@openclaw/normalization-core/record-coerce";
+import { normalizeTrimmedStringList } from "@openclaw/normalization-core/string-normalization";
 import { resolveBundledPluginsDir } from "./bundled-dir.js";
+import { listOpenClawPluginManifestMetadata } from "./manifest-metadata-scan.js";
 import {
   loadPluginManifestRegistryCore,
   type PluginManifestRegistry,
@@ -70,6 +73,32 @@ function pluginOwnsProviderPolicyRef(
   }
 
   return false;
+}
+
+function bundledManifestOwnsProviderPolicyRef(
+  manifest: Record<string, unknown>,
+  normalizedProviderId: string,
+): boolean {
+  const contracts = isRecord(manifest.contracts) ? manifest.contracts : undefined;
+  const ownedProviders = new Set(
+    normalizeTrimmedStringList([
+      ...normalizeTrimmedStringList(manifest.providers),
+      ...normalizeTrimmedStringList(manifest.cliBackends),
+      ...normalizeTrimmedStringList(contracts?.embeddingProviders),
+    ])
+      .map((provider) => normalizeProviderId(provider))
+      .filter(Boolean),
+  );
+  if (ownedProviders.has(normalizedProviderId)) {
+    return true;
+  }
+
+  const aliases = isRecord(manifest.providerAuthAliases) ? manifest.providerAuthAliases : {};
+  return Object.entries(aliases).some(([rawAlias, rawTarget]) => {
+    const alias = normalizeProviderId(rawAlias);
+    const target = typeof rawTarget === "string" ? normalizeProviderId(rawTarget) : undefined;
+    return alias === normalizedProviderId && Boolean(target && ownedProviders.has(target));
+  });
 }
 
 /** Resolves provider policy hooks for a bundled provider or its owning plugin. */
@@ -144,8 +173,11 @@ export function resolveProviderDeprecatedAuthProfileIds(providerId: string): rea
   if (cached) {
     return cached;
   }
-  const profileIds =
-    resolveBundledProviderPolicyPlugin(normalizedProviderId)?.deprecatedAuthProfileIds ?? [];
+  const ownerManifest = listOpenClawPluginManifestMetadata().find(
+    ({ manifest, origin }) =>
+      origin === "bundled" && bundledManifestOwnsProviderPolicyRef(manifest, normalizedProviderId),
+  )?.manifest;
+  const profileIds = normalizeTrimmedStringList(ownerManifest?.deprecatedAuthProfileIds);
   deprecatedAuthProfileIdsByProvider.set(cacheKey, profileIds);
   return profileIds;
 }

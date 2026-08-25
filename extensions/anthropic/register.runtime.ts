@@ -17,7 +17,6 @@ import {
   applyAuthProfileConfig,
   type AuthProfileStore,
   buildTokenProfileId,
-  CLAUDE_CLI_PROFILE_ID,
   createProviderApiKeyAuthMethod,
   listProfilesForProvider,
   type OpenClawConfig as ProviderAuthConfig,
@@ -52,7 +51,7 @@ import { normalizeLowercaseStringOrEmpty } from "openclaw/plugin-sdk/string-coer
 import * as claudeCliAuth from "./cli-auth-seam.js";
 import { buildAnthropicCliBackend } from "./cli-backend.js";
 import { buildClaudeCliCatalogEntries } from "./cli-catalog.js";
-import { CLAUDE_CLI_CANONICAL_DEFAULT_MODEL_REF } from "./cli-constants.js";
+import { CLAUDE_CLI_CANONICAL_DEFAULT_MODEL_REF, CLAUDE_CLI_PROFILE_ID } from "./cli-constants.js";
 import { buildAnthropicCliMigrationResult } from "./cli-migration.js";
 import {
   CLAUDE_CLI_BACKEND_ID,
