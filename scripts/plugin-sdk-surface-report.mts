@@ -312,8 +312,8 @@ export function readPluginSdkSurfaceBudgets(env: NodeJS.ProcessEnv = process.env
       // +2: conversation-binding inspection result and runtime inspector.
       // +2: restore shipped channel setup helpers until stable packages migrate.
       // +1: canonical untrusted audio-transcript formatter for channel plugins.
-      // +3: V2 plugin-tool context, factory, and options for closure-bound host authority.
-      4343,
+      // +1: V2 plugin-tool context for closure-bound host authority.
+      4341,
       env,
     ),
     publicFunctionExports: readPluginSdkSurfaceBudgetEnv(
