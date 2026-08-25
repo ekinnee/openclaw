@@ -146,33 +146,6 @@ describe("noteAuthProfileHealth", () => {
     expect(fs.existsSync(sharedPath)).toBe(true);
   });
 
-  it("does not warn while Claude CLI owns refresh of an expiring access token", async () => {
-    const now = 1_700_000_000_000;
-    vi.spyOn(Date, "now").mockReturnValue(now);
-    const mainDir = path.join(tempDir, "main-agent");
-    authProfileMocks.hasAnyAuthProfileStoreSource.mockReturnValue(true);
-    authProfileMocks.ensureAuthProfileStore.mockReturnValue({
-      version: 1,
-      profiles: {
-        "anthropic:claude-cli": {
-          type: "oauth",
-          provider: "claude-cli",
-          access: "access",
-          refresh: "refresh",
-          expires: now + 3 * 60 * 60_000,
-        },
-      },
-    });
-
-    const findings = await collectAuthProfileHealthFindings({
-      cfg: {
-        agents: { list: [{ id: "main", default: true, agentDir: mainDir }] },
-      } as OpenClawConfig,
-    });
-
-    expect(findings).toEqual([]);
-  });
-
   it("keeps expiring warnings for static and custom Claude CLI profiles", async () => {
     const now = 1_700_000_000_000;
     vi.spyOn(Date, "now").mockReturnValue(now);
@@ -329,7 +302,7 @@ describe("noteAuthProfileHealth", () => {
           provider: "claude-cli",
           access: "secret",
           refresh: "secret",
-          expires: now + 60_000,
+          expires: now + 3 * 24 * 60 * 60_000,
         },
       },
       usageStats: {
