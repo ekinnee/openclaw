@@ -187,6 +187,50 @@ describe("new-session composer keyboard submission", () => {
     expect(message).toBe("$release_notes ");
   });
 
+  it("retargets inline slash completion when the caret moves without input", () => {
+    replaceSlashCommands([
+      {
+        key: "release_notes",
+        name: "release_notes",
+        description: "Draft release notes.",
+        source: "skill",
+        skillModelVisible: true,
+      },
+      {
+        key: "office_hours",
+        name: "office_hours",
+        description: "Engineering office hours.",
+        source: "skill",
+        skillModelVisible: true,
+      },
+    ]);
+    let message = "";
+    const { composer } = renderComposer({
+      onInput: (next) => {
+        message = next;
+      },
+    });
+    const textarea = composer.querySelector<HTMLTextAreaElement>("textarea");
+    if (!textarea) {
+      throw new Error("Expected composer textarea");
+    }
+
+    textarea.value = "Use /release_ and /office_";
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+    textarea.dispatchEvent(new InputEvent("input", { bubbles: true, inputType: "insertText" }));
+    expect(composer.querySelector(".slash-menu")?.textContent).toContain("/office_hours");
+
+    const firstTokenCaret = "Use /release_".length;
+    textarea.setSelectionRange(firstTokenCaret, firstTokenCaret);
+    textarea.dispatchEvent(new Event("select", { bubbles: true }));
+    expect(composer.querySelector(".slash-menu")?.textContent).toContain("/release_notes");
+    textarea.dispatchEvent(
+      new KeyboardEvent("keydown", { bubbles: true, cancelable: true, key: "Enter" }),
+    );
+
+    expect(message).toBe("Use $release_notes and /office_");
+  });
+
   it.each([
     { label: "Enter", requiresModifier: false, ctrlKey: false, metaKey: false },
     { label: "Ctrl+Enter", requiresModifier: true, ctrlKey: true, metaKey: false },

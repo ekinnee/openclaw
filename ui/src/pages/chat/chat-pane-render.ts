@@ -70,7 +70,6 @@ export class ChatPane extends ChatPaneLayoutRender {
     }
     void this.ensureTaskSuggestionCloudProfiles();
     const selectedSession = selectedChatSessionRow(state);
-    const selectedSessionId = selectedSession?.sessionId?.trim() || undefined;
     const mutationAccess = readChatPaneMutationAccess(
       this.context.gateway.snapshot,
       state.sessionKey,
@@ -392,7 +391,7 @@ export class ChatPane extends ChatPaneLayoutRender {
         modelSetupRequired,
         restartRecoveryTombstoned,
         selectedSessionArchived,
-        selectedSessionId,
+        selectedSessionId: selectedSession?.sessionId?.trim() || undefined,
         sessionKey: state.sessionKey,
         unarchiveAccess: mutationAccess.unarchive,
       }),
@@ -533,6 +532,10 @@ export class ChatPane extends ChatPaneLayoutRender {
       onRequestUpdate: state.requestUpdate,
       onHistoryKeydown: state.handleChatInputHistoryKey,
       onSlashIntent: () => refreshChatCommands(state),
+      onSlashCommand:
+        suggestionViewer || catalogKey
+          ? undefined
+          : (command) => void state.handleSendChat(command),
       showNewMessages: state.chatNewMessagesBelow,
       onScrollToBottom: state.scrollToBottom,
       attachments: state.chatAttachments,
