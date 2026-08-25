@@ -53,6 +53,7 @@ import {
   buildMediaReferenceDetails,
   buildTaskRunDetails,
   createCapabilityProviderRuntimeDeps,
+  hasExplicitMediaModel,
   hasGenerationToolAvailability,
   loadMediaToolReferences,
   normalizeMediaReferenceInputs,
@@ -63,12 +64,8 @@ import {
   resolveRemoteMediaSsrfPolicy,
   resolveSelectedCapabilityProvider,
 } from "./media-tool-shared.js";
-import {
-  hasAuthForProvider,
-  coerceToolModelConfig,
-  hasToolModelConfig,
-  type ToolModelConfig,
-} from "./model-config.helpers.js";
+import { coerceToolModelConfig, hasAuthForProvider } from "./model-config.helpers.js";
+import type { ToolModelConfig } from "./model-config.helpers.js";
 import type { AnyAgentTool, SandboxFsBridge, ToolFsPolicy } from "./tool-runtime.helpers.js";
 import {
   createVideoGenerateDuplicateGuardResult,
@@ -210,6 +207,7 @@ function resolveVideoGenerationModelConfigForTool(params: {
   workspaceDir?: string;
   agentDir?: string;
   authStore?: AuthProfileStore;
+  modelOverride?: string;
 }): ToolModelConfig | null {
   return resolveCapabilityModelConfigForTool({
     cfg: params.cfg,
@@ -217,6 +215,7 @@ function resolveVideoGenerationModelConfigForTool(params: {
     agentDir: params.agentDir,
     authStore: params.authStore,
     modelConfig: params.cfg?.agents?.defaults?.mediaModels?.video,
+    modelOverride: params.modelOverride,
     providers: () => listRuntimeVideoGenerationProviders({ config: params.cfg }),
   });
 }
@@ -225,10 +224,6 @@ if (process.env.VITEST || process.env.NODE_ENV === "test") {
   (globalThis as Record<PropertyKey, unknown>)[Symbol.for("openclaw.videoGenerateToolTestApi")] = {
     resolveVideoGenerationModelConfigForTool,
   };
-}
-
-function hasExplicitVideoGenerationModelConfig(cfg?: OpenClawConfig): boolean {
-  return hasToolModelConfig(coerceToolModelConfig(cfg?.agents?.defaults?.mediaModels?.video));
 }
 
 function collectVideoGenerationModelProviderIds(params: {
@@ -871,16 +866,18 @@ export function createVideoGenerateTool(options?: {
         );
       }
 
+      const model = readToolStringParam(args, "model");
       const videoGenerationModelConfig = resolveVideoGenerationModelConfigForTool({
         cfg,
         workspaceDir: options?.workspaceDir,
         agentDir: options?.agentDir,
         authStore: options?.authProfileStore,
+        modelOverride: model,
       });
       if (!videoGenerationModelConfig) {
         throw new ToolInputError("No video-generation model configured.");
       }
-      const explicitModelConfig = hasExplicitVideoGenerationModelConfig(cfg);
+      const explicitModelConfig = hasExplicitMediaModel(cfg.agents?.defaults?.mediaModels?.video);
       const effectiveCfg =
         applyAgentDefaultModelConfig(cfg, "video", videoGenerationModelConfig) ?? cfg;
       const remoteMediaSsrfPolicy = resolveRemoteMediaSsrfPolicy(effectiveCfg);
@@ -894,7 +891,6 @@ export function createVideoGenerateTool(options?: {
         return activeDuplicateGuardResult;
       }
 
-      const model = readToolStringParam(args, "model");
       const filename = readToolStringParam(args, "filename");
       const size = readToolStringParam(args, "size");
       const aspectRatio = normalizeAspectRatio(readToolStringParam(args, "aspectRatio"));
@@ -1006,6 +1002,7 @@ export function createVideoGenerateTool(options?: {
       const loadedReferenceImages = await loadReferenceAssets({
         inputs: imageInputs,
         expectedKind: "image",
+        maxBytes: resolveGeneratedMediaMaxBytes(effectiveCfg, "image"),
         workspaceDir: options?.workspaceDir,
         sandboxConfig,
         ssrfPolicy: remoteMediaSsrfPolicy,
@@ -1022,6 +1019,7 @@ export function createVideoGenerateTool(options?: {
       const loadedReferenceVideos = await loadReferenceAssets({
         inputs: videoInputs,
         expectedKind: "video",
+        maxBytes: resolveGeneratedMediaMaxBytes(effectiveCfg, "video"),
         workspaceDir: options?.workspaceDir,
         sandboxConfig,
         ssrfPolicy: remoteMediaSsrfPolicy,
@@ -1037,6 +1035,7 @@ export function createVideoGenerateTool(options?: {
       const loadedReferenceAudios = await loadReferenceAssets({
         inputs: audioInputs,
         expectedKind: "audio",
+        maxBytes: resolveGeneratedMediaMaxBytes(effectiveCfg, "audio"),
         workspaceDir: options?.workspaceDir,
         sandboxConfig,
         ssrfPolicy: remoteMediaSsrfPolicy,

@@ -47,7 +47,7 @@ import {
 } from "./manifest-capability-availability.js";
 import {
   buildToolModelConfigFromCandidates,
-  coerceToolModelConfig,
+  coerceToolModelConfig as coerceModel,
   hasProviderAuthForTool,
   hasToolModelConfig,
   resolveDefaultModelRef,
@@ -334,9 +334,12 @@ export function resolveCapabilityModelConfigForTool(params: {
   agentDir?: string;
   authStore?: AuthProfileStore;
   modelConfig?: AgentModelConfig;
+  modelOverride?: string;
   providers: CapabilityProviderSource;
 }): ToolModelConfig | null {
-  const explicit = coerceToolModelConfig(params.modelConfig);
+  const configured = coerceModel(params.modelConfig);
+  const modelOverride = normalizeOptionalString(params.modelOverride);
+  const explicit = modelOverride ? { ...configured, primary: modelOverride } : configured;
   if (hasToolModelConfig(explicit)) {
     return explicit;
   }
@@ -371,6 +374,8 @@ export function resolveCapabilityModelConfigForTool(params: {
   });
 }
 
+export const hasExplicitMediaModel = (m?: AgentModelConfig) => hasToolModelConfig(coerceModel(m));
+
 /**
  * Reports whether a generation tool should be offered for the current config and auth state.
  */
@@ -386,7 +391,7 @@ export function hasGenerationToolAvailability(params: {
   if (params.cfg?.plugins?.enabled === false) {
     return false;
   }
-  if (hasToolModelConfig(coerceToolModelConfig(params.modelConfig))) {
+  if (hasToolModelConfig(coerceModel(params.modelConfig))) {
     return true;
   }
   const providers = typeof params.providers === "function" ? params.providers() : params.providers;
@@ -663,10 +668,7 @@ export async function loadMediaToolReferences<T>(params: {
     if (reference.isDataUrl) {
       const { decodeDataUrl } = await import("./image-tool.helpers.js");
       params.signal?.throwIfAborted();
-      media = decodeDataUrl(
-        resolvedInput,
-        params.toolName === "image_generate" ? { maxBytes: params.maxBytes } : undefined,
-      );
+      media = decodeDataUrl(resolvedInput, { maxBytes: params.maxBytes });
     } else {
       const { loadWebMedia } = await import("../../media/web-media.js");
       params.signal?.throwIfAborted();
@@ -681,7 +683,7 @@ export async function loadMediaToolReferences<T>(params: {
           : undefined;
       try {
         media = await loadWebMedia(resolvedPath ?? resolvedInput, {
-          ...(params.toolName === "music_generate" ? {} : { maxBytes: params.maxBytes }),
+          maxBytes: params.maxBytes,
           ...(params.sandbox
             ? {
                 sandboxValidated: true,
