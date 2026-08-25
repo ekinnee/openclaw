@@ -11,12 +11,17 @@ export type SidebarAttentionKind = (typeof SIDEBAR_ATTENTION_ITEM_KINDS)[number]
 
 export type UpdateAttentionDismissal = { version: string; gatewayBootId: string };
 export type SidebarAttentionDismissals = Partial<Record<SidebarAttentionKind, string[]>> & {
+  scopeUpgrade?: string;
   updateAvailable?: UpdateAttentionDismissal;
 };
 
 // Minimal chip shape the snooze logic needs; keeps this module free of the
 // component's item type so the two files cannot form an import cycle.
 type DismissableChip = { kind: SidebarAttentionKind; signature: string };
+type DismissalPruneScope = {
+  cronInventoryComplete: boolean;
+  modelAuthAgentId: string | null;
+};
 
 const DISMISSED_STORE_PREFIX = "openclaw.control.sidebarAttention.v1:";
 
@@ -47,6 +52,10 @@ export function loadDismissals(gatewayUrl: string): SidebarAttentionDismissals {
         result[kind] = [...new Set(signatures)];
       }
     }
+    const scopeUpgrade = readStringField(record, "scopeUpgrade");
+    if (scopeUpgrade) {
+      result.scopeUpgrade = scopeUpgrade;
+    }
     const updateAvailable = asNullableRecord(record.updateAvailable);
     const version = readStringField(updateAvailable, "version");
     const gatewayBootId = readStringField(updateAvailable, "gatewayBootId");
@@ -75,19 +84,43 @@ export function saveDismissals(gatewayUrl: string, dismissals: SidebarAttentionD
   }
 }
 
-/**
- * Record one dismissal via read-merge-write against the persisted map, not a
- * caller-held snapshot: another tab may have dismissed a different chip since
- * this tab last loaded, and a blind write would drop that entry.
- */
-export function addDismissal(
+/** Merge dismissals against persisted state so concurrent tabs keep each other's entries. */
+export function addDismissals(
   gatewayUrl: string,
-  kind: SidebarAttentionKind,
-  signature: string,
+  items: readonly DismissableChip[],
 ): SidebarAttentionDismissals {
   const stored = loadDismissals(gatewayUrl);
-  const next = { ...stored, [kind]: [...new Set([...(stored[kind] ?? []), signature])] };
+  const next = { ...stored };
+  for (const item of items) {
+    next[item.kind] = [...new Set([...(next[item.kind] ?? []), item.signature])];
+  }
   saveDismissals(gatewayUrl, next);
+  return next;
+}
+
+export function resolveScopeUpgradeAttentionDismissal(
+  scopes: readonly string[] | undefined,
+): string | null {
+  return scopes === undefined ? null : JSON.stringify([...new Set(scopes)].toSorted());
+}
+
+export function dismissScopeUpgradeAttention(
+  gatewayUrl: string,
+  dismissal: string,
+): SidebarAttentionDismissals {
+  const next = { ...loadDismissals(gatewayUrl), scopeUpgrade: dismissal };
+  saveDismissals(gatewayUrl, next);
+  return next;
+}
+
+export function rearmScopeUpgradeAttention(
+  dismissals: SidebarAttentionDismissals,
+  current: string | null,
+): SidebarAttentionDismissals {
+  if (!current || !dismissals.scopeUpgrade || dismissals.scopeUpgrade === current) {
+    return dismissals;
+  }
+  const { scopeUpgrade: _scopeUpgrade, ...next } = dismissals;
   return next;
 }
 
@@ -141,6 +174,7 @@ export function pruneDismissals(
   dismissals: SidebarAttentionDismissals,
   items: readonly DismissableChip[],
   updateAvailable: UpdateAttentionDismissal | null = null,
+  scope?: DismissalPruneScope,
 ): SidebarAttentionDismissals {
   const next: SidebarAttentionDismissals = {};
   let changed = false;
@@ -149,15 +183,31 @@ export function pruneDismissals(
     if (!stored) {
       continue;
     }
-    const current = stored.filter((signature) =>
-      items.some((item) => item.kind === kind && item.signature === signature),
-    );
+    const current = stored.filter((signature) => {
+      // Partial agent responses cannot clear another agent's dismissal; only the
+      // current auth owner and a complete cron inventory may re-arm signatures.
+      const authoritative =
+        !scope ||
+        (kind === "modelAuthExpired"
+          ? Boolean(
+              scope.modelAuthAgentId &&
+              (!signature.startsWith("agent:") ||
+                signature.startsWith(`agent:${scope.modelAuthAgentId}\n`)),
+            )
+          : scope.cronInventoryComplete);
+      return (
+        !authoritative || items.some((item) => item.kind === kind && item.signature === signature)
+      );
+    });
     if (current.length > 0) {
       next[kind] = current;
     }
     if (current.length !== stored.length) {
       changed = true;
     }
+  }
+  if (dismissals.scopeUpgrade) {
+    next.scopeUpgrade = dismissals.scopeUpgrade;
   }
   if (isUpdateAttentionDismissed(dismissals, updateAvailable)) {
     next.updateAvailable = dismissals.updateAvailable;

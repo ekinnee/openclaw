@@ -34,7 +34,8 @@ type SidebarAttentionPanelParams = {
   items: SidebarAttentionItem[];
   onApprovalDecision: (event: Event, approvalId: string, decision: ExecApprovalDecision) => void;
   onClose: (restoreFocus: boolean) => void;
-  onDismiss: (item: SidebarAttentionItem) => void;
+  onDismissItems: (items: readonly SidebarAttentionItem[]) => void;
+  onDismissScopeUpgrade?: () => void;
   onDismissUpdate?: () => void;
   onKeydown: (event: KeyboardEvent) => void;
   onNavigate: (routeId: NavigationRouteId) => void;
@@ -45,6 +46,7 @@ type SidebarAttentionPanelParams = {
   overflowBelow: boolean;
   panelPosition: SidebarAttentionPanelPosition;
   selectedTab: IssueTab;
+  scopeUpgradeDismissed: boolean;
   scopeUpgrade: ApplicationContext["scopeUpgrade"];
   updateSurface: boolean;
   watchUpdateProgress?: (listener: (progress: UpdateProgress) => void) => () => void;
@@ -70,28 +72,34 @@ export function renderSidebarAttentionPanel(params: SidebarAttentionPanelParams)
   const showApprovals = params.selectedTab === "all" || params.selectedTab === "approvals";
   const showUpdate = params.updateSurface && ["all", "system"].includes(params.selectedTab);
   const scopeUpgradeState = params.scopeUpgrade.state;
-  const showScopeUpgrade =
-    scopeUpgradeState.phase !== "hidden" && ["all", "system"].includes(params.selectedTab);
+  const scopeUpgradeDismissible =
+    ["available", "guidance"].includes(scopeUpgradeState.phase) &&
+    Boolean(params.onDismissScopeUpgrade);
+  const scopeUpgradeVisible =
+    scopeUpgradeState.phase !== "hidden" &&
+    !(scopeUpgradeDismissible && params.scopeUpgradeDismissed);
+  const showScopeUpgrade = scopeUpgradeVisible && ["all", "system"].includes(params.selectedTab);
+  const dismissScopeUpgrade = showScopeUpgrade && scopeUpgradeDismissible;
   const visibleCount =
     (showApprovals ? params.approvalQueue.length : 0) +
     visibleItems.length +
     (showUpdate ? 1 : 0) +
     (showScopeUpgrade ? 1 : 0);
+  const dismissUpdate = showUpdate && Boolean(params.onDismissUpdate);
+  const dismissibleCount =
+    visibleItems.length + (dismissUpdate ? 1 : 0) + (dismissScopeUpgrade ? 1 : 0);
   const errorItems = visibleItems.filter((item) => item.severity === "error");
   const warningItems = visibleItems.filter((item) => item.severity === "warning");
   const count =
     params.approvalQueue.length +
     params.items.length +
     (params.updateSurface ? 1 : 0) +
-    (scopeUpgradeState.phase === "hidden" ? 0 : 1);
+    (scopeUpgradeVisible ? 1 : 0);
   const tabCounts: Record<IssueTab, number> = {
     all: count,
     approvals: params.approvalQueue.length,
     automations: automationItems.length,
-    system:
-      systemItems.length +
-      (params.updateSurface ? 1 : 0) +
-      (scopeUpgradeState.phase === "hidden" ? 0 : 1),
+    system: systemItems.length + (params.updateSurface ? 1 : 0) + (scopeUpgradeVisible ? 1 : 0),
   };
   const custodianItems = params.items.filter((item) => item.action.kind === "askCustodian");
   const custodianSeverity = custodianItems.some((item) => item.severity === "error")
@@ -110,7 +118,7 @@ export function renderSidebarAttentionPanel(params: SidebarAttentionPanelParams)
   const renderItem = (item: SidebarAttentionItem) =>
     renderSidebarIssueItem(item, {
       basePath: params.context.basePath,
-      onDismiss: params.onDismiss,
+      onDismiss: (dismissedItem) => params.onDismissItems([dismissedItem]),
       onNavigate: params.onNavigate,
       onOpen: params.onOpen,
     });
@@ -126,6 +134,7 @@ export function renderSidebarAttentionPanel(params: SidebarAttentionPanelParams)
     renderSidebarScopeUpgradeItem({
       state: scopeUpgradeState,
       onCancel: () => params.scopeUpgrade.cancel(),
+      onDismiss: dismissScopeUpgrade ? params.onDismissScopeUpgrade : undefined,
       onRequest: () => params.scopeUpgrade.request(),
       onRetry: () => params.scopeUpgrade.retry(),
     });
@@ -153,19 +162,38 @@ export function renderSidebarAttentionPanel(params: SidebarAttentionPanelParams)
             >
             ${t("attention.issues")}
           </h2>
-          ${renderSidebarAskOpenClawButton({
-            count: custodianItems.length,
-            severity: custodianSeverity,
-            snapshot: params.context.gateway.snapshot,
-          })}
-          <button
-            type="button"
-            class="sidebar-brand__icon sidebar-issues-panel__mobile-close"
-            aria-label=${t("common.close")}
-            @click=${() => params.onClose(true)}
-          >
-            ${icons.x}
-          </button>
+          <div class="sidebar-issues-panel__header-actions">
+            ${dismissibleCount > 0
+              ? html`<button
+                  type="button"
+                  class="btn btn--xs btn--ghost sidebar-issues-panel__dismiss-shown"
+                  @click=${() => {
+                    params.onDismissItems(visibleItems);
+                    if (dismissUpdate) {
+                      params.onDismissUpdate?.();
+                    }
+                    if (dismissScopeUpgrade) {
+                      params.onDismissScopeUpgrade?.();
+                    }
+                  }}
+                >
+                  ${t("attention.dismissShown")}
+                </button>`
+              : nothing}
+            ${renderSidebarAskOpenClawButton({
+              count: custodianItems.length,
+              severity: custodianSeverity,
+              snapshot: params.context.gateway.snapshot,
+            })}
+            <button
+              type="button"
+              class="sidebar-brand__icon sidebar-issues-panel__mobile-close"
+              aria-label=${t("common.close")}
+              @click=${() => params.onClose(true)}
+            >
+              ${icons.x}
+            </button>
+          </div>
         </header>
         ${renderHubTabs<IssueTab>({
           id: "sidebar-issues",

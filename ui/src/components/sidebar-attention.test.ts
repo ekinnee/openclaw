@@ -16,16 +16,24 @@ import {
 import { createStorageMock as createTestStorageMock } from "../test-helpers/storage.ts";
 import { waitForFast } from "../test-helpers/wait-for.ts";
 import {
-  addDismissal,
+  addDismissals,
+  dismissScopeUpgradeAttention,
   dismissUpdateAttention,
   dismissalStoreKey,
   isUpdateAttentionDismissed,
   loadDismissals,
   pruneDismissals,
+  rearmScopeUpgradeAttention,
+  resolveScopeUpgradeAttentionDismissal,
   resolveUpdateAttentionDismissal,
   type SidebarAttentionKind,
 } from "./sidebar-attention-dismissals.ts";
 import { buildSidebarAttentionItems } from "./sidebar-attention-items.ts";
+import {
+  dismissSidebarUpdateAttention,
+  resolveSidebarUpdateAttention,
+  startSidebarUpdateAttention,
+} from "./sidebar-attention-update.ts";
 import "./sidebar-attention.ts";
 
 function deferred<T>() {
@@ -67,13 +75,14 @@ type SidebarAttentionElement = HTMLElement & {
   context: ApplicationContext;
   updateComplete: Promise<boolean>;
   cronJobs: CronJob[];
-  hasUpdateSurface(): boolean;
-  updateSurfaceVisible(): boolean;
-  dismissUpdateSurface(): void;
-  startUpdate(): void;
   modelAuthStatus: ModelAuthStatusResult | null;
   loadedAtMs: number;
 };
+
+const emptyAgentsCapability = {
+  state: { agentsList: null },
+  subscribe: () => () => undefined,
+} as unknown as ApplicationContext["agents"];
 
 function cronItems(cronJobs: readonly CronJob[], now = 0) {
   return buildSidebarAttentionItems({
@@ -165,6 +174,25 @@ describe("automation attention", () => {
       "older-overdue",
     ]);
   });
+
+  it("adds agent ownership only when the caller supplies all-agent context", () => {
+    const main = cronJob("main-job");
+    const writer = cronJob("writer-job");
+    writer.agentId = "writer";
+
+    const items = buildSidebarAttentionItems({
+      cronJobs: [main, writer],
+      cronOwnerByJobId: new Map([
+        [main.id, "Main"],
+        [writer.id, "Writer"],
+      ]),
+      modelAuthStatus: null,
+      now: 0,
+    });
+
+    expect(items.map((item) => item.meta?.context)).toEqual(["Main", "Writer"]);
+    expect(cronItems([main, writer]).every((item) => item.meta?.context === undefined)).toBe(true);
+  });
 });
 
 describe("model auth attention", () => {
@@ -227,7 +255,7 @@ describe("sidebar attention refresh ownership", () => {
     vi.unstubAllGlobals();
   });
 
-  it("keeps the latest refresh when an older load on the same client finishes last", async () => {
+  it("keeps scoped refreshes current and clears prior ownership during a scope switch", async () => {
     const firstCron = deferred<unknown>();
     const firstAuth = deferred<unknown>();
     const secondCron = deferred<unknown>();
@@ -268,7 +296,10 @@ describe("sidebar attention refresh ownership", () => {
       snapshot: { approvalQueue: [] },
       subscribe: () => () => undefined,
     } as unknown as ApplicationContext["overlays"];
-    const selectionState = { selectedId: "main" as string | null };
+    const selectionState = {
+      selectedId: "main" as string | null,
+      scopeId: "main" as string | null,
+    };
     const selectionListeners = new Set<() => void>();
     const agentSelection = {
       state: selectionState,
@@ -290,6 +321,7 @@ describe("sidebar attention refresh ownership", () => {
     const provider = createApplicationContextProvider({
       gateway,
       overlays,
+      agents: emptyAgentsCapability,
       agentSelection,
       scopeUpgrade: hiddenScopeUpgradeCapability,
     } as unknown as ApplicationContext);
@@ -300,8 +332,12 @@ describe("sidebar attention refresh ownership", () => {
     expect(request.mock.calls.find(([method]) => method === "models.authStatus")?.[1]).toEqual({
       agentId: "main",
     });
+    expect(request.mock.calls.find(([method]) => method === "cron.list")?.[1]).toMatchObject({
+      agentId: "main",
+    });
 
     selectionState.selectedId = "writer";
+    selectionState.scopeId = "writer";
     for (const listener of selectionListeners) {
       listener();
     }
@@ -309,6 +345,9 @@ describe("sidebar attention refresh ownership", () => {
     expect(request.mock.calls.filter(([method]) => method === "models.authStatus")[1]?.[1]).toEqual(
       { agentId: "writer" },
     );
+    expect(request.mock.calls.filter(([method]) => method === "cron.list")[1]?.[1]).toMatchObject({
+      agentId: "writer",
+    });
 
     const currentAuth = { ts: 2, providers: [] } as ModelAuthStatusResult;
     now = 200_000;
@@ -333,13 +372,19 @@ describe("sidebar attention refresh ownership", () => {
     expect(element.loadedAtMs).toBe(200_000);
     expect(localStorage.getItem(dismissalStoreKey(gateway.connection.gatewayUrl))).not.toBeNull();
 
-    selectionState.selectedId = null;
+    selectionState.scopeId = null;
     for (const listener of selectionListeners) {
       listener();
     }
+    await element.updateComplete;
+    expect(element.cronJobs).toEqual([]);
     await waitForFast(() => expect(request).toHaveBeenCalledTimes(5));
     expect(request.mock.calls.filter(([method]) => method === "models.authStatus")).toHaveLength(2);
-    expect(element.modelAuthStatus).toBeNull();
+    const allAgentsCronParams = request.mock.calls.filter(
+      ([method]) => method === "cron.list",
+    )[2]?.[1];
+    expect(allAgentsCronParams).not.toHaveProperty("agentId");
+    expect(element.modelAuthStatus).toBe(currentAuth);
   });
 
   it("finishes an agent auth refresh when a cron event arrives mid-switch", async () => {
@@ -393,6 +438,7 @@ describe("sidebar attention refresh ownership", () => {
     const selectionListeners = new Set<() => void>();
     const provider = createApplicationContextProvider({
       gateway,
+      agents: emptyAgentsCapability,
       overlays: {
         snapshot: { approvalQueue: [] },
         subscribe: () => () => undefined,
@@ -475,6 +521,7 @@ describe("sidebar attention refresh ownership", () => {
     const provider = createApplicationContextProvider({
       gateway,
       overlays,
+      agents: emptyAgentsCapability,
       agentSelection,
       scopeUpgrade: hiddenScopeUpgradeCapability,
     } as unknown as ApplicationContext);
@@ -544,25 +591,23 @@ describe("update attention", () => {
         features: { methods: ["update.status"] },
       },
     };
-    const element = document.createElement("openclaw-sidebar-attention") as SidebarAttentionElement;
-    element.context = {
+    const context = {
       gateway: { snapshot: gatewaySnapshot },
       overlays: { snapshot: overlaySnapshot },
     } as unknown as ApplicationContext;
 
-    expect(element.hasUpdateSurface()).toBe(false);
+    expect(resolveSidebarUpdateAttention(context, {}).present).toBe(false);
 
     gatewaySnapshot.hello.auth.scopes = ["operator.read"];
-    expect(element.hasUpdateSurface()).toBe(true);
+    expect(resolveSidebarUpdateAttention(context, {}).present).toBe(true);
 
     gatewaySnapshot.hello.auth.scopes = ["operator.admin"];
     overlaySnapshot.updateCampaignStatusHydrated = true;
-    expect(element.hasUpdateSurface()).toBe(true);
+    expect(resolveSidebarUpdateAttention(context, {}).present).toBe(true);
   });
 
   it("keeps restart reconciliation visible after update metadata clears", () => {
-    const element = document.createElement("openclaw-sidebar-attention") as SidebarAttentionElement;
-    element.context = {
+    const context = {
       gateway: { snapshot: { phase: "connected" } },
       overlays: {
         snapshot: {
@@ -575,7 +620,7 @@ describe("update attention", () => {
       },
     } as unknown as ApplicationContext;
 
-    expect(element.hasUpdateSurface()).toBe(true);
+    expect(resolveSidebarUpdateAttention(context, {}).present).toBe(true);
   });
 
   it("dismisses one target for one Gateway boot and resurfaces on either change", () => {
@@ -605,34 +650,37 @@ describe("update attention", () => {
         features: { methods: ["update.run"] },
       },
     };
-    const element = document.createElement("openclaw-sidebar-attention") as SidebarAttentionElement;
-    element.context = {
+    const context = {
       gateway: {
         connection: { gatewayUrl: "ws://gateway.test" },
         snapshot: gatewaySnapshot,
       },
       overlays: { snapshot: overlaySnapshot },
     } as unknown as ApplicationContext;
-    (element as unknown as { dismissedScope: string }).dismissedScope = "ws://gateway.test";
+    const initial = resolveSidebarUpdateAttention(context, {});
+    const dismissed = dismissSidebarUpdateAttention({
+      context,
+      dismissedScope: "ws://gateway.test",
+      state: initial,
+    });
 
-    expect(element.updateSurfaceVisible()).toBe(true);
-    element.dismissUpdateSurface();
-    expect(element.updateSurfaceVisible()).toBe(false);
+    expect(initial.visible).toBe(true);
+    expect(dismissed).not.toBeNull();
+    expect(resolveSidebarUpdateAttention(context, dismissed ?? {}).visible).toBe(false);
     expect(loadDismissals("ws://gateway.test").updateAvailable).toEqual({
       version: "2026.8.2",
       gatewayBootId: "boot-a",
     });
 
     overlaySnapshot.updateSchedule.target.version = "2026.8.3";
-    expect(element.updateSurfaceVisible()).toBe(true);
+    expect(resolveSidebarUpdateAttention(context, dismissed ?? {}).visible).toBe(true);
     overlaySnapshot.updateSchedule.target.version = "2026.8.2";
     gatewaySnapshot.hello.server.bootId = "boot-b";
-    expect(element.updateSurfaceVisible()).toBe(true);
+    expect(resolveSidebarUpdateAttention(context, dismissed ?? {}).visible).toBe(true);
   });
 
   it("forces a dismissed update back for warning and failure outcomes", () => {
     vi.stubGlobal("localStorage", createTestStorageMock());
-    const element = document.createElement("openclaw-sidebar-attention") as SidebarAttentionElement;
     const overlaySnapshot = {
       updateAvailable: {
         currentVersion: "2026.8.1",
@@ -645,7 +693,7 @@ describe("update attention", () => {
       updateRunning: false,
       updateStatusBanner: null as null | { tone: "warn" | "danger"; text: string },
     };
-    element.context = {
+    const context = {
       gateway: {
         connection: { gatewayUrl: "ws://gateway.test" },
         snapshot: {
@@ -660,21 +708,26 @@ describe("update attention", () => {
       },
       overlays: { snapshot: overlaySnapshot },
     } as unknown as ApplicationContext;
-    (element as unknown as { dismissedScope: string }).dismissedScope = "ws://gateway.test";
-    element.dismissUpdateSurface();
-    expect(element.updateSurfaceVisible()).toBe(false);
+    const dismissed = dismissSidebarUpdateAttention({
+      context,
+      dismissedScope: "ws://gateway.test",
+      state: resolveSidebarUpdateAttention(context, {}),
+    });
+    expect(dismissed).not.toBeNull();
+    const isVisible = () => resolveSidebarUpdateAttention(context, dismissed ?? {}).visible;
+    expect(isVisible()).toBe(false);
 
     overlaySnapshot.updateStatusBanner = { tone: "warn", text: "Update blocked" };
-    expect(element.updateSurfaceVisible()).toBe(true);
+    expect(isVisible()).toBe(true);
     overlaySnapshot.updateStatusBanner = { tone: "danger", text: "Update failed" };
-    expect(element.updateSurfaceVisible()).toBe(true);
+    expect(isVisible()).toBe(true);
 
     overlaySnapshot.updateStatusBanner = null;
     overlaySnapshot.updateRunning = true;
-    expect(element.updateSurfaceVisible()).toBe(true);
+    expect(isVisible()).toBe(true);
     overlaySnapshot.updateRunning = false;
     overlaySnapshot.updateReconciliationPending = true;
-    expect(element.updateSurfaceVisible()).toBe(true);
+    expect(isVisible()).toBe(true);
     overlaySnapshot.updateReconciliationPending = false;
     overlaySnapshot.updateSchedule = {
       channel: "stable",
@@ -688,13 +741,12 @@ describe("update attention", () => {
         updatedAtMs: 2,
       },
     };
-    expect(element.updateSurfaceVisible()).toBe(true);
+    expect(isVisible()).toBe(true);
   });
 
   it("does not start an update when a failure has no actionable target", () => {
     const runUpdate = vi.fn();
-    const element = document.createElement("openclaw-sidebar-attention") as SidebarAttentionElement;
-    element.context = {
+    const context = {
       gateway: {
         snapshot: {
           phase: "connected",
@@ -715,7 +767,7 @@ describe("update attention", () => {
       },
     } as unknown as ApplicationContext;
 
-    element.startUpdate();
+    startSidebarUpdateAttention({ context, nativeUpdateDeclined: true });
 
     expect(runUpdate).not.toHaveBeenCalled();
   });
@@ -742,9 +794,36 @@ describe("pruneDismissals", () => {
       ]),
     ).toEqual({ modelAuthExpired: ["openai"] });
   });
+
+  it("prunes only dismissals covered by the loaded agent scope", () => {
+    const dismissals = {
+      cronFailed: ["main-job", "writer-job"],
+      modelAuthExpired: ["agent:main\nopenai", "agent:writer\nopenai"],
+    };
+    const items = [chip("cronFailed", "main-job")];
+
+    expect(
+      pruneDismissals(dismissals, items, null, {
+        cronInventoryComplete: false,
+        modelAuthAgentId: "main",
+      }),
+    ).toEqual({
+      cronFailed: ["main-job", "writer-job"],
+      modelAuthExpired: ["agent:writer\nopenai"],
+    });
+    expect(
+      pruneDismissals(dismissals, items, null, {
+        cronInventoryComplete: true,
+        modelAuthAgentId: "main",
+      }),
+    ).toEqual({
+      cronFailed: ["main-job"],
+      modelAuthExpired: ["agent:writer\nopenai"],
+    });
+  });
 });
 
-describe("addDismissal", () => {
+describe("addDismissals", () => {
   function createStorageMock(): Storage {
     const map = new Map<string, string>();
     return {
@@ -769,7 +848,7 @@ describe("addDismissal", () => {
     // Another tab dismissed a cron chip after this tab last loaded.
     localStorage.setItem(key, JSON.stringify({ cronFailed: ["alpha"] }));
 
-    const next = addDismissal("ws://gateway.test", "cronFailed", "beta");
+    const next = addDismissals("ws://gateway.test", [{ kind: "cronFailed", signature: "beta" }]);
 
     const expected = { cronFailed: ["alpha", "beta"] };
     expect(next).toEqual(expected);
@@ -785,6 +864,52 @@ describe("addDismissal", () => {
     );
 
     expect(loadDismissals(gatewayUrl)).toEqual({ cronFailed: ["legacy-signature"] });
+  });
+
+  it("records visible alerts in one merged write", () => {
+    vi.stubGlobal("localStorage", createStorageMock());
+    const gatewayUrl = "ws://gateway.test";
+    localStorage.setItem(
+      dismissalStoreKey(gatewayUrl),
+      JSON.stringify({ modelAuthExpired: ["openai"] }),
+    );
+
+    const next = addDismissals(gatewayUrl, [
+      { kind: "cronFailed", signature: "main-job" },
+      { kind: "cronOverdue", signature: "writer-job@1" },
+    ]);
+
+    expect(next).toEqual({
+      cronFailed: ["main-job"],
+      cronOverdue: ["writer-job@1"],
+      modelAuthExpired: ["openai"],
+    });
+  });
+});
+
+describe("scope upgrade dismissal fact", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("binds dismissal to the granted scope set and re-arms after it changes", () => {
+    vi.stubGlobal("localStorage", createTestStorageMock());
+    const gatewayUrl = "ws://gateway.test";
+    const dismissal = resolveScopeUpgradeAttentionDismissal([
+      "operator.write",
+      "operator.read",
+      "operator.write",
+    ]);
+
+    expect(dismissal).toBe(
+      resolveScopeUpgradeAttentionDismissal(["operator.read", "operator.write"]),
+    );
+    const stored = dismissScopeUpgradeAttention(gatewayUrl, dismissal!);
+    expect(stored.scopeUpgrade).toBe(dismissal);
+    expect(loadDismissals(gatewayUrl)).toEqual({ scopeUpgrade: dismissal });
+
+    const changed = resolveScopeUpgradeAttentionDismissal(["operator.read"]);
+    expect(rearmScopeUpgradeAttention(stored, changed)).toEqual({});
   });
 });
 

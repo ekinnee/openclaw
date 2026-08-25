@@ -40,12 +40,17 @@ export type SidebarAttentionItem = {
 
 export function buildSidebarAttentionItems(params: {
   cronJobs: readonly CronJob[];
+  cronOwnerByJobId?: ReadonlyMap<string, string>;
   modelAuthStatus: ModelAuthStatusResult | null;
   modelAuthAgentId?: string | null;
   now: number;
 }): SidebarAttentionItem[] {
   const items: SidebarAttentionItem[] = [];
   const cronJobName = (job: CronJob) => job.name?.trim() || job.id;
+  const cronMeta = (job: CronJob, status: string, time: string) => {
+    const context = params.cronOwnerByJobId?.get(job.id);
+    return { ...(context ? { context } : {}), status, time };
+  };
   const boundedQuestion = (question: string) => clampText(question, ALERT_QUESTION_MAX_LENGTH);
   const explainedItem = (
     item: Omit<SidebarAttentionItem, "action">,
@@ -76,7 +81,7 @@ export function buildSidebarAttentionItems(params: {
       icon: "clock",
       label: jobName,
       detail: t("attention.automationFailed", { time }),
-      meta: { status: t("attention.failed"), time },
+      meta: cronMeta(job, t("attention.failed"), time),
       action: { kind: "navigate", routeId: "cron" },
       signature: job.id,
     });
@@ -107,7 +112,7 @@ export function buildSidebarAttentionItems(params: {
       icon: "clock",
       label: jobName,
       detail: t("attention.automationOverdue", { time }),
-      meta: { status: t("attention.overdue"), time },
+      meta: cronMeta(job, t("attention.overdue"), time),
       action: { kind: "navigate", routeId: "cron" },
       signature,
     });

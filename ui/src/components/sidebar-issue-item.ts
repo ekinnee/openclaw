@@ -158,9 +158,27 @@ function scopeUpgradeSummaryText(state: Exclude<ScopeUpgradeState, { phase: "hid
     : scopeUpgradeText(state);
 }
 
+function renderDismissButton(label: string, onDismiss: () => void) {
+  const text = t("attention.dismissItem", { item: label });
+  return html`<button
+    type="button"
+    class="sidebar-issues-panel__dismiss"
+    aria-label=${text}
+    title=${text}
+    @click=${(event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onDismiss();
+    }}
+  >
+    ${icons.x}
+  </button>`;
+}
+
 export function renderSidebarScopeUpgradeItem(params: {
   state: ScopeUpgradeState;
   onCancel: () => void;
+  onDismiss?: () => void;
   onRequest: () => void;
   onRetry: () => void;
 }) {
@@ -183,6 +201,9 @@ export function renderSidebarScopeUpgradeItem(params: {
         <span class="sidebar-issues-panel__entity">${t("connection.scopeUpgrade.status")}</span>
         <span class="sidebar-issues-panel__state" title=${summary}>${summary}</span>
       </span>
+      ${params.onDismiss
+        ? renderDismissButton(t("connection.scopeUpgrade.status"), params.onDismiss)
+        : nothing}
       <span class="sidebar-issues-panel__chevron" aria-hidden="true">${icons.chevronRight}</span>
     </summary>
     <div class="sidebar-issues-panel__body" role="status" aria-live="polite">
@@ -274,15 +295,7 @@ function renderNavigationItem(item: SidebarAttentionItem, handlers: SidebarIssue
           ${renderItemMeta(item)}
         </span>
       </a>
-      <button
-        type="button"
-        class="sidebar-issues-panel__dismiss"
-        aria-label=${t("attention.dismissItem", { item: item.label })}
-        title=${t("attention.dismissItem", { item: item.label })}
-        @click=${() => handlers.onDismiss(item)}
-      >
-        ${icons.x}
-      </button>
+      ${renderDismissButton(item.label, () => handlers.onDismiss(item))}
       <span class="sidebar-issues-panel__chevron" aria-hidden="true">${icons.chevronRight}</span>
     </div>
   </div>`;
@@ -315,19 +328,7 @@ export function renderSidebarIssueItem(
         <span class="sidebar-issues-panel__entity" title=${item.label}>${item.label}</span>
         ${renderItemMeta(item)}
       </span>
-      <button
-        type="button"
-        class="sidebar-issues-panel__dismiss"
-        aria-label=${t("attention.dismissItem", { item: item.label })}
-        title=${t("attention.dismissItem", { item: item.label })}
-        @click=${(event: Event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          handlers.onDismiss(item);
-        }}
-      >
-        ${icons.x}
-      </button>
+      ${renderDismissButton(item.label, () => handlers.onDismiss(item))}
       <span class="sidebar-issues-panel__chevron" aria-hidden="true">${icons.chevronRight}</span>
     </summary>
     <div class="sidebar-issues-panel__body">
