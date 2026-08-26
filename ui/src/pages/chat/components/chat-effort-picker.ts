@@ -20,6 +20,7 @@ type ChatEffortPickerParams = {
   onFastModeSelect: (value: ChatFastModeSelectValue, sessionKey: string) => Promise<unknown>;
   onRequestUpdate?: () => void;
   onThinkingSelect: (value: string, sessionKey: string) => Promise<unknown>;
+  reserved?: boolean;
 };
 
 function formatEffortLabel(label: string): string {
@@ -29,7 +30,7 @@ function formatEffortLabel(label: string): string {
 export function renderChatEffortPicker(params: ChatEffortPickerParams) {
   const sliderStops = params.thinking.options;
   const showReasoning = sliderStops.length > 0;
-  if (!showReasoning && (!params.showFastMode || !params.fastMode.supported)) {
+  if (!params.reserved && !showReasoning && (!params.showFastMode || !params.fastMode.supported)) {
     return nothing;
   }
   const selection = params.thinking.selection;
@@ -120,10 +121,29 @@ export function renderChatEffortPicker(params: ChatEffortPickerParams) {
   const onlyStopSelected = selection.kind === "anchored" && selection.index === 0;
   return html`
     <details
-      class="chat-controls__inline-select chat-controls__effort-picker"
+      class="chat-controls__inline-select chat-controls__effort-picker ${params.reserved
+        ? "chat-controls__effort-picker--reserved"
+        : ""}"
+      aria-hidden=${String(params.reserved === true)}
+      ?inert=${params.reserved === true}
       @toggle=${(event: Event) => {
+        const details = event.currentTarget as HTMLDetailsElement;
         handleChatComposerDetailsToggle(event);
-        syncChatPickerOverlay(event.currentTarget as HTMLDetailsElement);
+        syncChatPickerOverlay(details);
+        if (!details.open) {
+          return;
+        }
+        if (!details.hasAttribute("data-chat-focus-panel")) {
+          return;
+        }
+        details.removeAttribute("data-chat-focus-panel");
+        queueMicrotask(() => {
+          details
+            .querySelector<HTMLElement>(
+              "[data-chat-thinking-slider]:not(:disabled), [data-chat-thinking-option]:not(:disabled), [data-chat-speed-toggle]:not(:disabled)",
+            )
+            ?.focus({ preventScroll: true });
+        });
       }}
     >
       <summary
@@ -164,35 +184,17 @@ export function renderChatEffortPicker(params: ChatEffortPickerParams) {
                     <span class="chat-controls__effort-heading">
                       ${t("chat.modelControls.effort")}
                     </span>
-                    <span class="chat-controls__reasoning-state">
-                      <span
-                        class="chat-controls__reasoning-value ${hasThinkingOverride
-                          ? ""
-                          : "chat-controls__reasoning-value--inherit"}"
-                      >
-                        ${sliderStops.length > 1
-                          ? html`
-                              <span data-chat-thinking-preview-committed>
-                                ${reasoningValueText}
-                              </span>
-                              ${sliderStops.map(
-                                (stop, index) => html`
-                                  <span data-chat-thinking-preview-index=${index} hidden>
-                                    ${formatEffortLabel(stop.label)}
-                                  </span>
-                                `,
-                              )}
-                            `
-                          : reasoningValueText}
-                      </span>
+                    <span class="sr-only">
+                      <span data-chat-thinking-preview-committed>${reasoningValueText}</span>
+                      ${sliderStops.map(
+                        (stop, index) => html`<span data-chat-thinking-preview-index=${index} hidden
+                          >${formatEffortLabel(stop.label)}</span
+                        >`,
+                      )}
                     </span>
                   </div>
                   ${sliderStops.length > 1
                     ? html`
-                        <div class="chat-controls__effort-scale" aria-hidden="true">
-                          <span>${t("chat.modelControls.faster")}</span>
-                          <span>${t("chat.modelControls.smarter")}</span>
-                        </div>
                         <div class="chat-controls__reasoning-slider">
                           <div class="chat-controls__reasoning-dots" aria-hidden="true">
                             ${sliderStops.map(
@@ -230,6 +232,10 @@ export function renderChatEffortPicker(params: ChatEffortPickerParams) {
                             @blur=${(event: FocusEvent) =>
                               resetSliderPreview(event.currentTarget as HTMLInputElement, true)}
                           />
+                        </div>
+                        <div class="chat-controls__effort-scale" aria-hidden="true">
+                          <span>${t("chat.modelControls.faster")}</span>
+                          <span>${t("chat.modelControls.smarter")}</span>
                         </div>
                       `
                     : onlyStop
