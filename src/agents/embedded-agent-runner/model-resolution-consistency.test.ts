@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createPluginMetadataSnapshot } from "../../config/plugin-auto-enable.test-helpers.js";
-import { withPluginMetadataSnapshotScope } from "../../plugins/current-plugin-metadata-snapshot.js";
 import {
   prepareModelRunCapabilities,
   resolvePreparedModelThinkingCompat,
 } from "../model-catalog-lookup.js";
 import type { ModelCatalogEntry } from "../model-catalog.types.js";
 import { resolveInitialEmbeddedRunModel } from "./run/runtime-resolution.js";
+
+// Self-defense against isolate:false shard composition: sibling test files
+// mock this module with incomplete factories, and a leaked mock strips the
+// real withPluginMetadataSnapshotScope this file needs. A file-local
+// identity mock always wins and restores the actual module.
+vi.mock("../../plugins/current-plugin-metadata-snapshot.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../plugins/current-plugin-metadata-snapshot.js")>()),
+}));
 
 const STATIC_MODEL_ID = "claude-haiku-4-5";
 const PROVIDER = "anthropic";
@@ -68,6 +74,10 @@ const resolveModelAsyncMock = vi.fn(
 vi.mock("./model.js", () => ({
   createEmptyAgentDiscoveryStores: () => ({ authStorage, modelRegistry: emptyModelRegistry }),
   resolveModelAsync: resolveModelAsyncMock,
+}));
+
+vi.mock("../provider-model-normalization.runtime.js", () => ({
+  normalizeProviderModelIdWithRuntime: () => undefined,
 }));
 
 vi.mock("../harness/runtime-plugin.js", () => ({
@@ -140,11 +150,6 @@ vi.mock("../../plugins/provider-runtime.js", () => ({
   prepareProviderRuntimeAuth: vi.fn(async () => undefined),
 }));
 
-vi.mock("../../plugins/current-plugin-metadata-snapshot.js", () => ({
-  getCurrentPluginMetadataSnapshot: () => ({ plugins: [] }),
-  withPluginMetadataSnapshotScope: (_snapshot: unknown, run: () => unknown) => run(),
-}));
-
 vi.mock("../provider-secret-egress.js", () => ({
   protectPreparedProviderRuntimeAuth: (value: unknown) => value,
   unwrapSecretSentinelsForProviderEgress: (value: unknown) => value,
@@ -205,19 +210,11 @@ describe("embedded model resolution consistency", () => {
     };
 
     expect(
-      withPluginMetadataSnapshotScope(
-        createPluginMetadataSnapshot({
-          config,
-          manifestRegistry: { plugins: [], diagnostics: [] },
-        }),
-        () =>
-          resolveInitialEmbeddedRunModel({
-            config,
-            agentId: "worker",
-            model: "worker-haiku",
-          }),
-        { config },
-      ),
+      resolveInitialEmbeddedRunModel({
+        config,
+        agentId: "worker",
+        model: "worker-haiku",
+      }),
     ).toEqual({ provider: "anthropic", modelId: "claude-haiku-4-5" });
   });
 
