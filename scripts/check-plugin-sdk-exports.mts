@@ -71,7 +71,7 @@ let missing = 0;
 import { defineChannelPluginEntry } from "openclaw/plugin-sdk/core";
 import type {
   EmbeddingBatchOptions,
-  EmbeddingProviderRuntime,
+  EmbeddingProviderBatchRuntime,
 } from "openclaw/plugin-sdk/embedding-provider-runtime-contract";
 import { createPluginRuntimeStore, type PluginRuntime } from "openclaw/plugin-sdk/runtime-store";
 import { z } from "zod";
@@ -81,14 +81,19 @@ const runtimeStore = createPluginRuntimeStore<PluginRuntime>({
   errorMessage: "package consumer runtime not initialized",
 });
 const embeddingRuntime = {
-  id: "package-consumer",
   sourceWideBatchEmbed: true,
   batchEmbed: async (options: EmbeddingBatchOptions) => options.chunks.map(() => [1]),
-} satisfies EmbeddingProviderRuntime;
+} satisfies EmbeddingProviderBatchRuntime;
+const batchRuntimeWithInternalPolicy = {
+  batchEmbed: async () => [],
+  // @ts-expect-error cache identity is not part of the public batch contract
+  cacheKeyData: {},
+} satisfies EmbeddingProviderBatchRuntime;
 export const configSchema = buildChannelConfigSchema(
   z.object({ dmPolicy: DmPolicySchema.optional() }),
 );
 void embeddingRuntime;
+void batchRuntimeWithInternalPolicy;
 
 declare const plugin: Parameters<typeof defineChannelPluginEntry>[0]["plugin"];
 export default defineChannelPluginEntry({

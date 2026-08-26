@@ -2,5 +2,5 @@
 export type {
   EmbeddingBatchChunk,
   EmbeddingBatchOptions,
-  EmbeddingProviderRuntime,
+  EmbeddingProviderBatchRuntime,
 } from "../plugins/embedding-provider-runtime-types.js";

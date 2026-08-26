@@ -14,6 +14,14 @@ export type EmbeddingBatchOptions = {
   debug: (message: string, data?: Record<string, unknown>) => void;
 };
 
+/** Provider-owned asynchronous batching capability. */
+export type EmbeddingProviderBatchRuntime = {
+  /** Runs the provider-owned asynchronous batch lifecycle, returning one vector per chunk. */
+  batchEmbed: (options: EmbeddingBatchOptions) => Promise<number[][] | null>;
+  /** Lets the provider batch chunks from multiple dirty memory files in one request. */
+  sourceWideBatchEmbed?: true;
+};
+
 /** Runtime metadata returned with a created embedding provider. */
 export type EmbeddingProviderRuntime = {
   id: string;
@@ -25,8 +33,4 @@ export type EmbeddingProviderRuntime = {
   }>;
   inlineQueryTimeoutMs?: number;
   inlineBatchTimeoutMs?: number;
-  /** Lets the provider batch chunks from multiple dirty memory files in one request. */
-  sourceWideBatchEmbed?: boolean;
-  /** Runs the provider-owned asynchronous batch lifecycle, returning one vector per chunk. */
-  batchEmbed?: (options: EmbeddingBatchOptions) => Promise<number[][] | null>;
-};
+} & Partial<EmbeddingProviderBatchRuntime>;
