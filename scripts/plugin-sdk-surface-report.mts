@@ -363,8 +363,10 @@ export function readPluginSdkSurfaceBudgets(env: NodeJS.ProcessEnv = process.env
       // -1: add one tool policy object and retire two unused deprecated mode exports.
       // -1: one exec policy object replaces two deprecated comparator exports.
       // +1: approved bounded TAR inspection through the archive admission owner.
+      // +1: canonical runtime-context classifier for native history projection.
+      // +1: prepared model-specific runtime choices for channel consumers.
       // +3: public provider-owned asynchronous embedding batch contract.
-      4449,
+      4451,
       env,
     ),
     publicFunctionExports: readPluginSdkSurfaceBudgetEnv(
@@ -495,7 +497,9 @@ export function readPluginSdkSurfaceBudgets(env: NodeJS.ProcessEnv = process.env
       // -2: retire the deprecated mode projection callables.
       // -2: exec comparators are members of the shared policy object.
       // +1: approved bounded TAR inspection through the archive admission owner.
-      2628,
+      // +1: canonical runtime-context classifier for native history projection.
+      // +1: prepared model-specific runtime choice reader.
+      2630,
       env,
     ),
     publicDeprecatedExports: readPluginSdkSurfaceBudgetEnv(
