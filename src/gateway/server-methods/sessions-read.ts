@@ -26,6 +26,10 @@ import {
 import { SessionTranscriptColdError } from "../../config/sessions/session-cold-storage-state.js";
 import { searchSessionTranscripts } from "../../config/sessions/session-transcript-search.js";
 import {
+  buildProjectedAgentRunIndex,
+  resolveProjectedAgentRunModel,
+} from "../../infra/agent-run-registry.js";
+import {
   measureDiagnosticsTimelineSpan,
   measureDiagnosticsTimelineSpanSync,
 } from "../../infra/diagnostics-timeline.js";
@@ -52,6 +56,8 @@ import { resolveSessionStoreAgentId } from "../session-store-key.js";
 import { readSessionPreviewItemsFromTranscript } from "../session-transcript-readers.js";
 import type { SessionListActiveRunProjector } from "../session-utils-contracts.js";
 import { projectGatewaySessionActiveRun } from "../session-utils-display.js";
+import { resolveSessionSelectedModelRef } from "../session-utils-projection.js";
+import { resolveGatewaySessionFallbackModel } from "../session-utils-row.js";
 import {
   listSessionsFromStoreAsync,
   loadCombinedSessionStoreForGatewayCore,
@@ -447,6 +453,7 @@ export const sessionReadHandlers: GatewayRequestHandlers = {
           diagnostics?.mark("decoration");
           const projectPlacement = createSessionPlacementBatchProjector(context, result.sessions);
           const projectActiveRun = createVisibleActiveSessionRunProjector(context);
+          const projectedAgentRuns = buildProjectedAgentRunIndex();
           // These rows are unpublished; decorate them with fresh caller facts after the yields.
           const sharing = prepareSessionSharing({ client, cfg });
           measureDiagnosticsTimelineSpanSync(
@@ -465,6 +472,47 @@ export const sessionReadHandlers: GatewayRequestHandlers = {
                   agentId: session.agentId,
                   defaultAgentId: tryResolveSessionCompatibilityOwnerAgentId(cfg, storeKey),
                 });
+                if (activeRunState.active) {
+                  const agentId =
+                    session.agentId ?? tryResolveSessionCompatibilityOwnerAgentId(cfg, storeKey);
+                  const liveModel = agentId
+                    ? resolveProjectedAgentRunModel({
+                        agentId,
+                        sessionId: session.sessionId,
+                        sessionKey: storeKey,
+                        index: projectedAgentRuns,
+                      })
+                    : undefined;
+                  session.activeModelProvider = liveModel?.provider;
+                  session.activeModel = liveModel?.model;
+                } else {
+                  const target = targetsBySessionKey.get(session.key);
+                  const freshEntry = sharingTarget?.entry;
+                  const agentId =
+                    session.agentId ?? tryResolveSessionCompatibilityOwnerAgentId(cfg, storeKey);
+                  const completedFallback =
+                    target && sharingTarget && freshEntry?.fallbackNotice && agentId
+                      ? (() => {
+                          const selectedModel = resolveSessionSelectedModelRef({
+                            cfg,
+                            source: { ...target.modelSource, entry: freshEntry },
+                            agentId,
+                            sessionKey: storeKey,
+                          });
+                          return resolveGatewaySessionFallbackModel({
+                            cfg,
+                            selectedProvider: selectedModel.provider,
+                            selectedModel: selectedModel.model,
+                            entry: freshEntry,
+                            agentId,
+                            sessionKey: storeKey,
+                            storePath: sharingTarget.storePath,
+                          });
+                        })()
+                      : undefined;
+                  session.activeModelProvider = completedFallback?.provider;
+                  session.activeModel = completedFallback?.model;
+                }
                 Object.assign(session, {
                   visibility,
                   ...(sharingTarget

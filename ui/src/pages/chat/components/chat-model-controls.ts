@@ -7,6 +7,7 @@ import type {
 } from "../../../api/types.ts";
 import { t } from "../../../i18n/index.ts";
 import {
+  buildQualifiedChatModelValue,
   normalizeChatModelProviderId,
   resolvePreferredServerChatModelValue,
 } from "../../../lib/chat/model-ref.ts";
@@ -25,6 +26,8 @@ import {
   listEffectiveModelAuthProviders,
 } from "../../../lib/model-auth.ts";
 import { describeModelProviderAuth } from "../../../lib/model-provider-auth-label.ts";
+import { isSessionRunActive } from "../../../lib/session-run-state.ts";
+import { areUiSessionKeysEquivalent } from "../../../lib/sessions/session-key.ts";
 import { renderChatEffortPicker } from "./chat-effort-picker.ts";
 import type { ChatModelAccountSection } from "./chat-model-account-control.ts";
 import type {
@@ -49,6 +52,7 @@ type ChatModelControlsProps = {
   accountSelection?: ChatAccountSelection | null;
   renderAccountSection?: (model: string) => ChatModelAccountSection | undefined;
   activeRunId: string | null;
+  activeRunSessionKey?: string;
   agentDefaultModel?: string;
   connected: boolean;
   gatewayAvailable: boolean;
@@ -258,8 +262,16 @@ export function renderChatModelControls(props: ChatModelControlsProps) {
     sessionKey: props.sessionKey,
     sessionsResult: props.sessionsResult,
   });
+  const activeSession = props.selectedSession;
+  const localRunMatchesSession = Boolean(
+    props.activeRunId &&
+    props.activeRunSessionKey &&
+    areUiSessionKeysEquivalent(props.activeRunSessionKey, props.sessionKey),
+  );
+  const activeRunId = localRunMatchesSession ? props.activeRunId : null;
+  const stream = localRunMatchesSession ? props.stream : null;
   const resolvedFastMode = resolveChatFastModeSelectState({
-    activeRunId: props.activeRunId,
+    activeRunId,
     catalog: props.modelCatalog,
     connected: props.connected,
     currentModelOverride: currentOverride,
@@ -268,24 +280,40 @@ export function renderChatModelControls(props: ChatModelControlsProps) {
     loading: props.loading,
     sending: props.sending,
     sessionsResult: props.sessionsResult,
-    stream: props.stream,
+    stream,
   });
   // Reasoning/fast state still describes the previous model until the refreshed
   // session row lands. Lock both so stale levels cannot be committed mid-switch.
   const fastMode = props.modelSwitching
     ? { ...resolvedFastMode, disabled: true }
     : resolvedFastMode;
-  const activeSession = props.selectedSession;
   const currentProviderHint = activeSession?.modelProvider ?? "";
   const hasPendingModelSelection = Object.hasOwn(props.modelOverrides ?? {}, props.sessionKey);
+  const sessionRunning = isSessionRunActive(activeSession ?? {});
+  const executionPending =
+    props.sending || Boolean(activeRunId) || stream !== null || sessionRunning;
+  const currentRunMatches =
+    sessionRunning &&
+    (!activeRunId ||
+      !activeSession?.activeRunIds ||
+      activeSession.activeRunIds.includes(activeRunId));
+  // The row can still describe the previous turn while a send is being admitted.
+  // Only the current run's complete provider/model pair identifies its execution.
   const activeModelValue = hasPendingModelSelection
     ? ""
-    : resolvePreferredServerChatModelValue(
-        activeSession?.activeModel,
-        activeSession?.activeModelProvider,
-        props.modelCatalog,
-      );
-  const triggerModelValue = activeModelValue || currentOverride;
+    : executionPending
+      ? currentRunMatches &&
+        activeSession?.activeModel?.trim() &&
+        activeSession.activeModelProvider?.trim()
+        ? buildQualifiedChatModelValue(activeSession.activeModel, activeSession.activeModelProvider)
+        : ""
+      : resolvePreferredServerChatModelValue(
+          activeSession?.activeModel,
+          activeSession?.activeModelProvider,
+          props.modelCatalog,
+        );
+  const modelPending = executionPending && !activeModelValue;
+  const triggerModelValue = modelPending ? "" : activeModelValue || currentOverride;
   const defaultProviderHint = props.sessionsResult?.defaults?.modelProvider ?? "";
   const defaultCatalogEntry = catalog.entry(defaultModel);
   const canonicalDefaultLabel = resolveChatModelPickerLabel(defaultCatalogEntry, defaultLabel);
@@ -506,10 +534,17 @@ export function renderChatModelControls(props: ChatModelControlsProps) {
         sessionModelPinned,
         sessionKey: props.sessionKey,
         triggerModelLabel: formatPickerModelLabel(committedModelLabel),
-        triggerModelValue,
-        triggerStatusLabel: props.modelSelectionLocked ? undefined : catalogTriggerStatus,
+        triggerModelValue: modelPending ? "" : triggerModelValue || undefined,
+        triggerStatusLabel: modelPending
+          ? t("chat.modelControls.modelPending")
+          : props.modelSelectionLocked
+            ? undefined
+            : catalogTriggerStatus,
         triggerLoading:
-          !props.modelSelectionLocked && catalogLoadingWithoutSnapshot && !selectionKnown,
+          !modelPending &&
+          !props.modelSelectionLocked &&
+          catalogLoadingWithoutSnapshot &&
+          !selectionKnown,
         onModelSetup: props.onModelSetup,
         onOpen: props.onModelPickerOpen,
         onOpenChange: props.onModelPickerOpenChange,
