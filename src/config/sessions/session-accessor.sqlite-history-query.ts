@@ -598,6 +598,24 @@ export function readSessionTranscriptHistoryAnchorPageFromProjection(
   options: TranscriptAnchorPageOptions,
 ): SessionTranscriptMessageAnchorPage {
   const history = resolveVisibleHistoryProjection(projection);
+  if (options.closedResetInterval === true && options.direction === "older") {
+    const closingReset = readDisplayableActiveEventById(
+      projection,
+      options.messageId,
+      options.maxBytes,
+    );
+    if (closingReset?.event_type === "reset") {
+      const closedPage = readHistoricalHistoryAnchorPage(
+        projection,
+        history.displaySource,
+        closingReset,
+        options,
+      );
+      if (closedPage) {
+        return closedPage;
+      }
+    }
+  }
   const windowChange = resolveHistoryReadWindowChange(
     projection,
     history,

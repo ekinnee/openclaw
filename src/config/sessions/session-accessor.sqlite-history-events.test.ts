@@ -875,6 +875,48 @@ describe("SQLite transcript history events", () => {
     ).toBe(false);
   });
 
+  it("bounds a closed reset interval before hydrating excluded payloads", async () => {
+    await persistSessionTranscriptTurn(scope, {
+      messages: [
+        transcriptMessage("oversized-older", null, { role: "user", content: "older" }),
+        transcriptMessage("fitting-newer", "oversized-older", {
+          role: "assistant",
+          content: "newer",
+        }),
+      ],
+      touchSessionEntry: false,
+    });
+    await appendTranscriptEvent(scope, {
+      type: "reset",
+      id: "closing-reset",
+      parentId: "fitting-newer",
+      timestamp: "2026-09-07T00:00:00.000Z",
+      reason: "new",
+    });
+    const database = openOpenClawAgentDatabase({ agentId: scope.agentId, env: scope.env });
+    database.db
+      .prepare(
+        `UPDATE transcript_events
+         SET event_json = '{', event_zstd = NULL, event_utf8_bytes = 16384
+         WHERE session_id = ? AND seq = (
+           SELECT seq FROM transcript_event_identities
+           WHERE session_id = ? AND event_id = 'oversized-older'
+         )`,
+      )
+      .run(scope.sessionId, scope.sessionId);
+
+    const page = readSessionTranscriptHistoryAnchorPage(scope, {
+      closedResetInterval: true,
+      direction: "older",
+      maxBytes: 1_024,
+      maxMessages: 10,
+      messageId: "closing-reset",
+    });
+
+    expect(page).toMatchObject({ found: true, totalMessages: 3 });
+    expect(page.events.map(historyEventId)).toEqual(["fitting-newer", "closing-reset"]);
+  });
+
   it.each(["message", "custom_message"])(
     "does not reopen an inactive side-branch %s as a historical anchor",
     async (type) => {

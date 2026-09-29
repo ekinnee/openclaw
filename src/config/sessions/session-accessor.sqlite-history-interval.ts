@@ -226,13 +226,14 @@ function readHistoricalDisplayEventRange(
   start: number,
   count: number,
   anchor: { activePosition: number; displayPosition: number },
+  maxBytes?: number,
 ): SessionTranscriptMessageEvent[] {
   if (count <= 0) {
     return [];
   }
   const query = selectHistoricalDisplayEvents(projection, interval).select([
     "active.event_seq",
-    transcriptEventJsonSql(projection.database.db, "event").as("event_json"),
+    sql<number>`${transcriptEventReadBytesSql("event")} + 1`.as("serialized_bytes"),
   ]);
   const olderCount = anchor.displayPosition - start;
   // The anchor already identifies the physical position; visit only its selected neighbors.
@@ -253,14 +254,57 @@ function readHistoricalDisplayEventRange(
       .orderBy("active.active_position", "asc")
       .limit(count - olderCount),
   ).rows;
+  const ranged = [...older.toReversed(), ...newer].map((row, index) =>
+    Object.assign(row, { displaySeq: start + index + 1 }),
+  );
+  const selected = (() => {
+    if (maxBytes === undefined) {
+      return ranged;
+    }
+    const limit = Math.max(1_024, Math.floor(maxBytes));
+    let bytes = 2;
+    let selectedStart = ranged.length;
+    while (selectedStart > 0) {
+      const nextBytes = ranged[selectedStart - 1]!.serialized_bytes;
+      if (bytes + nextBytes > limit) {
+        break;
+      }
+      bytes += nextBytes;
+      selectedStart--;
+    }
+    return ranged.slice(selectedStart);
+  })();
+  if (selected.length === 0) {
+    return [];
+  }
+  const payloads = executeSqliteQuerySync(
+    projection.database.db,
+    getActiveTranscriptKysely(projection.database)
+      .selectFrom("transcript_events")
+      .select(["seq", transcriptEventJsonSql(projection.database.db).as("event_json")])
+      .where("session_id", "=", projection.resolved.sessionId)
+      .where(
+        "seq",
+        "in",
+        selected.map((row) => row.event_seq),
+      ),
+  ).rows;
+  const payloadBySeq = new Map(payloads.map((row) => [row.seq, row.event_json]));
   return positionTranscriptDisplayEvents(
     projection,
     displaySource,
-    [...older.toReversed(), ...newer].map((row, index) => ({
-      event: parseStoredTranscriptEvent(row.event_json),
-      eventSeq: row.event_seq,
-      seq: start + index + 1,
-    })),
+    selected.flatMap((row) => {
+      const eventJson = payloadBySeq.get(row.event_seq);
+      return eventJson === undefined
+        ? []
+        : [
+            {
+              event: parseStoredTranscriptEvent(eventJson),
+              eventSeq: row.event_seq,
+              seq: row.displaySeq,
+            },
+          ];
+    }),
   );
 }
 
@@ -295,7 +339,7 @@ export function resolveHistoricalHistoryEvent(
 export function readHistoricalHistoryAnchorPage(
   projection: CurrentTranscriptProjection,
   displaySource: string | undefined,
-  row: NonNullable<ReturnType<typeof readDisplayableActiveEventById>>,
+  row: { active_position: number; event_type: string | null },
   options: TranscriptAnchorPageOptions,
 ): SessionTranscriptMessageAnchorPage | undefined {
   const interval = resolveClosedResetIntervalForDisplayable(projection, row);
@@ -323,6 +367,7 @@ export function readHistoricalHistoryAnchorPage(
       range.readStart,
       range.endExclusive - range.readStart,
       { activePosition: row.active_position, displayPosition: anchorPosition },
+      options.maxBytes,
     ),
     found: true,
     hasOverreadContext: range.hasOverreadContext,
