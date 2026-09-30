@@ -25,6 +25,7 @@ import { positionTranscriptDisplayEvents } from "./session-accessor.sqlite-displ
 import {
   parseStoredTranscriptEvent,
   readDisplayableActiveEventById,
+  readDisplayableActiveResetMetadataById,
   readHistoricalHistoryAnchorPage,
   resolveHistoricalHistoryEvent,
 } from "./session-accessor.sqlite-history-interval.js";
@@ -599,12 +600,8 @@ export function readSessionTranscriptHistoryAnchorPageFromProjection(
 ): SessionTranscriptMessageAnchorPage {
   const history = resolveVisibleHistoryProjection(projection);
   if (options.closedResetInterval === true && options.direction === "older") {
-    const closingReset = readDisplayableActiveEventById(
-      projection,
-      options.messageId,
-      options.maxBytes,
-    );
-    if (closingReset?.event_type === "reset") {
+    const closingReset = readDisplayableActiveResetMetadataById(projection, options.messageId);
+    if (closingReset) {
       const closedPage = readHistoricalHistoryAnchorPage(
         projection,
         history.displaySource,

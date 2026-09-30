@@ -126,6 +126,44 @@ function selectHistoricalDisplayEvents(
     );
 }
 
+function selectDisplayableActiveEventById(
+  projection: CurrentTranscriptProjection,
+  eventId: string,
+) {
+  const db = getActiveTranscriptKysely(projection.database);
+  return db
+    .selectFrom("transcript_event_identities as identity")
+    .innerJoin("session_transcript_active_events as active", (join) =>
+      join
+        .onRef("active.session_id", "=", "identity.session_id")
+        .onRef("active.event_seq", "=", "identity.seq"),
+    )
+    .innerJoin("transcript_events as event", (join) =>
+      join
+        .onRef("event.session_id", "=", "active.session_id")
+        .onRef("event.seq", "=", "active.event_seq"),
+    )
+    .select([
+      "active.event_seq",
+      "active.active_position",
+      "active.message_position",
+      "identity.event_type",
+    ])
+    .where("identity.session_id", "=", projection.resolved.sessionId)
+    .where("identity.event_id", "=", eventId)
+    .where((eb) =>
+      eb.or([
+        eb("active.message_position", "is not", null),
+        isVisibleHistoryNonMessageEventSql(
+          eb.ref("identity.event_type"),
+          transcriptEventNavigationSql("event"),
+          eb.ref("active.event_seq"),
+          eb.ref("event.seq"),
+        ),
+      ]),
+    );
+}
+
 export function readDisplayableActiveEventById(
   projection: CurrentTranscriptProjection,
   eventId: string,
@@ -134,48 +172,17 @@ export function readDisplayableActiveEventById(
   const db = getActiveTranscriptKysely(projection.database);
   const indexed = executeSqliteQueryTakeFirstSync(
     projection.database.db,
-    db
-      .selectFrom("transcript_event_identities as identity")
-      .innerJoin("session_transcript_active_events as active", (join) =>
-        join
-          .onRef("active.session_id", "=", "identity.session_id")
-          .onRef("active.event_seq", "=", "identity.seq"),
-      )
-      .innerJoin("transcript_events as event", (join) =>
-        join
-          .onRef("event.session_id", "=", "active.session_id")
-          .onRef("event.seq", "=", "active.event_seq"),
-      )
-      .select([
-        "active.event_seq",
-        "active.active_position",
-        "active.message_position",
-        "identity.event_type",
-      ])
-      .select((eb) =>
-        maxBytes === undefined
-          ? transcriptEventJsonSql(projection.database.db, "event").as("event_json")
-          : eb
-              .case()
-              .when(eb(transcriptEventReadBytesSql("event"), "<=", maxBytes))
-              .then(transcriptEventJsonSql(projection.database.db, "event"))
-              .else(null)
-              .end()
-              .as("event_json"),
-      )
-      .where("identity.session_id", "=", projection.resolved.sessionId)
-      .where("identity.event_id", "=", eventId)
-      .where((eb) =>
-        eb.or([
-          eb("active.message_position", "is not", null),
-          isVisibleHistoryNonMessageEventSql(
-            eb.ref("identity.event_type"),
-            transcriptEventNavigationSql("event"),
-            eb.ref("active.event_seq"),
-            eb.ref("event.seq"),
-          ),
-        ]),
-      ),
+    selectDisplayableActiveEventById(projection, eventId).select((eb) =>
+      maxBytes === undefined
+        ? transcriptEventJsonSql(projection.database.db, "event").as("event_json")
+        : eb
+            .case()
+            .when(eb(transcriptEventReadBytesSql("event"), "<=", maxBytes))
+            .then(transcriptEventJsonSql(projection.database.db, "event"))
+            .else(null)
+            .end()
+            .as("event_json"),
+    ),
   );
   if (indexed) {
     return indexed.event_json === null ? undefined : { ...indexed, event_json: indexed.event_json };
@@ -204,6 +211,25 @@ export function readDisplayableActiveEventById(
         event_type: typeof unindexed.event.type === "string" ? unindexed.event.type : null,
         event_json: event.event_json,
       }
+    : undefined;
+}
+
+export function readDisplayableActiveResetMetadataById(
+  projection: CurrentTranscriptProjection,
+  eventId: string,
+): { active_position: number; event_type: "reset" } | undefined {
+  const indexed = executeSqliteQueryTakeFirstSync(
+    projection.database.db,
+    selectDisplayableActiveEventById(projection, eventId),
+  );
+  if (indexed) {
+    return indexed.event_type === "reset"
+      ? { active_position: indexed.active_position, event_type: "reset" }
+      : undefined;
+  }
+  const unindexed = findUnindexedActiveTranscriptEntry(projection, eventId);
+  return unindexed?.event.type === "reset"
+    ? { active_position: unindexed.active_position, event_type: "reset" }
     : undefined;
 }
 
