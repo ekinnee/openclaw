@@ -231,9 +231,9 @@ function readHistoricalDisplayEventRange(
   if (count <= 0) {
     return [];
   }
-  const query = selectHistoricalDisplayEvents(projection, interval).select([
+  const query = selectHistoricalDisplayEvents(projection, interval).select((eb) => [
     "active.event_seq",
-    sql<number>`${transcriptEventReadBytesSql("event")} + 1`.as("serialized_bytes"),
+    eb(transcriptEventReadBytesSql("event"), "+", 1).as("serialized_bytes"),
   ]);
   const olderCount = anchor.displayPosition - start;
   // The anchor already identifies the physical position; visit only its selected neighbors.
@@ -341,6 +341,7 @@ export function readHistoricalHistoryAnchorPage(
   displaySource: string | undefined,
   row: { active_position: number; event_type: string | null },
   options: TranscriptAnchorPageOptions,
+  excludeClosingReset = false,
 ): SessionTranscriptMessageAnchorPage | undefined {
   const interval = resolveClosedResetIntervalForDisplayable(projection, row);
   if (!interval) {
@@ -356,9 +357,13 @@ export function readHistoricalHistoryAnchorPage(
         .as("before_anchor"),
     ]),
   );
-  const total = counts?.total ?? 0;
   const anchorPosition = counts?.before_anchor ?? 0;
-  const range = resolveHistoryAnchorPageRange(total, anchorPosition, options);
+  const total = excludeClosingReset ? anchorPosition : (counts?.total ?? 0);
+  const range = resolveHistoryAnchorPageRange(
+    total,
+    excludeClosingReset ? total - 1 : anchorPosition,
+    options,
+  );
   return {
     events: readHistoricalDisplayEventRange(
       projection,

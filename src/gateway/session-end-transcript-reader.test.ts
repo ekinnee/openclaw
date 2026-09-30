@@ -26,8 +26,8 @@ describe("reset-boundary ended transcript reader", () => {
     }));
     mocks.readSessionMessagesAroundIdWithStatsAsync.mockResolvedValue({
       found: true,
-      messages: [...messages, { __openclaw: { id: boundaryId } }],
-      totalMessages: messageCount + 1,
+      messages,
+      totalMessages: messageCount,
     });
     const scope = { agentId: "main", sessionId: "ended" } as SessionTranscriptReadScope;
     const source = createResetBoundaryTranscriptSource(scope, boundaryId);
@@ -40,7 +40,7 @@ describe("reset-boundary ended transcript reader", () => {
     expect(mocks.readSessionMessagesAroundIdWithStatsAsync).toHaveBeenCalledWith(scope, {
       closedResetInterval: true,
       messageId: boundaryId,
-      maxMessages: messageCount + 1,
+      maxMessages: messageCount,
       maxBytes: 8 * 1024 * 1024,
       direction: "older",
     });

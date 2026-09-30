@@ -9,6 +9,7 @@ import {
   useNoBundledPlugins,
   writePlugin,
 } from "../plugins/loader.test-fixtures.js";
+import type { PluginHookEndedTranscriptReadResult } from "../plugins/session-end-transcript.js";
 import { testState, writeSessionStore } from "./test-helpers.js";
 import {
   directSessionReq,
@@ -63,7 +64,7 @@ module.exports = {
       try {
         const transcript = context.endedTranscript;
         const result = transcript?.available
-          ? await transcript.readTail({ maxMessages: 10, maxBytes: 64 * 1024 })
+          ? await transcript.readTail({ maxMessages: 10, maxBytes: 4 * 1024 })
           : transcript;
         globalThis[resultKey]?.resolve(result);
       } catch (error) {
@@ -81,6 +82,7 @@ test("sessions.reset delivers the ended SQLite window only to a loaded granted p
   await createSessionStoreDir();
   const storePath = requireStorePath();
   await writeSessionStore({ entries: { main: sessionStoreEntry("sess-main") } });
+  const latestEndedContent = "latest ended interval ".padEnd(3_600, "x");
   await seedSessionTranscript({
     agentId: "main",
     sessionId: "sess-main",
@@ -94,7 +96,7 @@ test("sessions.reset delivers the ended SQLite window only to a loaded granted p
     sessionId: "sess-main",
     sessionKey: "agent:main:main",
     storePath,
-    messages: [{ role: "user", content: "latest ended interval", id: "m2" }],
+    messages: [{ role: "user", content: latestEndedContent, id: "m2" }],
   });
 
   useNoBundledPlugins();
@@ -126,7 +128,7 @@ test("sessions.reset delivers the ended SQLite window only to a loaded granted p
       }
     },
   });
-  const grantedResult = createDeferred<unknown>();
+  const grantedResult = createDeferred<PluginHookEndedTranscriptReadResult>();
   const ungrantedResult = createDeferred<unknown>();
   (globalThis as Record<PropertyKey, unknown>)[resultKeys.granted] = grantedResult;
   (globalThis as Record<PropertyKey, unknown>)[resultKeys.ungranted] = ungrantedResult;
@@ -139,10 +141,13 @@ test("sessions.reset delivers the ended SQLite window only to a loaded granted p
       hookSettled.promise,
     ]);
     expect(granted).toMatchObject({
-      messages: [expect.objectContaining({ role: "user", content: "latest ended interval" })],
+      messages: [expect.objectContaining({ role: "user", content: latestEndedContent })],
       totalMessages: 1,
       truncated: false,
     });
+    expect(Buffer.byteLength(JSON.stringify(granted.messages), "utf8")).toBeLessThanOrEqual(
+      4 * 1024,
+    );
     expect(ungranted).toEqual({
       available: false,
       reason: "conversation-access-required",

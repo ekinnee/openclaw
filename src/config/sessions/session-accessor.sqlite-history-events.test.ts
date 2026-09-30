@@ -913,8 +913,8 @@ describe("SQLite transcript history events", () => {
       messageId: "closing-reset",
     });
 
-    expect(page).toMatchObject({ found: true, totalMessages: 3 });
-    expect(page.events.map(historyEventId)).toEqual(["fitting-newer", "closing-reset"]);
+    expect(page).toMatchObject({ found: true, totalMessages: 2 });
+    expect(page.events.map(historyEventId)).toEqual(["fitting-newer"]);
   });
 
   it.each(["message", "custom_message"])(

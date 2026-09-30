@@ -4,11 +4,14 @@
  * Tests the hook runner methods directly since session init is deeply integrated.
  */
 import { describe, expect, it, vi } from "vitest";
+import { createDeferredCore } from "../shared/deferred.js";
 import {
   addTestHook,
   createHookRunnerWithRegistry,
   TEST_PLUGIN_AGENT_CTX,
 } from "./hooks.test-fixtures.js";
+import { PluginInstanceDrainTimeoutError } from "./plugin-instance-error.js";
+import { PluginInstance } from "./plugin-instance.js";
 import type { PluginHookSessionContext } from "./session-end-transcript.js";
 import { attachSessionEndTranscriptSource } from "./session-end-transcript.js";
 import type {
@@ -18,6 +21,11 @@ import type {
 } from "./types.js";
 
 type PluginHookSessionStartContext = Parameters<PluginHookHandlerMap["session_start"]>[1];
+type TranscriptReadResult = {
+  messages: readonly unknown[];
+  totalMessages: number;
+  truncated: boolean;
+};
 
 async function expectSessionHookCall(params: {
   hookName: "session_start" | "session_end";
@@ -216,5 +224,92 @@ describe("session hook runner methods", () => {
     );
 
     await expect(detachedRead).rejects.toThrow("no longer active");
+  });
+
+  it("rejects transcript reads at forced plugin retirement", async () => {
+    vi.useFakeTimers();
+    const firstRead = createDeferredCore<TranscriptReadResult>();
+    const readTail = vi
+      .fn()
+      .mockImplementationOnce(() => firstRead.promise)
+      .mockResolvedValue({ messages: [], totalMessages: 0, truncated: false });
+    const entered = createDeferredCore();
+    const handlerGate = createDeferredCore();
+    let transcript: PluginHookSessionContext["endedTranscript"];
+    let inFlight: Promise<unknown> | undefined;
+    const { registry, runner } = createHookRunnerWithRegistry([
+      {
+        hookName: "session_end",
+        pluginId: "retiring-reader",
+        handler: () => undefined,
+        conversationAccessAllowed: true,
+      },
+    ]);
+    const instance = new PluginInstance("retiring-reader", {
+      record: registry.plugins[0]!,
+      registry,
+    });
+    const retiringHandler: PluginHookHandlerMap["session_end"] = async (_event, context) => {
+      transcript = context.endedTranscript;
+      if (!transcript?.available) {
+        throw new Error("expected ended transcript reader");
+      }
+      inFlight = transcript.readTail({ maxMessages: 1, maxBytes: 1_024 });
+      inFlight.catch(() => {});
+      entered.resolve();
+      await handlerGate.promise;
+    };
+    registry.typedHooks[0]!.handler = instance.wrap(retiringHandler);
+    const context = { ...sessionCtx };
+    attachSessionEndTranscriptSource(context, { available: true, readTail });
+    const running = runner.runSessionEnd(
+      { sessionId: sessionCtx.sessionId, messageCount: 1, reason: "reset" },
+      context,
+    );
+    let disposing: ReturnType<PluginInstance["dispose"]> | undefined;
+
+    try {
+      await entered.promise;
+      expect(readTail).toHaveBeenCalledOnce();
+      if (!transcript?.available) {
+        throw new Error("expected ended transcript reader");
+      }
+
+      disposing = instance.dispose();
+      await vi.advanceTimersByTimeAsync(4_999);
+      expect(instance.lifecycle.signal.aborted).toBe(false);
+      await expect(transcript.readTail({ maxMessages: 1, maxBytes: 1_024 })).resolves.toEqual({
+        messages: [],
+        totalMessages: 0,
+        truncated: false,
+      });
+      expect(readTail).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(instance.lifecycle.signal.aborted).toBe(true);
+      const callsAtRetirement = readTail.mock.calls.length;
+      await expect(transcript.readTail({ maxMessages: 1, maxBytes: 1_024 })).rejects.toThrow(
+        "no longer active",
+      );
+      expect(readTail).toHaveBeenCalledTimes(callsAtRetirement);
+
+      firstRead.resolve({ messages: [], totalMessages: 0, truncated: false });
+      await expect(inFlight).rejects.toThrow("no longer active");
+      handlerGate.resolve();
+      await running;
+      const disposal = await disposing!;
+      const timeout = disposal.errors[0];
+      expect(timeout).toBeInstanceOf(PluginInstanceDrainTimeoutError);
+      if (!(timeout instanceof PluginInstanceDrainTimeoutError)) {
+        throw new Error("expected forced-retirement settlement");
+      }
+      await timeout.settled;
+    } finally {
+      handlerGate.resolve();
+      firstRead.resolve({ messages: [], totalMessages: 0, truncated: false });
+      await vi.advanceTimersByTimeAsync(5_000);
+      await Promise.allSettled([running, disposing ?? instance.dispose()]);
+      vi.useRealTimers();
+    }
   });
 });

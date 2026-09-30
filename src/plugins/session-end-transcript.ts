@@ -1,3 +1,5 @@
+import { getPluginValueInstance } from "./plugin-instance-scope.js";
+
 type PluginHookEndedTranscriptUnavailableReason =
   | "conversation-access-required"
   | "no-stable-cutoff"
@@ -80,13 +82,16 @@ function readSessionEndTranscriptSource(
   );
 }
 
-function createScopedAvailableEndedTranscript(source: SessionEndTranscriptAvailableSource): {
+function createScopedAvailableEndedTranscript(
+  source: SessionEndTranscriptAvailableSource,
+  lifecycleSignal?: AbortSignal,
+): {
   capability: SessionEndTranscriptAvailableSource;
   revoke(): void;
 } {
   let active = true;
   const assertActive = () => {
-    if (!active) {
+    if (!active || lifecycleSignal?.aborted) {
       throw new Error("session_end transcript reader is no longer active");
     }
   };
@@ -119,7 +124,7 @@ export function createSessionEndTranscriptSourceLease(source: SessionEndTranscri
 }
 
 export function projectSessionEndTranscriptContext(
-  hook: { conversationAccessAllowed?: true },
+  hook: { conversationAccessAllowed?: true; handler: object },
   context: PluginHookSessionContext,
 ): { context: PluginHookSessionContext; dispose(): void } {
   if (hook.conversationAccessAllowed !== true) {
@@ -138,7 +143,10 @@ export function projectSessionEndTranscriptContext(
   if (!source.available) {
     return { context: { ...context, endedTranscript: Object.freeze({ ...source }) }, dispose() {} };
   }
-  const scoped = createScopedAvailableEndedTranscript(source);
+  const scoped = createScopedAvailableEndedTranscript(
+    source,
+    getPluginValueInstance(hook.handler)?.lifecycle.signal,
+  );
   return {
     context: { ...context, endedTranscript: scoped.capability },
     dispose: () => scoped.revoke(),

@@ -1,4 +1,3 @@
-import { asOptionalRecord } from "@openclaw/normalization-core/record-coerce";
 import type { SessionTranscriptReadScope } from "../config/sessions/session-accessor.sqlite-contract.js";
 import {
   MAX_VISIBLE_MESSAGE_MAX_BYTES,
@@ -79,19 +78,14 @@ export function createResetBoundaryTranscriptSource(
       const page = await readSessionMessagesAroundIdWithStatsAsync(scope, {
         closedResetInterval: true,
         messageId: boundaryId,
-        maxMessages: options.maxMessages + 1,
+        maxMessages: options.maxMessages,
         maxBytes: options.maxBytes,
         direction: "older",
       });
       if (!page.found) {
         throw new Error("Ended session reset boundary is no longer available");
       }
-      const messages = page.messages.filter((message) => {
-        const record = asOptionalRecord(message);
-        const meta = record ? asOptionalRecord(Reflect.get(record, "__openclaw")) : undefined;
-        return meta?.id !== boundaryId;
-      });
-      return finalizeEndedTranscriptRead(messages, Math.max(0, page.totalMessages - 1), options);
+      return finalizeEndedTranscriptRead(page.messages, page.totalMessages, options);
     },
   };
 }

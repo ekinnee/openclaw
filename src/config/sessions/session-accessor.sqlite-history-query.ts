@@ -610,6 +610,7 @@ export function readSessionTranscriptHistoryAnchorPageFromProjection(
         history.displaySource,
         closingReset,
         options,
+        true,
       );
       if (closedPage) {
         return closedPage;
