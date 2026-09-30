@@ -78,7 +78,7 @@ import type {
   PluginHookSkillProposalEvaluateEvent,
   PluginHookSkillProposalEvaluationOutcome,
 } from "./hook-types.js";
-import { runPluginCleanup } from "./plugin-instance-scope.js";
+import { getPluginValueInstance, runPluginCleanup } from "./plugin-instance-scope.js";
 import {
   type PluginSubagentRequesterContext,
   withPluginSubagentRequesterContext,
@@ -1304,7 +1304,13 @@ export function createHookRunner(
     // Session hooks
     runSessionStart: bindVoidHook("session_start"),
     runSessionEnd: (event: HookEvent<"session_end">, ctx: HookContext<"session_end">) =>
-      runVoidHook("session_end", event, ctx, {}, undefined, projectSessionEndTranscriptContext),
+      runVoidHook("session_end", event, ctx, {}, undefined, (hook, context) =>
+        projectSessionEndTranscriptContext(
+          hook,
+          context,
+          getPluginValueInstance(hook.handler)?.lifecycle.signal,
+        ),
+      ),
     runSubagentDeliveryTarget: bindModifyingHook("subagent_delivery_target", {
       mergeResults: (acc, next): PluginHookSubagentDeliveryTargetResult =>
         acc?.origin ? acc : next,

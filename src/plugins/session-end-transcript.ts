@@ -1,5 +1,3 @@
-import { getPluginValueInstance } from "./plugin-instance-scope.js";
-
 type PluginHookEndedTranscriptUnavailableReason =
   | "conversation-access-required"
   | "no-stable-cutoff"
@@ -124,8 +122,9 @@ export function createSessionEndTranscriptSourceLease(source: SessionEndTranscri
 }
 
 export function projectSessionEndTranscriptContext(
-  hook: { conversationAccessAllowed?: true; handler: object },
+  hook: { conversationAccessAllowed?: true },
   context: PluginHookSessionContext,
+  lifecycleSignal?: AbortSignal,
 ): { context: PluginHookSessionContext; dispose(): void } {
   if (hook.conversationAccessAllowed !== true) {
     return {
@@ -143,10 +142,7 @@ export function projectSessionEndTranscriptContext(
   if (!source.available) {
     return { context: { ...context, endedTranscript: Object.freeze({ ...source }) }, dispose() {} };
   }
-  const scoped = createScopedAvailableEndedTranscript(
-    source,
-    getPluginValueInstance(hook.handler)?.lifecycle.signal,
-  );
+  const scoped = createScopedAvailableEndedTranscript(source, lifecycleSignal);
   return {
     context: { ...context, endedTranscript: scoped.capability },
     dispose: () => scoped.revoke(),
