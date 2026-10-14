@@ -2167,15 +2167,26 @@ export const single = {
   });
 
   it.each([
-    { directory: "src/state", file: "src/state/openclaw-database-verify.process.test.ts" },
-    { directory: "src/agents", file: "src/agents/agent-command-local.test.ts" },
+    {
+      directory: "src/state",
+      file: "src/state/openclaw-database-verify.process.test.ts",
+      selected: ["src/state/openclaw-database-verify.process.test.ts"],
+    },
+    {
+      directory: "src/agents",
+      file: "src/agents/agent-command-local.test.ts",
+      selected: [
+        "src/agents/agent-command-local.plugins.test.ts",
+        "src/agents/agent-command-local.test.ts",
+      ],
+    },
   ])(
     "deduplicates the process selected by $directory and its exact leaf",
-    ({ directory, file }) => {
+    ({ directory, file, selected }) => {
       const plans = buildVitestRunPlans([directory, file]);
       expect(
         plans.filter((plan) => plan.config === "test/vitest/vitest.cli-process.config.ts"),
-      ).toEqual([runPlan("cli-process", [file])]);
+      ).toEqual([runPlan("cli-process", selected)]);
     },
   );
 
