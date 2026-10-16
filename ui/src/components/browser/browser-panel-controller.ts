@@ -21,18 +21,18 @@ import {
   openBrowserTab,
   startBrowser,
 } from "./browser-client.ts";
-import { BrowserPanelInputController } from "./browser-panel-controller-input.ts";
 import { BrowserPanelDownload } from "./browser-panel-download.ts";
+import { BrowserPanelInputOwner } from "./browser-panel-input-owner.ts";
 import { BrowserPanelNativeController } from "./browser-panel-native-controller.ts";
 import {
   BrowserPanelOperationOwnership,
   type BrowserPanelControllerHost,
 } from "./browser-panel-operation-ownership.ts";
 import { BrowserPanelPendingInput } from "./browser-panel-pending-input.ts";
-import { BrowserPanelSnapshotController } from "./browser-panel-snapshot-controller.ts";
+import { createBrowserPanelSnapshot } from "./browser-panel-snapshot.ts";
 import { BrowserPanelStream } from "./browser-panel-stream.ts";
 import type { BrowserPanelView } from "./browser-panel-surface.ts";
-import { BrowserPanelViewportController } from "./browser-panel-viewport-controller.ts";
+import { BrowserPanelViewportOwner } from "./browser-panel-viewport-owner.ts";
 import { browserRouteKey, type BrowserRoute } from "./browser-target.ts";
 import { normalizeBrowserUrlDraft } from "./browser-url.ts";
 
@@ -43,6 +43,7 @@ export type { BrowserPanelControllerHost } from "./browser-panel-operation-owner
 /** Browser session, navigation, capture, and input lifecycle for the docked surface. */
 export class BrowserPanelController implements PanelLifecycleController {
   running: boolean | null = null;
+  canAutoResizeViewport = false;
   tabs: BrowserPanelTab[] = [];
   /** Stable tab handle (plugin alias when available), not a raw CDP target id. */
   activeTargetId: string | null = null;
@@ -62,16 +63,16 @@ export class BrowserPanelController implements PanelLifecycleController {
   readonly operations: BrowserPanelOperationOwnership;
   readonly pendingInput = new BrowserPanelPendingInput();
   readonly download = new BrowserPanelDownload(this);
-  readonly input: BrowserPanelInputController;
+  readonly input: BrowserPanelInputOwner;
   readonly stream: BrowserPanelStream;
   private activeClient: GatewayBrowserClient | null = null;
   urlDraftEditing = false;
-  private readonly viewport = new BrowserPanelViewportController(this);
-  private readonly snapshot = new BrowserPanelSnapshotController(this);
+  private readonly viewport = new BrowserPanelViewportOwner(this);
+  private readonly snapshot = createBrowserPanelSnapshot(this);
 
   constructor(readonly host: BrowserPanelControllerHost) {
     this.operations = new BrowserPanelOperationOwnership(host);
-    this.input = new BrowserPanelInputController(this);
+    this.input = new BrowserPanelInputOwner(this);
     this.stream = new BrowserPanelStream(this);
     this.native = new BrowserPanelNativeController(this);
     host.addController(this);
@@ -163,6 +164,7 @@ export class BrowserPanelController implements PanelLifecycleController {
   resetBrowserState(): void {
     this.invalidateViewOperations();
     this.setState("running", null);
+    this.setState("canAutoResizeViewport", false);
     const nativeTab = this.native.activeTab ?? this.native.tabs[0];
     this.setState("tabs", this.native.tabs);
     this.setState("activeTargetId", nativeTab?.id ?? null);
@@ -212,6 +214,7 @@ export class BrowserPanelController implements PanelLifecycleController {
         return;
       }
       this.setState("running", snapshot.running);
+      this.setState("canAutoResizeViewport", snapshot.canAutoResizeViewport);
       this.setState(
         "tabs",
         this.native.mergeRemoteTabs(this.operations.retainTabSnapshot(client, snapshot.tabs)),

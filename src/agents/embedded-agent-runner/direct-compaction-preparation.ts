@@ -111,8 +111,12 @@ export async function prepareDirectCompactionAttempt(
     workspaceDir: resolvedWorkspace,
     pluginRegistry: params.preparedModelRuntime.pluginRegistry!,
   });
-  const fail = (reason: string, err?: unknown): EmbeddedAgentCompactResult => {
-    const failureReason = classifyCompactionReason(reason);
+  const fail = (
+    reason: string,
+    err?: unknown,
+    explicitReasonClass?: "compaction_model_unresolved",
+  ): EmbeddedAgentCompactResult => {
+    const failureReason = explicitReasonClass ?? classifyCompactionReason(reason);
     const failure = err ? describeFailoverError(err) : undefined;
     const detail =
       failureReason === "unknown" ? formatUnknownCompactionReasonDetail(reason) : undefined;
@@ -152,7 +156,10 @@ export async function prepareDirectCompactionAttempt(
   const { model, error, authStorage, modelRegistry } = modelResolution;
   if (!model) {
     const reason = error ?? `Unknown model: ${runtimeProvider}/${modelId}`;
-    return { ok: false as const, result: fail(reason) };
+    return {
+      ok: false as const,
+      result: fail(reason, undefined, "compaction_model_unresolved"),
+    };
   }
   // Overrides stay unset when no bound/planned/explicit harness resolved so auth-aware
   // selection can pick the credential-owning harness (codex for ChatGPT OAuth); native
@@ -237,6 +244,7 @@ export async function prepareDirectCompactionAttempt(
   }
   let runtimeModel: ProviderRuntimeModel = resolvedAuthAttempt.model;
   const apiKeyInfo = resolvedAuthAttempt.auth;
+  let runtimeApiKey = apiKeyInfo.apiKey;
   const resolvedRuntimeAuthPlan = resolvedAuthAttempt.plan;
   let hasRuntimeAuthExchange = false;
   try {
@@ -268,7 +276,7 @@ export async function prepareDirectCompactionAttempt(
         preparedAuth: runtimeAuth,
       });
       runtimeModel = applyPreparedRuntimeAuthToModel(runtimeModel, preparedAuth);
-      const runtimeApiKey = preparedAuth?.apiKey ?? apiKeyInfo.apiKey;
+      runtimeApiKey = preparedAuth?.apiKey ?? apiKeyInfo.apiKey;
       hasRuntimeAuthExchange = Boolean(preparedAuth?.apiKey);
       if (!runtimeApiKey) {
         throw new Error(`Provider "${runtimeModel.provider}" runtime auth returned no apiKey.`);
@@ -370,6 +378,7 @@ export async function prepareDirectCompactionAttempt(
         modelRegistry,
         runtimeModel,
         apiKeyInfo,
+        runtimeApiKey,
         resolvedRuntimeAuthPlan,
         hasRuntimeAuthExchange,
         resolvedWorkspace,

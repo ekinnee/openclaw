@@ -7,6 +7,7 @@ import {
   withAgentRunLifecycleGeneration,
 } from "../infra/agent-events.js";
 import { GatewayScheduler } from "../infra/gateway-scheduler.js";
+import { ensureGlobalHookRunner } from "../plugins/hook-runner-global.js";
 import {
   getBoundLegacyPluginSdkResourceHost,
   LegacyPluginSdkResourceHost,
@@ -104,6 +105,7 @@ export async function runLocalAgentCommand<TResult>(params: {
                     },
                     { abortSignal: admittedPrepared.opts.abortSignal },
                   );
+                  ensureGlobalHookRunner();
                   const registry = lease.snapshot.pluginRegistry;
                   const invocations = registry
                     ? new PluginInvocationScope(

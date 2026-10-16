@@ -8,6 +8,7 @@ import { withCliPluginInvocation } from "../cli/run-main-plugin-cache.js";
 import { withCliProcessScope } from "../cli/runtime-cleanup-scope.js";
 import { setRuntimeConfigSnapshot } from "../config/runtime-snapshot.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { getGlobalHookRunner, resetGlobalHookRunner } from "../plugins/hook-runner-global.js";
 import { createHookRunner } from "../plugins/hooks.js";
 import {
   cleanupPluginLoaderFixturesForTest,
@@ -23,6 +24,7 @@ import {
 } from "../test-utils/openclaw-test-state.js";
 import { normalizeMessageChannel } from "../utils/message-channel.js";
 import { runLocalAgentCommand } from "./agent-command-local.js";
+import { runBeforeToolCallHook } from "./agent-tools.before-tool-call.policy.js";
 import type { AgentCommandOpts } from "./command/types.js";
 import { resetPreparedModelRuntimeSnapshotsForTest } from "./prepared-model-runtime.test-support.js";
 
@@ -47,6 +49,7 @@ beforeEach(async () => {
   state = await createOpenClawTestState({ label: "local-plugin-custody" });
   argv = process.argv;
   useNoBundledPlugins();
+  resetGlobalHookRunner();
 });
 afterEach(async () => {
   process.argv = argv;
@@ -72,6 +75,7 @@ it.each([false, true])("owns only the admitted local registry (CLI preaction=%s)
         JSON.stringify(effectFile) +
         ', callId + "\\n"); return { content: [{ type: "text", text: "written" }] }; } }), { name: "local_probe" });',
       'api.on("before_prompt_build", async () => ({ prependContext: "local hook" }));',
+      'api.on("before_tool_call", async () => ({ block: true, blockReason: "local policy" }));',
       'api.registerChannel({ plugin: { id: "local-channel", meta: { id: "local-channel", label: "Local", aliases: ["local-alias"] }, capabilities: { chatTypes: ["direct"] }, config: { listAccountIds: () => ["selected"], resolveAccount: () => ({ accountId: "selected" }) } } });',
       'if (api.registrationMode === "full") api.registerTool(() => ({ name: "full_probe", description: "full only", parameters: { type: "object", properties: {} }, execute: async () => ({ content: [] }) }), { name: "full_probe" });',
     ].join("\n"),
@@ -122,6 +126,10 @@ it.each([false, true])("owns only the admitted local registry (CLI preaction=%s)
       opts: { message: "probe", agentId: "main", runId: "outer" },
       runtime,
       run: async () => {
+        expect(await runBeforeToolCallHook({ toolName: "exec", params: {} })).toMatchObject({
+          blocked: true,
+          reason: "local policy",
+        });
         const registry = getPluginRuntimeGenerationRegistry()!;
         const probe = () => {
           const tool = registry.tools
@@ -197,6 +205,7 @@ it.each([false, true])("owns only the admitted local registry (CLI preaction=%s)
                 ?.factory({}),
             ).toMatchObject({ description: "full only" });
           } else {
+            expect(getGlobalHookRunner()).toBeNull();
             expect(await command()).toBe("done");
           }
           await expect(async () => await late?.()).rejects.toThrow();

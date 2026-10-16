@@ -654,9 +654,6 @@ export const streamOpenAICodexResponses: StreamFunction<
           ? formatRequestTimeoutError(requestTimeoutMs, error)
           : error;
       compactRequest?.reject(normalizedError);
-      for (const block of output.content.filter((candidate) => candidate.type === "toolCall")) {
-        delete block.partialJson;
-      }
       const providerRefusal = readCodexProviderRefusal(normalizedError);
       if (providerRefusal) {
         appendAssistantMessageDiagnostic(output, {
@@ -1336,7 +1333,7 @@ async function readChatGptResponsesErrorTextLimited(
     signal?.removeEventListener("abort", onAbort);
     if (!completed) {
       // This provider module is browser-safe, so keep error-body cleanup on Web APIs.
-      await cancel();
+      void cancel();
     }
     try {
       reader.releaseLock();

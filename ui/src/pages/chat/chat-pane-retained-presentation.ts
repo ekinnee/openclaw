@@ -1,9 +1,7 @@
 import type { ProgressCard } from "@openclaw/gateway-protocol";
-import { html, nothing } from "lit";
 import { createDeferredCore } from "../../../../src/shared/deferred.ts";
 import { gatewayPresentationScope } from "../../app/gateway-presentation-scope.ts";
 import { loadSettings, patchSettings } from "../../app/settings.ts";
-import "../../components/modal-dialog.ts";
 import type { SessionProgressCardRefreshAction } from "../../components/session-progress-card.ts";
 import { t } from "../../i18n/index.ts";
 import { boardProviderCacheKey } from "../../lib/board/provider.ts";
@@ -437,43 +435,9 @@ export abstract class ChatPaneRetainedPresentation extends ChatPaneBoard {
 
   protected renderResetConfirmation() {
     if (!this.resetConfirmation) {
-      return nothing;
+      return null;
     }
-    const title = t("chat.board.resetTitle");
-    const description = t("chat.board.resetDescription");
-    return html`
-      <openclaw-modal-dialog
-        label=${title}
-        description=${description}
-        @modal-cancel=${() => this.settleResetConfirmation(false)}
-      >
-        <div class="exec-approval-card board-reset-confirmation">
-          <div class="exec-approval-header">
-            <div>
-              <div class="exec-approval-title">${title}</div>
-              <div class="exec-approval-sub">${description}</div>
-            </div>
-          </div>
-          <div class="exec-approval-actions">
-            <button
-              class="btn primary"
-              type="button"
-              @click=${() => this.settleResetConfirmation(true)}
-            >
-              ${t("common.confirm")}
-            </button>
-            <button
-              class="btn"
-              type="button"
-              autofocus
-              @click=${() => this.settleResetConfirmation(false)}
-            >
-              ${t("common.cancel")}
-            </button>
-          </div>
-        </div>
-      </openclaw-modal-dialog>
-    `;
+    return { onResolve: (confirmed: boolean) => this.settleResetConfirmation(confirmed) };
   }
 
   protected override activeChanged(active: boolean): void {
@@ -511,7 +475,6 @@ export abstract class ChatPaneRetainedPresentation extends ChatPaneBoard {
       return;
     }
     if (presented) {
-      this.minutePoll.start();
       this.consumeSessionHandoff(this.sessionKey);
       this.activateComposerPresentation();
       this.syncActiveBindings();
@@ -544,7 +507,6 @@ export abstract class ChatPaneRetainedPresentation extends ChatPaneBoard {
       void this.refreshSessionPullRequests();
       return;
     }
-    this.minutePoll.stop();
     if (this.state) {
       retireChatBranchRequests(this.state);
       // Unwatch can cancel an admitted refresh before sync; a later presentation
