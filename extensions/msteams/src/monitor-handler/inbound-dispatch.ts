@@ -1,8 +1,6 @@
 import { resolveAllowlistMatchSimple } from "openclaw/plugin-sdk/allow-from";
 import {
   createChannelInboundEnvelopeBuilderAsync,
-  hasFinalInboundReplyDispatch,
-  resolveInboundReplyDispatchCounts,
   resolveInboundSupplementalSenderAllowed,
   toInboundMediaFactsWithMetadata,
 } from "openclaw/plugin-sdk/channel-inbound";
@@ -187,7 +185,7 @@ export async function dispatchMSTeamsInboundTurn(params: {
         : undefined,
       quote: quoteInfo
         ? {
-            id: quoteInfo.id ?? activity.replyToId ?? undefined,
+            id: quoteInfo.id ?? activity.replyToId,
             body: quoteBodyFull ?? quoteInfo.body,
             sender: quoteInfo.sender,
             senderAllowed: quoteSenderAllowed,
@@ -223,8 +221,8 @@ export async function dispatchMSTeamsInboundTurn(params: {
       originatingTo: `conversation:${conversationId}`,
       // Channel-only thread root (facts.threadId) so messaging-tool evidence matches
       // session/origin thread ids; keep replyToId as parent. Undefined for DM/group.
-      messageThreadId: facts.threadId ?? undefined,
-      replyToId: activity.replyToId ?? undefined,
+      messageThreadId: facts.threadId,
+      replyToId: activity.replyToId,
       nativeChannelId,
     },
     message: {
@@ -250,14 +248,11 @@ export async function dispatchMSTeamsInboundTurn(params: {
     },
   });
 
-  logVerboseMessage(`msteams inbound: from=${ctxPayload.From} chars=${rawBody.length}`);
-
   const { dispatcherOptions, delivery, replyOptions } = createMSTeamsReplyDispatcher({
     cfg,
     agentId: route.agentId,
     sessionKey: route.sessionKey,
     accountId: route.accountId,
-    runtime,
     log,
     app,
     conversationRef,
@@ -287,9 +282,8 @@ export async function dispatchMSTeamsInboundTurn(params: {
           },
         }
       : cfg;
-  log.info("dispatching to agent", { sessionKey: route.sessionKey });
   try {
-    const turnResult = await core.channel.inbound.run({
+    await core.channel.inbound.run({
       channel: "msteams",
       accountId: route.accountId,
       raw: context,
@@ -332,18 +326,7 @@ export async function dispatchMSTeamsInboundTurn(params: {
         }),
       },
     });
-    const dispatchResult = turnResult.dispatched ? turnResult.dispatchResult : undefined;
-    const counts = resolveInboundReplyDispatchCounts(dispatchResult);
-    log.info("dispatch complete", {
-      counts,
-    });
-    if (hasFinalInboundReplyDispatch(dispatchResult)) {
-      logVerboseMessage(
-        `msteams: delivered ${counts.final} repl${counts.final === 1 ? "y" : "ies"} to ${teamsTo}`,
-      );
-    }
   } catch (err) {
-    log.error("dispatch failed", { error: formatUnknownError(err) });
     runtime.error(`msteams dispatch failed: ${formatUnknownError(err)}`);
     if (facts.turnAdoptionLifecycle) {
       throw err;
