@@ -12,10 +12,6 @@ import {
   getBoundLegacyPluginSdkResourceHost,
   LegacyPluginSdkResourceHost,
 } from "../plugins/legacy-sdk-resource-host.js";
-import {
-  collectRegistryInvocationInstances,
-  PluginInvocationScope,
-} from "../plugins/plugin-invocation-scope.js";
 import { withPluginRuntimeGenerationScope } from "../plugins/runtime/generation-scope.js";
 import type { RuntimeEnv } from "../runtime.js";
 import { runWithAgentCommandRecoveryOwner } from "./agent-command-recovery-owner.js";
@@ -105,39 +101,29 @@ export async function runLocalAgentCommand<TResult>(params: {
                     },
                     { abortSignal: admittedPrepared.opts.abortSignal },
                   );
+                  // Tool policy dispatches through the global runner; a headless run has no root.
                   ensureGlobalHookRunner();
-                  const registry = lease.snapshot.pluginRegistry;
-                  const invocations = registry
-                    ? new PluginInvocationScope(
-                        registry,
-                        collectRegistryInvocationInstances(registry),
-                      )
-                    : undefined;
-                  const execute = () =>
-                    params.run(
-                      {
-                        ...admittedPrepared,
-                        commandRuntimeContext: {
-                          config: lease.snapshot.config,
-                          pluginGeneration: lease.pluginGeneration,
-                        },
-                      },
-                      resolvedDeps,
-                    );
                   let active = true;
                   try {
                     return await withPluginRuntimeGenerationScope(lease.snapshot, () =>
                       withPreparedModelRuntimePluginGenerationScope(
                         lease.pluginGeneration,
-                        () => (invocations ? invocations.run(execute) : execute()),
+                        () =>
+                          params.run(
+                            {
+                              ...admittedPrepared,
+                              commandRuntimeContext: {
+                                config: lease.snapshot.config,
+                                pluginGeneration: lease.pluginGeneration,
+                              },
+                            },
+                            resolvedDeps,
+                          ),
                         () => (active ? lease.snapshot : undefined),
                       ),
                     );
                   } finally {
                     active = false;
-                    // A nested command can end while its parent or executable still holds
-                    // physical custody. Its captured callbacks must end with this invocation.
-                    invocations?.release();
                   }
                 };
                 return capability
