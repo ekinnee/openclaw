@@ -5,7 +5,9 @@ import { afterEach, expect, it, vi } from "vitest";
 import { useAutoCleanupTempDirTracker } from "../../../test/helpers/temp-dir.js";
 import { createUpdatePreflightFailure } from "../../infra/update-preflight-details.js";
 import * as processExec from "../../process/exec.js";
+import * as databaseContexts from "./update-command-database-context.js";
 import { inspectGitDryRunTargetSchemaVersions } from "./update-command-git.js";
+import { preflightUpdateCommandSchemas } from "./update-command-schema.js";
 
 const tempDirs = useAutoCleanupTempDirTracker(afterEach);
 afterEach(() => {
@@ -133,3 +135,54 @@ it("explains when a dry-run cannot hydrate a promised target manifest", async ()
   expect(missingManifest.message).not.toContain("Check Git remote access");
   expect(git(checkout, "rev-parse", "origin/main")).toBe(targetBefore);
 });
+
+it.each([false, true])(
+  "reports Node prerequisites without fetching the Git preview target (cached=%s)",
+  async (cached) => {
+    const { checkout, source } = createGitFixture(tempDirs.make("update-git-node-preview-"));
+    fs.writeFileSync(
+      path.join(source, "package.json"),
+      JSON.stringify({ name: "openclaw", version: "2026.9.2", engines: { node: ">=999.0.0" } }),
+    );
+    git(source, "add", "package.json");
+    git(source, "commit", "-m", "require newer Node");
+    git(source, "push", "origin", "main");
+    if (cached) {
+      git(checkout, "fetch", "origin");
+    }
+    const refs = git(checkout, "show-ref");
+    const installedManifest = fs.readFileSync(path.join(checkout, "package.json"), "utf8");
+    // The fixture has no managed service or database; keep the Git/runtime checks real.
+    vi.spyOn(databaseContexts, "inspectUpdateDatabaseContexts").mockResolvedValue({
+      service: undefined,
+      services: new Map(),
+      managedEnv: undefined,
+      contexts: [],
+    });
+    const preflight = await preflightUpdateCommandSchemas({
+      root: checkout,
+      updateInstallKind: "git",
+      switchToGit: false,
+      shouldRestart: false,
+      updateStepTimeoutMs: 5000,
+      managedServiceRootRedirect: null,
+      channel: "dev",
+      opts: { dryRun: true, json: true },
+      refuseUpdate: async () => {
+        throw new Error("A preview must report its incomplete checks without applying the update");
+      },
+    });
+    if (cached) {
+      expect(preflight?.preflightFailures).toContainEqual(
+        expect.objectContaining({
+          reason: "preflight-node-runtime-incompatible",
+          message: expect.stringContaining(">=999.0.0"),
+        }),
+      );
+    } else {
+      expect(preflight?.preflightNotes.join("\n")).toContain("Node compatibility was not checked");
+    }
+    expect(git(checkout, "show-ref")).toBe(refs);
+    expect(fs.readFileSync(path.join(checkout, "package.json"), "utf8")).toBe(installedManifest);
+  },
+);
