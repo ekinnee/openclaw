@@ -38,7 +38,7 @@ describe("Doctor per-store output", () => {
       using db = openNodeSqliteDatabase(file);
       const key = `retained:${createHash("sha256").update("retained\0!legacy:example.org\0$legacy-event").digest("hex")}`;
       db.prepare(
-        "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at) VALUES ('matrix', 'inbound-dedupe', ?, ?, 1)",
+        "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at) VALUES ('matrix', 'inbound-dedupe', ?, ?, 1)",
       ).run(
         key,
         JSON.stringify({ roomId: "!legacy:example.org", eventId: "$legacy-event", ts: 1 }),

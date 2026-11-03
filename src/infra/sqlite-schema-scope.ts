@@ -12,6 +12,7 @@ export type SqliteSchemaFacts = {
   readonly schemaVersion: number;
   readonly tables: ReadonlySet<string>;
   readonly views: ReadonlySet<string>;
+  readonly viewSql: ReadonlyMap<string, string | null>;
   readonly tableSql: ReadonlyMap<string, string | null>;
   readonly indexes: ReadonlySet<string>;
   readonly indexDefinitions: ReadonlyMap<string, { table: string; sql: string | null }>;

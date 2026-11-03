@@ -18,6 +18,26 @@ version's `openclaw update --dry-run` does not reveal the target's migration pla
 Older builds refuse newer schemas; rollback requires the verified pre-upgrade
 backup and its matching build, not just reinstalling the older package.
 
+The writer-fence prerequisite currently uses **local staging state schema 40**.
+This number is not an upstream allocation and must be coordinated before landing.
+It follows the actual state 37–39 history below; it does not reinterpret those
+versions as experimental protection formats. Conflicting experimental protection
+layouts, mixed old/new storage relations, and malformed writer guards are
+preserved and refused before migration or repair. There is no experimental-store
+conversion or deletion in this change.
+
+The staging migration atomically renames the plugin-state relation, creates its
+non-forwarding old-name guard, and records the matching content floor. PostgreSQL
+also renames the original primary-key constraint so fresh and upgraded stores
+have the same canonical catalog. The existing updater may temporarily retain an
+older physical header; compatible readers check the independently recorded
+content floor as well. The rename uses a complete database backup, not a scoped
+table archive. Automatic rollback remains limited to the captured, unchanged
+candidate generation; a later write requires refusal rather than discarding it.
+Deferred header publication preserves ordinary updater compatibility; it is not
+readiness to produce a future binding format. Such production requires a later
+versioned owner operation and matching committed physical and content floors.
+
 Doctor completes recognized schema-1 databases that predate the audit ledger before later workspace and agent checks run. Missing ownership metadata or a missing audit ledger at schema 2 or newer still prevents repair.
 
 | Version | Change                                                                                                                                                                                                                                                                                                                                         | Published in        |

@@ -73,7 +73,7 @@ test("lists one workspace in order and preserves corruption", async ({ tempRoot 
   const update = (assignment: string, condition = "") =>
     // sqlite-allow-raw -- Seed ordering, expiry, and corruption at the storage boundary.
     db
-      .prepare(`UPDATE plugin_state_entries SET ${assignment}
+      .prepare(`UPDATE plugin_state_records SET ${assignment}
       WHERE plugin_id = ? AND namespace = ? ${condition}`)
       .run("core:memory-artifact-provenance", "workspace-files");
   update(`

@@ -449,6 +449,99 @@ describe("plugin-state-store.runtime", () => {
     resetPluginStateStoreForTests();
   });
 
+  it("moves supported native bindings into retained storage on a fresh worker", async ({
+    state,
+  }) => {
+    const bundledEnv = {
+      OPENCLAW_BUNDLED_PLUGINS_DIR: fileURLToPath(new URL("../../extensions/", import.meta.url)),
+      OPENCLAW_TEST_TRUST_BUNDLED_PLUGINS_DIR: "1",
+      OPENCLAW_DISABLE_BUNDLED_PLUGINS: undefined,
+    };
+    Object.assign(state.envVars, bundledEnv);
+    Object.assign(state.env, bundledEnv);
+    state.applyEnv();
+    const { record, registry, runtime } = setup("codex", "bundled", true);
+    const namespace = "app-server-thread-bindings";
+    const binding = {
+      version: 1,
+      state: "active",
+      sessionId: "retained-move-session",
+      binding: { threadId: "retained-move-thread", cwd: "/synthetic/retained-move" },
+    };
+    const source = runtime.openSyncKeyedStore<typeof binding>({ namespace, maxEntries: 10 });
+    const database = () => openOpenClawStateDatabase({ env: state.env }).db;
+    const snapshot = () =>
+      database()
+        .prepare(
+          "SELECT * FROM plugin_state_records WHERE plugin_id = ? ORDER BY namespace, entry_key",
+        )
+        .all(record.id);
+    const storedValue = (scope: string, key: string) =>
+      database()
+        .prepare(
+          "SELECT value_json, created_at, expires_at FROM plugin_state_records WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
+        )
+        .get(record.id, scope, key);
+    const retained = runtime.openKeyedStoreV2<typeof binding>({
+      namespace: "archive",
+      retention: "retained",
+    });
+    let beforeRevoke: ReturnType<typeof snapshot>;
+    try {
+      source.register("supported", binding);
+      source.register("still-live", binding);
+      const original = storedValue(namespace, "supported");
+      expect(original).toMatchObject({ value_json: JSON.stringify(binding), expires_at: null });
+      const before = snapshot();
+      // The synchronous seed prepares only the parent codec. Join any worker
+      // retirement so this move cannot inherit another operation's preparation.
+      await closeOpenClawStateDatabaseAsync();
+      try {
+        await expect(
+          retained.moveEntriesFrom({
+            namespace,
+            entries: [{ sourceKey: "supported", targetKey: "archived" }],
+          }),
+        ).resolves.toBe(1);
+      } catch (error) {
+        expect(snapshot()).toEqual(before);
+        throw error;
+      }
+      expect(storedValue(namespace, "supported")).toBeUndefined();
+      expect(storedValue("@retained.archive", "archived")).toEqual(original);
+      expect(await retained.lookup("archived")).toEqual(binding);
+
+      // Preexisting future-format bytes are a data fixture, not native authority.
+      database()
+        .prepare("INSERT INTO plugin_state_records VALUES (?, ?, ?, ?, ?, NULL)")
+        .run(record.id, namespace, "future", '{"version":5,"opaque":"preserved"}', 1);
+      const beforeRefusal = snapshot();
+      await expect(
+        retained.moveEntriesFrom({
+          namespace,
+          entries: [
+            { sourceKey: "still-live", targetKey: "candidate" },
+            { sourceKey: "future", targetKey: "future" },
+          ],
+        }),
+      ).rejects.toMatchObject({
+        code: "PLUGIN_STATE_WRITE_FAILED",
+        message: expect.stringContaining("Unsupported native session binding"),
+      });
+      expect(snapshot()).toEqual(beforeRefusal);
+      beforeRevoke = snapshot();
+    } finally {
+      revokePluginRecord(registry.registry, record);
+    }
+    await expect(
+      retained.moveEntriesFrom({
+        namespace,
+        entries: [{ sourceKey: "still-live", targetKey: "after-revocation" }],
+      }),
+    ).rejects.toThrow('Plugin "codex" runtime is no longer active');
+    expect(snapshot()).toEqual(beforeRevoke);
+  });
+
   it("warns once per legacy factory and leaves V2 factories silent", async ({ state: _state }) => {
     const pluginId = "sdk-state-factory-warning";
     const warning = vi.spyOn(process, "emitWarning").mockImplementation(() => {});

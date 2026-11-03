@@ -284,7 +284,7 @@ describe("sqlite hot query plans", () => {
       ["idx_delivery_queue_pending"],
     );
     check(
-      `SELECT entry_key, value_json FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ?
+      `SELECT entry_key, value_json FROM plugin_state_records WHERE plugin_id = ? AND namespace = ?
        ORDER BY created_at ASC, entry_key LIMIT 50`,
       ["telegram", "kv"],
       ["idx_plugin_state_listing"],
@@ -292,7 +292,7 @@ describe("sqlite hot query plans", () => {
     );
     for (const namespace of [undefined, "kv"]) {
       check(
-        `SELECT count(*) FROM plugin_state_entries
+        `SELECT count(*) FROM plugin_state_records
          WHERE plugin_id = ? ${namespace ? "AND namespace = ?" : ""}
            AND (expires_at IS NULL OR expires_at > ?)`,
         namespace ? ["telegram", namespace, 1000] : ["telegram", 1000],

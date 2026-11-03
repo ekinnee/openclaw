@@ -22,6 +22,7 @@ import {
 import { OPENCLAW_STATE_SCHEMA_VERSION } from "./openclaw-state-db-contract.js";
 import { tableExists } from "./openclaw-state-db-schema-helpers.js";
 import { normalizeOpenClawStateSchemaReadError } from "./openclaw-state-db-schema-migration-required.js";
+import { assertStatePluginStorageLayout } from "./openclaw-state-db-schema-v40-plugin-state.js";
 import type { DB } from "./openclaw-state-db.generated.js";
 
 // Read-only clients need schema admission without loading updater publication policy.
@@ -127,6 +128,7 @@ export function admitStateSchemaFacts(
         context,
       ),
     );
+    assertStatePluginStorageLayout(database, readStateSchemaContentVersion(database));
   } catch (error) {
     // An unreadable newer catalog must not be mistaken for a repair this build can perform.
     let version: number;
@@ -147,6 +149,42 @@ export function admitStateSchemaFacts(
     }
     throw normalizeOpenClawStateSchemaReadError(error, pathname);
   }
+}
+
+/** Format selection only: callers retain their existing source-read authority. */
+export function resolvePluginStateReadRelation(
+  database: EngineConnection,
+): "plugin_state_entries" | "plugin_state_records" | undefined {
+  // Historical per-account sources can predate global metadata. Read-only
+  // recognition preserves that contract without certifying ordinary provenance.
+  admitStateSchemaFacts(database, "Plugin state source");
+  assertSupportedStateSchemaVersion(database, "Plugin state source");
+  if (isPostgresSqlConnection(database)) {
+    const facts = getPostgresPhysicalFacts(database);
+    if (!facts) {
+      throw new PostgresSchemaAdmissionUnavailableError(
+        "Missing PostgreSQL state schema admission",
+      );
+    }
+    const current = facts.catalog.some(
+      (fact) => fact.kind === "table" && fact.table === "plugin_state_records",
+    );
+    const legacy = facts.catalog.some(
+      (fact) => fact.kind === "table" && fact.table === "plugin_state_entries",
+    );
+    if (current === legacy) {
+      throw new PostgresSchemaAdmissionUnavailableError(
+        "Missing or conflicting PostgreSQL plugin-state physical relation",
+      );
+    }
+    return current ? "plugin_state_records" : "plugin_state_entries";
+  }
+  const facts = getAdmittedSqliteSchemaFacts(database);
+  return facts?.tables.has("plugin_state_records")
+    ? "plugin_state_records"
+    : facts?.tables.has("plugin_state_entries")
+      ? "plugin_state_entries"
+      : undefined;
 }
 
 export function assertSupportedStateSchemaVersion(

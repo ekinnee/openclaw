@@ -50,7 +50,11 @@ export function redactGitBackupRow(
   identity: RedactionIdentity,
   prefixes: readonly string[],
 ): boolean {
-  if (table === "plugin_state_entries" || table === "plugin_blob_entries") {
+  if (
+    table === "plugin_state_entries" ||
+    table === "plugin_state_records" ||
+    table === "plugin_blob_entries"
+  ) {
     if (typeof row.namespace !== "string") {
       return false;
     }

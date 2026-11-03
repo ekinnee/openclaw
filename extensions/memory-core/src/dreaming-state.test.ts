@@ -87,7 +87,7 @@ test("workspace enumeration isolates corrupt neighbors while preserving order an
   const foreignPrefix = `${memoryCoreWorkspaceStateKey(foreignWorkspace.workspaceDir)}:`;
   database.db
     .prepare(
-      `UPDATE plugin_state_entries
+      `UPDATE plugin_state_records
        SET created_at = CASE json_extract(value_json, '$.key') WHEN 'a' THEN 30 ELSE 10 END,
            expires_at = CASE json_extract(value_json, '$.key') WHEN 'expired' THEN 0 ELSE NULL END
        WHERE plugin_id = 'memory-core' AND namespace = ? AND entry_key LIKE ?`,
@@ -96,7 +96,7 @@ test("workspace enumeration isolates corrupt neighbors while preserving order an
   const corrupt = (keyPrefix: string) =>
     database.db
       .prepare(
-        `UPDATE plugin_state_entries SET value_json = '{'
+        `UPDATE plugin_state_records SET value_json = '{'
      WHERE plugin_id = 'memory-core' AND namespace = ? AND entry_key LIKE ?`,
       )
       .run(scope.namespace, `${keyPrefix}%`);
@@ -116,7 +116,7 @@ test("workspace enumeration isolates corrupt neighbors while preserving order an
   expect(
     database.db
       .prepare(
-        `SELECT value_json FROM plugin_state_entries
+        `SELECT value_json FROM plugin_state_records
          WHERE plugin_id = 'memory-core' AND namespace = ? AND entry_key LIKE ?`,
       )
       .get(scope.namespace, `${foreignPrefix}%`),

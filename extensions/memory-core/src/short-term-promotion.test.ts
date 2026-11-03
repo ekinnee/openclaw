@@ -2166,7 +2166,7 @@ describe("short-term promotion", () => {
     const db = openOpenClawStateDatabase().db;
     const workspaceKey = memoryCoreWorkspaceStateKey(workspaceDir);
     db.exec(`
-      CREATE TRIGGER abort_recall_prune BEFORE DELETE ON plugin_state_entries
+      CREATE TRIGGER abort_recall_prune BEFORE DELETE ON plugin_state_records
       WHEN OLD.plugin_id = 'memory-core'
         AND OLD.namespace = '${SHORT_TERM_PHASE_SIGNAL_NAMESPACE}'
         AND json_extract(OLD.value_json, '$.workspaceKey') = '${workspaceKey}'

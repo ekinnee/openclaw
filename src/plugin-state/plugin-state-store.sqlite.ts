@@ -21,6 +21,7 @@ import {
   livePluginStateRow,
   readPluginStateNamespace,
 } from "./plugin-state-namespace-owner.js";
+import { preparePluginStateNativeBindingMutation } from "./plugin-state-native-binding-codec.js";
 import { invalidatePluginStateMutation } from "./plugin-state-operation-epochs.js";
 import {
   pluginStatePublication,
@@ -33,6 +34,7 @@ import {
 } from "./plugin-state-store.database.js";
 import {
   assertPluginStateKey,
+  assertPluginStateMutation,
   parseStoredJson,
   getPluginStateKysely,
   selectPluginStateEntry,
@@ -151,6 +153,7 @@ function residentLookups(
 type PluginStateRegisterParams = PluginStateRegisterEntryParams & { env?: NodeJS.ProcessEnv };
 
 export function pluginStateRegister(params: PluginStateRegisterParams): void {
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   writePluginState(
     "register",
@@ -177,6 +180,7 @@ export function pluginStateImportBatch(
   if (entries.length > PLUGIN_STATE_DOCTOR_IMPORT_BATCH_ROWS) {
     throw new RangeError("Plugin state doctor import batch exceeds its row limit");
   }
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   try {
     const result = runWriteTransaction(
@@ -219,6 +223,7 @@ export function pluginStateImportBatch(
 export function pluginStateRegisterIfAbsent(
   params: Omit<PluginStateRegisterParams, "createdAtMs">,
 ): boolean {
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   return writePluginState(
     "register",
@@ -233,6 +238,7 @@ export function pluginStateUpdate(
     updateValueJson: (current: unknown) => { valueJson: string; ttlMs?: number } | undefined;
   },
 ): boolean {
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   return writePluginState(
     "register",
@@ -346,6 +352,7 @@ export function pluginStateConsume(params: {
   key: string;
   env?: NodeJS.ProcessEnv;
 }): unknown {
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   return writePluginState(
     "consume",
@@ -361,6 +368,7 @@ export function pluginStateDelete(params: {
   key: string;
   env?: NodeJS.ProcessEnv;
 }): boolean {
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   return writePluginState(
     "delete",
@@ -379,6 +387,7 @@ export function pluginStateDeleteIf(params: {
   predicate: (current: unknown) => boolean;
   env?: NodeJS.ProcessEnv;
 }): boolean {
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   return writePluginState(
     "delete",
@@ -400,7 +409,7 @@ export function pluginStateDeleteIf(params: {
 }
 
 export function observedPluginStateRow(
-  eb: ExpressionBuilder<Pick<DB, "plugin_state_entries">, "plugin_state_entries">,
+  eb: ExpressionBuilder<Pick<DB, "plugin_state_records">, "plugin_state_records">,
   scope: { pluginId: string; namespace: string },
   entry: PluginDoctorRawStateEntry,
 ) {
@@ -433,6 +442,7 @@ export function pluginStateDeleteEntriesIfUnchanged(params: {
   }
   // Copy plugin-visible envelopes before BEGIN; no plugin-owned accessors run in the transaction.
   const observed = params.entries.map(({ value: _value, ...entry }) => entry);
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   return runWriteTransaction(
     "delete",
@@ -440,8 +450,9 @@ export function pluginStateDeleteEntriesIfUnchanged(params: {
       params.assertOwnedInTransaction(db);
       let deleted = 0;
       for (const entry of observed) {
+        assertPluginStateMutation(db, { ...params, key: entry.key });
         const query = getPluginStateKysely(db)
-          .deleteFrom("plugin_state_entries")
+          .deleteFrom("plugin_state_records")
           .where((eb) => observedPluginStateRow(eb, params, entry))
           .returning(["plugin_id", "namespace", "entry_key"]);
         const result = executeSqliteQuerySync(db, query);
@@ -563,6 +574,7 @@ export function pluginStateClear(params: {
   namespace: string;
   env?: NodeJS.ProcessEnv;
 }): void {
+  preparePluginStateNativeBindingMutation(params, params.env);
   invalidatePluginStateMutation(params);
   writePluginState(
     "clear",

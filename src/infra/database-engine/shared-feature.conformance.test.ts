@@ -301,10 +301,10 @@ it.skipIf(!connection)(
         ]);
         expect(capture.getSessionEvents("conformance-capture")).toHaveLength(2);
 
-        remote.exec("DROP TABLE plugin_state_entries");
+        remote.exec("DROP TABLE plugin_state_records");
         let missingTableError: unknown;
         try {
-          remote.query("SELECT * FROM plugin_state_entries");
+          remote.query("SELECT * FROM plugin_state_records");
         } catch (error) {
           missingTableError = error;
         }

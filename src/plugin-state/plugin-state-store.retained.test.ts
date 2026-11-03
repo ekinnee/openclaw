@@ -39,8 +39,8 @@ const reopen = async () => {
 const moveFault = useSqliteWorkerFault([
   {
     name: "fail_last_retained_move",
-    match: /^delete from plugin_state_entries\b/u,
-    sql: `CREATE TEMP TRIGGER fail_last_retained_move BEFORE DELETE ON main.plugin_state_entries
+    match: /^delete from plugin_state_records\b/u,
+    sql: `CREATE TEMP TRIGGER fail_last_retained_move BEFORE DELETE ON main.plugin_state_records
       WHEN OLD.plugin_id = 'retained-storage-test' AND OLD.namespace = 'history' AND OLD.entry_key = '64'
       BEGIN SELECT RAISE(ABORT, 'synthetic retained move failure'); END;`,
   },
@@ -82,7 +82,7 @@ describe("plugin-state-store.retained", () => {
   const query = (sql: string) => openOpenClawStateDatabase().db.prepare(sql);
   const snapshot = () =>
     query(
-      "SELECT * FROM plugin_state_entries WHERE plugin_id = ? ORDER BY namespace, entry_key",
+      "SELECT * FROM plugin_state_records WHERE plugin_id = ? ORDER BY namespace, entry_key",
     ).all(pluginId);
 
   afterEach(async () => {
@@ -140,7 +140,7 @@ describe("plugin-state-store.retained", () => {
     ]);
     const raw = '{ "body": "legacy 9" }';
     query(
-      "UPDATE plugin_state_entries SET value_json = ? WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
+      "UPDATE plugin_state_records SET value_json = ? WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
     ).run(raw, pluginId, "history", "9");
     const source = open<{ body: string }>({ namespace: "history", maxEntries: 10 });
     const retained = open<{ body: string }>();
@@ -164,7 +164,7 @@ describe("plugin-state-store.retained", () => {
     expect(reads).not.toHaveBeenCalled();
     expect(
       query(
-        "SELECT value_json, created_at, expires_at FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
+        "SELECT value_json, created_at, expires_at FROM plugin_state_records WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
       ).get(pluginId, "@retained.history", key(9)),
     ).toEqual({ value_json: raw, created_at: 9, expires_at: null });
     const foreign = keyedStore<{ body: string }>("other-plugin", "history");
@@ -328,7 +328,7 @@ describe("plugin-state-store.expiry", () => {
 
   function expiredCount() {
     return openOpenClawStateDatabase()
-      .db.prepare("SELECT count(*) AS count FROM plugin_state_entries WHERE expires_at <= ?")
+      .db.prepare("SELECT count(*) AS count FROM plugin_state_records WHERE expires_at <= ?")
       .get(Date.now())?.count;
   }
 

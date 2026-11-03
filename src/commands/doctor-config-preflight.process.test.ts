@@ -513,6 +513,40 @@ describe("doctor invalid config process exit", () => {
 });
 
 describe("Doctor repair followed by gateway readiness", () => {
+  it("seeds canonical plugin rows separately from the retired sidecar", () => {
+    const stateDir = tempDirs.createTempDir("openclaw-plugin-sidecar-fixture-");
+    seedPluginStateSidecar(stateDir, 2_000);
+    const shared = path.join(stateDir, "state", "openclaw.sqlite");
+    const sidecar = path.join(stateDir, "plugin-state", "state.sqlite");
+    expect(
+      readDatabase(shared, (db) =>
+        db
+          .prepare(
+            "SELECT value_json, created_at FROM plugin_state_records WHERE entry_key = 'interaction:1'",
+          )
+          .get(),
+      ),
+    ).toEqual({ value_json: '{"ok":false}', created_at: 2_000 });
+    expect(
+      readDatabase(shared, (db) =>
+        db.prepare("SELECT type FROM sqlite_schema WHERE name = 'plugin_state_entries'").get(),
+      ),
+    ).toEqual({ type: "view" });
+    expect(
+      readDatabase(sidecar, (db) =>
+        db
+          .prepare(
+            "SELECT value_json, created_at FROM plugin_state_entries WHERE entry_key = 'interaction:1'",
+          )
+          .get(),
+      ),
+    ).toEqual({ value_json: '{"ok":true}', created_at: 3_000 });
+    expect(
+      readDatabase(sidecar, (db) =>
+        db.prepare("SELECT type FROM sqlite_schema WHERE name = 'plugin_state_entries'").get(),
+      ),
+    ).toEqual({ type: "table" });
+  });
   it(
     "serves canonical state after Doctor repairs cron and preserves retired plugin sidecars",
     async ({ signal }) => {
@@ -564,7 +598,7 @@ describe("Doctor repair followed by gateway readiness", () => {
           readDatabase(databasePath, (database) =>
             database
               .prepare(
-                "SELECT value_json, created_at FROM plugin_state_entries WHERE plugin_id = 'discord' AND namespace = 'components' AND entry_key = 'interaction:1'",
+                "SELECT value_json, created_at FROM plugin_state_records WHERE plugin_id = 'discord' AND namespace = 'components' AND entry_key = 'interaction:1'",
               )
               .get(),
           );

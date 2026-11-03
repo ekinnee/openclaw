@@ -81,3 +81,27 @@ export function fixtureDescriptor(): PortDescriptor {
     },
   };
 }
+
+/** The state owner declares the retired SQL name without forwarding retained records. */
+export function stateWriterFenceFixtureDescriptor(): PortDescriptor {
+  const records = schema("plugin_state_records");
+  return {
+    id: "state",
+    version: 40,
+    minimumPostgresVersion: 16,
+    ...records,
+    sqlite:
+      records.sqlite +
+      "CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format;",
+    postData:
+      "CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format;",
+    expectedCatalog: [
+      ...records.expectedCatalog,
+      {
+        table: "plugin_state_entries",
+        kind: "viewDefinition",
+        value: "SELECT 'upgrade-required'::text AS unsupported_format;",
+      },
+    ],
+  };
+}

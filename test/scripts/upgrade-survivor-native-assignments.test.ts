@@ -1,6 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
+import { DatabaseSync } from "node:sqlite";
 import { afterEach, expect, it } from "vitest";
+import { pluginStateObservationRelation } from "../../scripts/e2e/lib/plugin-state-observation.mjs";
 import { publishDiagnostics } from "../../scripts/e2e/lib/upgrade-survivor/diagnostics.mjs";
 import {
   assertImportedAssignments,
@@ -187,4 +189,37 @@ it("requires package-bound proof before publishing a successful retirement cell"
     expect(() => publish({ ...snapshot, phases: invalid })).toThrow();
   }
   expect(() => publish({ ...snapshot, padding: "x".repeat(256 * 1024) })).toThrow();
+});
+
+it.each(["legacy", "current"])(
+  "observes retained binding rows through the %s physical relation",
+  (layout) => {
+    using database = new DatabaseSync(":memory:");
+    database.exec(
+      "CREATE TABLE plugin_state_entries (value_json TEXT NOT NULL); INSERT INTO plugin_state_entries VALUES ('{\"retained\":true}')",
+    );
+    if (layout === "current") {
+      database.exec(
+        "ALTER TABLE plugin_state_entries RENAME TO plugin_state_records; CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format",
+      );
+    }
+    const relation = pluginStateObservationRelation(database);
+    expect(database.prepare(`SELECT value_json FROM ${relation}`).get()?.value_json).toBe(
+      '{"retained":true}',
+    );
+  },
+);
+
+it.each([
+  "CREATE TABLE unrelated (value_json TEXT)",
+  "CREATE TABLE plugin_state_entries (value_json TEXT); CREATE TABLE plugin_state_records (value_json TEXT)",
+  "CREATE TABLE plugin_state_records (value_json TEXT)",
+  "CREATE TABLE plugin_state_records (value_json TEXT); CREATE VIEW plugin_state_entries AS SELECT * FROM plugin_state_records",
+  "CREATE TABLE plugin_state_records (value_json TEXT); CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format; CREATE TRIGGER legacy_write INSTEAD OF INSERT ON plugin_state_entries BEGIN SELECT 1; END",
+])("refuses mixed or unknown retained binding observation layouts (%s)", (sql) => {
+  using database = new DatabaseSync(":memory:");
+  database.exec(sql);
+  expect(() => pluginStateObservationRelation(database)).toThrow(
+    "Unrecognized plugin-state observation layout",
+  );
 });

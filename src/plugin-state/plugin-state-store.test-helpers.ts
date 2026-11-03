@@ -22,7 +22,7 @@ export function clearPluginStateStoreForTests(): void {
     const result = executeSqliteQuerySync(
       db,
       getPluginStateKysely(db)
-        .deleteFrom("plugin_state_entries")
+        .deleteFrom("plugin_state_records")
         .returning(["plugin_id", "namespace", "entry_key"]),
     );
     pluginStatePublication.stageDeletions(db, result.rows);

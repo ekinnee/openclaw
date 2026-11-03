@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import type { Kysely } from "kysely";
 import type { EngineConnection, SqlConnection } from "../sql-connection.js";
 import type { PortDescriptor } from "./port-types.js";
+import type { PostgresCatalogFact } from "./postgres-catalog.js";
 import type { FullTextCapability, TextIndex, TextIndexDefinition } from "./text-contract.js";
 import type { DatabaseEngineId, DatabaseEngineInput } from "./types.js";
 import type { VectorCapability, VectorIndex } from "./vector-contract.js";
@@ -86,6 +87,7 @@ export type AdmittedStore = {
     database: EngineConnection,
     fromVersion: number,
     sourceTables: ReadonlySet<string>,
+    sourceCatalog: readonly PostgresCatalogFact[],
   ) => void;
 };
 type TransactionRecipes<Connection extends SqlConnection> = {

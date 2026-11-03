@@ -17,11 +17,12 @@ it("requires selected activation cleanup while preserving another engine and pro
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
   fs.mkdirSync(artifacts);
   const database = new DatabaseSync(databasePath);
-  database.exec(`CREATE TABLE plugin_state_entries (
+  database.exec(`CREATE TABLE plugin_state_records (
     plugin_id TEXT NOT NULL, namespace TEXT NOT NULL, entry_key TEXT NOT NULL,
     value_json TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER,
     PRIMARY KEY (plugin_id, namespace, entry_key)
-  ) STRICT`);
+  ) STRICT;
+  CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format;`);
   database.close();
   const fixture = path.resolve("scripts/e2e/lib/upgrade-survivor/custom-plugin-siblings.mjs");
   const node = resolveTestNodeExecPath();
@@ -61,12 +62,12 @@ it("requires selected activation cleanup while preserving another engine and pro
        };
        const results = [check()];
        const db = new DatabaseSync(seed.databasePath);
-       const remove = db.prepare('DELETE FROM plugin_state_entries WHERE entry_key = ?');
+       const remove = db.prepare('DELETE FROM plugin_state_records WHERE entry_key = ?');
        remove.run(seed.entries[0].key);
        results.push(check());
        remove.run(seed.entries[1].key);
        results.push(check());
-       db.prepare('INSERT INTO plugin_state_entries VALUES (?, ?, ?, ?, ?, NULL)').run(
+       db.prepare('INSERT INTO plugin_state_records VALUES (?, ?, ?, ?, ?, NULL)').run(
          'core:context-engine-quarantine-health', 'runtime-quarantines',
          seed.entries[1].key, seed.entries[1].value, Date.now());
        remove.run(seed.entries[2].key);

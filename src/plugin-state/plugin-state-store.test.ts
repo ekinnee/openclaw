@@ -376,7 +376,7 @@ describe("plugin-state-store", () => {
     sync.register("key", 1);
     const db = requireNativeSqliteDatabase(openOpenClawStateDatabase().db);
     const reads = trackSqliteStatementExecutions(db, ["reads"], (sql) =>
-      sql.startsWith("select ") && sql.includes('"plugin_state_entries"') ? "reads" : null,
+      sql.startsWith("select ") && sql.includes('"plugin_state_records"') ? "reads" : null,
     );
     try {
       expect(sync.lookupMany([])).toEqual([]);
@@ -447,7 +447,7 @@ describe("plugin-state-store", () => {
     ]);
     const database = openOpenClawStateDatabase().db;
     const replaceJson = database.prepare(
-      "UPDATE plugin_state_entries SET value_json = ? WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
+      "UPDATE plugin_state_records SET value_json = ? WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
     );
     replaceJson.run("{malformed", "codex", namespace, "binding:a");
     replaceJson.run('{ "generation" : 1 }', "codex", namespace, "binding:b");
@@ -510,10 +510,10 @@ describe("plugin-state-store.errors", () => {
     await expect(async () => read()).rejects.toMatchObject(expected);
   }
 
-  it("preserves each caller's operation when a shared cold namespace load fails", async () => {
+  it("preserves each caller's operation when a shared cold namespace admission fails", async () => {
     await withOpenClawTestState({ label: "plugin-state-load-failure" }, async () => {
       const { db, path } = openOpenClawStateDatabase();
-      db.exec("DROP TABLE plugin_state_entries");
+      db.exec("DROP TABLE plugin_state_records");
       const store = openAsyncStore({ namespace: "load-failure" });
       const results = await Promise.allSettled([
         store.lookup("key"),
@@ -527,10 +527,15 @@ describe("plugin-state-store.errors", () => {
           throw new Error("Damaged plugin state unexpectedly read successfully");
         }
         expect(result.reason).toMatchObject({
-          code: "PLUGIN_STATE_READ_FAILED",
+          code: "PLUGIN_STATE_OPEN_FAILED",
           operation,
           path,
-          cause: expect.objectContaining({ message: "no such table: plugin_state_entries" }),
+          cause: expect.objectContaining({
+            name: "SqliteSchemaMismatchError",
+            message: expect.stringContaining(
+              "Unsupported or conflicting shared-state writer-fence layout",
+            ),
+          }),
         });
         expect(result.reason.owner.threadId).toBeGreaterThan(0);
       }
@@ -545,46 +550,78 @@ describe("plugin-state-store.errors", () => {
         store.register("a", 1);
         store.register("b", 2);
         const { db, path } = openOpenClawStateDatabase();
-        db.prepare("UPDATE plugin_state_entries SET value_json = ? WHERE entry_key = ?").run(
+        db.prepare("UPDATE plugin_state_records SET value_json = ? WHERE entry_key = ?").run(
           "invalid first JSON",
           "a",
         );
-        if (failure === "sqlite-step") {
-          // The second native step must take precedence over the first row's decode failure.
-          db.exec(`ALTER TABLE plugin_state_entries RENAME TO plugin_state_source;
-          CREATE VIEW plugin_state_entries AS SELECT plugin_id, namespace, entry_key,
-          CASE WHEN entry_key = 'b' THEN json_extract('invalid SQL JSON', '$') ELSE value_json END AS value_json,
-          created_at, expires_at FROM plugin_state_source;`);
+        let nativeSteps = 0;
+        const prepare = Object.getOwnPropertyDescriptors(DatabaseSync.prototype).prepare.value;
+        if (!prepare) {
+          throw new Error("Native prepare method is unavailable");
         }
-        for (const connection of ["warm", "readonly"]) {
-          if (connection === "readonly") {
-            closePluginStateDatabase();
-          }
-          throws(() => store.entries(), {
-            code: failure === "decode" ? "PLUGIN_STATE_CORRUPT" : "PLUGIN_STATE_READ_FAILED",
-            operation: "entries",
-            path,
-            cause:
-              failure === "decode"
-                ? expect.any(SyntaxError)
-                : expect.objectContaining({
-                    code: "ERR_SQLITE_ERROR",
-                    message: "malformed JSON",
-                  }),
-          });
-          const writer = new DatabaseSync(path);
-          try {
-            writer.exec("PRAGMA busy_timeout = 0");
-            const table = failure === "decode" ? "plugin_state_entries" : "plugin_state_source";
-            writer.exec(`UPDATE ${table} SET created_at = created_at + 1`);
-            expect(writer.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get()).toEqual({
-              busy: 0,
-              log: 0,
-              checkpointed: 0,
+        const fault =
+          failure === "sqlite-step"
+            ? vi.spyOn(DatabaseSync.prototype, "prepare").mockImplementation(function (
+                this: DatabaseSync,
+                sql: string,
+              ) {
+                let query = sql;
+                if (
+                  /^select\b/iu.test(query) &&
+                  /from "plugin_state_records"/iu.test(query) &&
+                  /order by "created_at"/iu.test(query)
+                ) {
+                  // Test-only query fault after format admission: execute the real native
+                  // JSON function on row b while the physical table and guard remain intact.
+                  this.function("openclaw_test_row_step", (value) => {
+                    nativeSteps += 1;
+                    return value;
+                  });
+                  query = query.replace(
+                    '"value_json"',
+                    () => `CASE WHEN openclaw_test_row_step("entry_key") = 'b'
+              THEN json_extract('invalid SQL JSON', '$') ELSE "value_json" END AS "value_json"`,
+                  );
+                }
+                return prepare.call(this, query);
+              })
+            : undefined;
+        try {
+          for (const connection of ["warm", "readonly"]) {
+            if (connection === "readonly") {
+              closePluginStateDatabase();
+            }
+            nativeSteps = 0;
+            throws(() => store.entries(), {
+              code: failure === "decode" ? "PLUGIN_STATE_CORRUPT" : "PLUGIN_STATE_READ_FAILED",
+              operation: "entries",
+              path,
+              cause:
+                failure === "decode"
+                  ? expect.any(SyntaxError)
+                  : expect.objectContaining({
+                      code: "ERR_SQLITE_ERROR",
+                      message: "malformed JSON",
+                    }),
             });
-          } finally {
-            writer.close();
+            if (failure === "sqlite-step") {
+              expect(nativeSteps).toBe(2);
+            }
+            const writer = new DatabaseSync(path);
+            try {
+              writer.exec("PRAGMA busy_timeout = 0");
+              writer.exec("UPDATE plugin_state_records SET created_at = created_at + 1");
+              expect(writer.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get()).toEqual({
+                busy: 0,
+                log: 0,
+                checkpointed: 0,
+              });
+            } finally {
+              writer.close();
+            }
           }
+        } finally {
+          fault?.mockRestore();
         }
       });
     },
@@ -601,7 +638,7 @@ describe("plugin-state-store.errors", () => {
         // Seed corrupt storage before any keyed receipt can cache the row.
         database.db
           .prepare(
-            "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, NULL)",
+            "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, NULL)",
           )
           .run("discord", "corrupt", "key", "invalid JSON", Date.now());
         const expected = {
@@ -638,7 +675,7 @@ describe("plugin-state-store.errors", () => {
         expect(predicate).not.toHaveBeenCalled();
         expect(
           openOpenClawStateDatabase({ env: state.env })
-            .db.prepare("SELECT value_json FROM plugin_state_entries")
+            .db.prepare("SELECT value_json FROM plugin_state_records")
             .all(),
         ).toEqual([{ value_json: "invalid JSON" }]);
       },
@@ -769,9 +806,9 @@ describe("plugin-state-store.retention", () => {
         requireNativeSqliteDatabase(store.db),
         ["expiryProbe", "delete"],
         (sql) =>
-          sql.startsWith('select "expires_at" from "plugin_state_entries"')
+          sql.startsWith('select "expires_at" from "plugin_state_records"')
             ? "expiryProbe"
-            : sql.startsWith('delete from "plugin_state_entries"')
+            : sql.startsWith('delete from "plugin_state_records"')
               ? "delete"
               : null,
       );
@@ -820,7 +857,7 @@ describe("plugin-state-store.retention", () => {
     const statements = trackSqliteStatementExecutions(
       requireNativeSqliteDatabase(openOpenClawStateDatabase().db),
       ["delete"],
-      (sql) => (sql.startsWith('delete from "plugin_state_entries"') ? "delete" : null),
+      (sql) => (sql.startsWith('delete from "plugin_state_records"') ? "delete" : null),
     );
     try {
       store.register("a-protected", 64);
@@ -859,7 +896,7 @@ describe("plugin-state-store.retention", () => {
       ]);
       expect(
         openOpenClawStateDatabase()
-          .db.prepare("SELECT count(*) AS count FROM plugin_state_entries WHERE expires_at <= ?")
+          .db.prepare("SELECT count(*) AS count FROM plugin_state_records WHERE expires_at <= ?")
           .get(2_000)?.count,
       ).toBe(1);
     },

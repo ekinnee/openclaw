@@ -1,0 +1,3 @@
+# Cold-cutover writer exclusion, official/experimental format preservation, restore/port and native-binding runtime regressions.
+# Includes fresh-worker V1 move and actual-predecessor/full-Doctor upgrade regressions; no scalar or inherited-debt change.
+1161

@@ -149,7 +149,7 @@ export function registerOpenResponsesContinuationTests({
     expect(json.id).toMatch(/^resp_/);
     const stored = openOpenClawStateDatabase()
       .db.prepare(
-        "SELECT value_json FROM plugin_state_entries WHERE plugin_id = 'core:openresponses' AND namespace = 'response-sessions' AND entry_key = ?",
+        "SELECT value_json FROM plugin_state_records WHERE plugin_id = 'core:openresponses' AND namespace = 'response-sessions' AND entry_key = ?",
       )
       .get(json.id!);
     expect(stored?.value_json).toEqual(expect.any(String));

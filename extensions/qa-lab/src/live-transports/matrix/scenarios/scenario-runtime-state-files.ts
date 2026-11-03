@@ -97,7 +97,7 @@ async function readMatrixSyncCacheCursorsFromSqlite(
         const rows = db
           .prepare(
             `SELECT entry_key AS entryKey, value_json AS valueJson
-                 FROM plugin_state_entries
+                 FROM plugin_state_records
                 WHERE plugin_id = ?
                   AND namespace = ?
                   AND (expires_at IS NULL OR expires_at > ?)`,
@@ -149,7 +149,7 @@ export async function rewriteMatrixSyncStoreCursor(params: {
     const rows = db
       .prepare(
         `SELECT entry_key AS entryKey, value_json AS valueJson
-           FROM plugin_state_entries
+           FROM plugin_state_records
           WHERE plugin_id = ?
             AND namespace = ?
             AND entry_key LIKE ?`,
@@ -175,7 +175,7 @@ export async function rewriteMatrixSyncStoreCursor(params: {
     const nextChunks = chunkMatrixSyncCacheJson(syncJson);
     const now = Date.now();
     const upsert = db.prepare(
-      `INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at)
+      `INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at)
        VALUES (?, ?, ?, ?, ?, NULL)
        ON CONFLICT(plugin_id, namespace, entry_key)
        DO UPDATE SET value_json = excluded.value_json, created_at = excluded.created_at, expires_at = NULL`,
@@ -202,7 +202,7 @@ export async function rewriteMatrixSyncStoreCursor(params: {
       now,
     );
     db.prepare(
-      `DELETE FROM plugin_state_entries
+      `DELETE FROM plugin_state_records
         WHERE plugin_id = ?
           AND namespace = ?
           AND entry_key LIKE ?
@@ -222,7 +222,7 @@ export async function deleteMatrixSyncStoreCursor(params: MatrixSyncStoreCursor)
   const db = openNodeSqliteDatabase(params.pathname);
   try {
     db.prepare(
-      `DELETE FROM plugin_state_entries
+      `DELETE FROM plugin_state_records
         WHERE plugin_id = ?
           AND namespace = ?
           AND (entry_key = ? OR entry_key LIKE ?)`,
@@ -240,7 +240,7 @@ export async function deleteMatrixSyncStoreCursor(params: MatrixSyncStoreCursor)
 function readMatrixStorageMetadata(db: ReturnType<typeof openNodeSqliteDatabase>): unknown {
   const row = db
     .prepare(
-      `SELECT value_json AS valueJson FROM plugin_state_entries
+      `SELECT value_json AS valueJson FROM plugin_state_records
           WHERE plugin_id = ? AND namespace = ? AND entry_key = ?
             AND (expires_at IS NULL OR expires_at > ?)`,
     )

@@ -109,7 +109,7 @@ describe.skipIf(!connection)("Git backup secret exclusion across engines", () =>
                 )
                 .run(secret);
               const pluginInsert = source.prepare(
-                "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at) VALUES (?, ?, ?, ?, 1)",
+                "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at) VALUES (?, ?, ?, ?, 1)",
               );
               for (const [plugin, pluginNamespace, key, value] of [
                 ["zalouser", "credentials", "default", { cookie: secret }],
@@ -224,19 +224,19 @@ describe.skipIf(!connection)("Git backup secret exclusion across engines", () =>
                   .prepare("SELECT name FROM sqlite_schema WHERE name = 'device_auth_tokens'")
                   .all(),
               ).toEqual([]);
-              expect(image.prepare("SELECT count(*) AS n FROM plugin_state_entries").get()?.n).toBe(
+              expect(image.prepare("SELECT count(*) AS n FROM plugin_state_records").get()?.n).toBe(
                 4,
               );
               expect(
                 image
                   .prepare(
-                    "SELECT plugin_id, value_json FROM plugin_state_entries WHERE plugin_id IN ('active-memory', 'mcp-relay', 'x') ORDER BY plugin_id",
+                    "SELECT plugin_id, value_json FROM plugin_state_records WHERE plugin_id IN ('active-memory', 'mcp-relay', 'x') ORDER BY plugin_id",
                   )
                   .all(),
               ).toEqual(retainedPluginRows);
               expect(
                 image
-                  .prepare("SELECT value_json FROM plugin_state_entries WHERE plugin_id='discord'")
+                  .prepare("SELECT value_json FROM plugin_state_records WHERE plugin_id='discord'")
                   .all(),
               ).toEqual([{ value_json: '{"threadId":"thread"}' }]);
               expect(
@@ -287,7 +287,7 @@ describe.skipIf(!connection)("Git backup secret exclusion across engines", () =>
                 path.join(unredacted, "postgres", "database.sqlite"),
               );
               expect(
-                fullImage.prepare("SELECT count(*) AS n FROM plugin_state_entries").get()?.n,
+                fullImage.prepare("SELECT count(*) AS n FROM plugin_state_records").get()?.n,
               ).toBe(7);
               expect(
                 fullImage.prepare("SELECT count(*) AS n FROM plugin_blob_entries").get()?.n,
@@ -295,7 +295,7 @@ describe.skipIf(!connection)("Git backup secret exclusion across engines", () =>
               expect(
                 fullImage
                   .prepare(
-                    "SELECT value_json FROM plugin_state_entries WHERE plugin_id='discord' AND namespace='thread-bindings'",
+                    "SELECT value_json FROM plugin_state_records WHERE plugin_id='discord' AND namespace='thread-bindings'",
                   )
                   .all(),
               ).toEqual([
@@ -342,21 +342,21 @@ describe.skipIf(!connection)("Git backup secret exclusion across engines", () =>
                     expect(
                       (
                         await client.query(
-                          `SELECT count(*)::int AS n FROM "${restored.namespace}".plugin_state_entries`,
+                          `SELECT count(*)::int AS n FROM "${restored.namespace}".plugin_state_records`,
                         )
                       ).rows,
                     ).toEqual([{ n: index === 0 ? 4 : 7 }]);
                     expect(
                       (
                         await client.query(
-                          `SELECT plugin_id, value_json FROM "${restored.namespace}".plugin_state_entries WHERE plugin_id IN ('active-memory', 'mcp-relay', 'x') ORDER BY plugin_id`,
+                          `SELECT plugin_id, value_json FROM "${restored.namespace}".plugin_state_records WHERE plugin_id IN ('active-memory', 'mcp-relay', 'x') ORDER BY plugin_id`,
                         )
                       ).rows,
                     ).toEqual(retainedPluginRows);
                     expect(
                       (
                         await client.query(
-                          `SELECT value_json FROM "${restored.namespace}".plugin_state_entries WHERE plugin_id='discord' AND namespace='thread-bindings'`,
+                          `SELECT value_json FROM "${restored.namespace}".plugin_state_records WHERE plugin_id='discord' AND namespace='thread-bindings'`,
                         )
                       ).rows,
                     ).toEqual([

@@ -261,7 +261,7 @@ describe("memory forget", () => {
         } else {
           const trigger =
             failure === "backup"
-              ? "BEFORE UPDATE ON plugin_state_entries WHEN OLD.plugin_id = 'memory-core' AND OLD.namespace = 'dreaming-memory-backups'"
+              ? "BEFORE UPDATE ON plugin_state_records WHEN OLD.plugin_id = 'memory-core' AND OLD.namespace = 'dreaming-memory-backups'"
               : failure === "index"
                 ? "BEFORE DELETE ON memory_index_chunks WHEN OLD.id = 'chunk-0'"
                 : failure === "sources"
@@ -378,7 +378,7 @@ describe("memory forget phase-signal failures", () => {
   const readPhases = async () => (await readPhaseSignalStore(h.workspaceDir, observedAt)).entries;
   function abortWrite(event: string, namespace: string, key: string, message: string) {
     const db = openOpenClawStateDatabase().db;
-    db.exec(`CREATE TRIGGER abort_write ${event} ON plugin_state_entries
+    db.exec(`CREATE TRIGGER abort_write ${event} ON plugin_state_records
       WHEN OLD.plugin_id = 'memory-core' AND OLD.namespace = '${namespace}'
         AND json_extract(OLD.value_json, '$.workspaceKey') = '${memoryCoreWorkspaceStateKey(h.workspaceDir)}'
         AND json_extract(OLD.value_json, '$.key') = '${key}'

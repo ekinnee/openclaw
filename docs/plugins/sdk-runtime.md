@@ -644,6 +644,14 @@ by Doctor after backup, the maintenance scope owns the reader. Other sources use
 an artifact-preserving private copy with the existing unstable-source refusal.
 The helper owns cleanup; callbacks must not retain or close the connection.
 
+For supported legacy/current plugin-state inspection inside that read contract,
+`resolvePluginStateReadRelation(db)` from `sqlite-worker-runtime` selects the
+recognized physical relation or returns `undefined` when neither table exists.
+It refuses newer content floors, conflicting experimental layouts, and malformed
+writer guards. The selector is format recognition only: the caller retains its
+existing source-read authority, and must not use it to certify ordinary content
+provenance or obtain mutation authority.
+
 First-party imports of an external SQLite database can use
 `startSqliteReadOnlyLocationAsync(path, { signal })` from the private
 `sqlite-runtime` facade. Snapshot preparation, native flushes, and staging

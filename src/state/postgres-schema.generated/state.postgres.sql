@@ -737,7 +737,7 @@ CREATE TABLE "plugin_blob_entries" (
   PRIMARY KEY ("plugin_id", "namespace", "entry_key")
 );
 
-CREATE TABLE "plugin_state_entries" (
+CREATE TABLE "plugin_state_records" (
   "plugin_id" text COLLATE "C" NOT NULL,
   "namespace" text COLLATE "C" NOT NULL,
   "entry_key" text COLLATE "C" NOT NULL,
@@ -1342,6 +1342,8 @@ CREATE TABLE "worktrees" (
   CHECK (("owner_kind" IN ('manual', 'workboard', 'session')))
 );
 
+CREATE VIEW "plugin_state_entries" AS SELECT 'upgrade-required'::text AS unsupported_format;
+
 CREATE INDEX "idx_acp_replay_sessions_key_updated" ON "acp_replay_sessions" (("session_key") ASC, ("complete") ASC, ("updated_at") DESC, ("session_id") ASC);
 
 CREATE INDEX "idx_acp_replay_sessions_updated" ON "acp_replay_sessions" (("updated_at") DESC, ("session_id") ASC);
@@ -1488,9 +1490,9 @@ CREATE INDEX "idx_plugin_blob_expiry" ON "plugin_blob_entries" (("expires_at") A
 
 CREATE INDEX "idx_plugin_blob_listing" ON "plugin_blob_entries" (("plugin_id") ASC, ("namespace") ASC, ("created_at") ASC, ("entry_key") ASC);
 
-CREATE INDEX "idx_plugin_state_expiry" ON "plugin_state_entries" (("expires_at") ASC) WHERE "expires_at" IS NOT NULL;
+CREATE INDEX "idx_plugin_state_expiry" ON "plugin_state_records" (("expires_at") ASC) WHERE "expires_at" IS NOT NULL;
 
-CREATE INDEX "idx_plugin_state_listing" ON "plugin_state_entries" (("plugin_id") ASC, ("namespace") ASC, ("created_at") ASC, ("entry_key") ASC, ("expires_at") ASC NULLS FIRST);
+CREATE INDEX "idx_plugin_state_listing" ON "plugin_state_records" (("plugin_id") ASC, ("namespace") ASC, ("created_at") ASC, ("entry_key") ASC, ("expires_at") ASC NULLS FIRST);
 
 CREATE INDEX "idx_sandbox_registry_last_used" ON "sandbox_registry_entries" (("registry_kind") ASC, ("last_used_at_ms") DESC, ("container_name") ASC) WHERE "last_used_at_ms" IS NOT NULL;
 

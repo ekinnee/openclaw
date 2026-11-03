@@ -65,7 +65,7 @@ it("joins an accepted catalog refresh across the close prelude before plugin-sta
     try {
       const row = persisted
         .prepare(
-          "SELECT value_json FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
+          "SELECT value_json FROM plugin_state_records WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
         )
         .get("core:openrouter-model-capabilities", "models.v4", "synthetic/close-proof");
       expect(row && JSON.parse(String(row.value_json))).toMatchObject({ name: "Close proof" });

@@ -70,7 +70,7 @@ it.each([true, false])(
     const publicBlob = "public-custom-plugin-data";
     withDatabase(database.path, (db) => {
       const insert = db.prepare(
-        "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at) VALUES (?, ?, ?, ?, 1)",
+        "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at) VALUES (?, ?, ?, ?, 1)",
       );
       credentials.forEach(([plugin, namespace, key], index) =>
         insert.run(plugin, namespace, key, JSON.stringify({ credential: markers[index] })),
@@ -107,7 +107,7 @@ it.each([true, false])(
     expect(result.pushed).toBe(true);
     const remoteFile = (file: string) =>
       requireGitCommand(remote, ["show", `${result.commit}:global/${file}`]);
-    const stateRows = await remoteFile("tables/plugin_state_entries.jsonl");
+    const stateRows = await remoteFile("tables/plugin_state_records.jsonl");
     const blobRows = await remoteFile("tables/plugin_blob_entries.jsonl");
     for (const marker of markers) {
       expect.soft(stateRows.includes(marker), marker).toBe(!excludeSecrets);
@@ -138,7 +138,7 @@ it.each([true, false])(
       expectedIdentity: { role: "global" },
     });
     expectDatabaseRows(restored, {
-      "SELECT value_json FROM plugin_state_entries WHERE plugin_id = 'discord' AND namespace IN ('thread-bindings', '@retained.thread-bindings')":
+      "SELECT value_json FROM plugin_state_records WHERE plugin_id = 'discord' AND namespace IN ('thread-bindings', '@retained.thread-bindings')":
         ["thread-bindings", "@retained.thread-bindings"].map(() => ({
           value_json: JSON.stringify(
             excludeSecrets
@@ -146,9 +146,9 @@ it.each([true, false])(
               : { threadId: "thread", agentId: "main", webhookToken: "synthetic-webhook-token" },
           ),
         })),
-      "SELECT value_json FROM plugin_state_entries WHERE plugin_id = 'x' AND namespace = 'x.spend'":
+      "SELECT value_json FROM plugin_state_records WHERE plugin_id = 'x' AND namespace = 'x.spend'":
         [{ value_json: "15000000" }],
-      "SELECT value_json FROM plugin_state_entries WHERE plugin_id = 'active-memory'": [
+      "SELECT value_json FROM plugin_state_records WHERE plugin_id = 'active-memory'": [
         { value_json: '{"disabled":true}' },
       ],
       "SELECT namespace, hex(blob) AS bytes FROM plugin_blob_entries WHERE plugin_id = 'fixture' ORDER BY namespace":
@@ -166,26 +166,34 @@ it.each([true, false])(
   },
 );
 
-it("filters plugin credentials before PostgreSQL image materialization with a generic Git identity", () => {
-  const transform = createGitBackupRowTransform(
-    { role: "generic" },
-    "state",
-    new Set(["plugin_state_entries", "plugin_blob_entries"]),
-  );
-  const secret = { plugin_id: "matrix", namespace: "credentials", entry_key: "account:default" };
-  for (const table of ["plugin_state_entries", "plugin_blob_entries"]) {
-    expect(transform(table, secret)).toBeUndefined();
-    const durable = { plugin_id: "x", namespace: "x.spend", entry_key: "cycle", value_json: "15" };
-    expect(transform(table, durable)).toEqual(durable);
-  }
-  const binding = { plugin_id: "discord", namespace: "thread-bindings", entry_key: "thread" };
-  expect(
-    transform("plugin_state_entries", {
-      ...binding,
-      value_json: '{"threadId":"thread","webhookToken":"synthetic-webhook-token"}',
-    }),
-  ).toEqual({ ...binding, value_json: '{"threadId":"thread"}' });
-  for (const value_json of ['{"webhookToken":', '"synthetic-webhook-token"', "[]"]) {
-    expect(transform("plugin_state_entries", { ...binding, value_json })).toBeUndefined();
-  }
-});
+it.each(["plugin_state_entries", "plugin_state_records"])(
+  "filters %s credentials before image materialization with a generic Git identity",
+  (table) => {
+    const transform = createGitBackupRowTransform(
+      { role: "generic" },
+      "state",
+      new Set([table, "plugin_blob_entries"]),
+    );
+    const secret = { plugin_id: "matrix", namespace: "credentials", entry_key: "account:default" };
+    for (const relation of [table, "plugin_blob_entries"]) {
+      expect(transform(relation, secret)).toBeUndefined();
+      const durable = {
+        plugin_id: "x",
+        namespace: "x.spend",
+        entry_key: "cycle",
+        value_json: "15",
+      };
+      expect(transform(relation, durable)).toEqual(durable);
+    }
+    const binding = { plugin_id: "discord", namespace: "thread-bindings", entry_key: "thread" };
+    expect(
+      transform(table, {
+        ...binding,
+        value_json: '{"threadId":"thread","webhookToken":"synthetic-webhook-token"}',
+      }),
+    ).toEqual({ ...binding, value_json: '{"threadId":"thread"}' });
+    for (const value_json of ['{"webhookToken":', '"synthetic-webhook-token"', "[]"]) {
+      expect(transform(table, { ...binding, value_json })).toBeUndefined();
+    }
+  },
+);

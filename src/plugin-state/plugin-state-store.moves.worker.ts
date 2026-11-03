@@ -4,9 +4,11 @@ import {
   sqliteStringSet,
   sqliteStringSetEntries,
 } from "../infra/kysely-sync.js";
+import { isPluginStateNativeBindingMutationScope } from "./plugin-state-native-binding-codec.js";
 import { pluginStatePublication } from "./plugin-state-publication.js";
 import {
   assertPluginStateKey,
+  assertPluginStateMutation,
   createPluginStateError,
   getPluginStateKysely,
   isRetainedPluginStateNamespace,
@@ -48,7 +50,7 @@ export function movePluginStateEntries(
     executeSqliteQuerySync(
       store.db,
       kysely
-        .selectFrom("plugin_state_entries")
+        .selectFrom("plugin_state_records")
         .select(["entry_key", "expires_at"])
         .where("plugin_id", "=", params.pluginId)
         .where("namespace", "=", params.sourceNamespace)
@@ -72,6 +74,32 @@ export function movePluginStateEntries(
     assertPluginStateKey(store.db, entry.targetKey, "register");
     return true;
   });
+  if (
+    isPluginStateNativeBindingMutationScope({
+      pluginId: params.pluginId,
+      namespace: params.sourceNamespace,
+    }) ||
+    isPluginStateNativeBindingMutationScope(params)
+  ) {
+    for (const entry of entries) {
+      const sourceScope = {
+        pluginId: params.pluginId,
+        namespace: params.sourceNamespace,
+        key: entry.sourceKey,
+      };
+      assertPluginStateMutation(store.db, sourceScope);
+      const source = executeSqliteQuerySync(
+        store.db,
+        kysely
+          .selectFrom("plugin_state_records")
+          .select("value_json")
+          .where("plugin_id", "=", params.pluginId)
+          .where("namespace", "=", params.sourceNamespace)
+          .where("entry_key", "=", entry.sourceKey),
+      ).rows[0];
+      assertPluginStateMutation(store.db, { ...params, key: entry.targetKey }, source?.value_json);
+    }
+  }
   let moved = 0;
   // Bound returned postimages; retained values can be one MiB each.
   for (let offset = 0; offset < entries.length; offset += 64) {
@@ -80,7 +108,7 @@ export function movePluginStateEntries(
     const inserted = executeSqliteQuerySync(
       store.db,
       kysely
-        .insertInto("plugin_state_entries")
+        .insertInto("plugin_state_records")
         .columns(["plugin_id", "namespace", "entry_key", "value_json", "created_at", "expires_at"])
         .expression(
           kysely
@@ -92,7 +120,7 @@ export function movePluginStateEntries(
               "target.key",
               "requested.key",
             )
-            .crossJoin("plugin_state_entries")
+            .crossJoin("plugin_state_records")
             .where("plugin_id", "=", params.pluginId)
             .where("namespace", "=", params.sourceNamespace)
             .whereRef("entry_key", "=", "requested.value")
@@ -113,7 +141,7 @@ export function movePluginStateEntries(
               created_at: (eb) => eb.ref("excluded.created_at"),
               expires_at: (eb) => eb.ref("excluded.expires_at"),
             })
-            .where("plugin_state_entries.expires_at", "<=", now),
+            .where("plugin_state_records.expires_at", "<=", now),
         )
         .returningAll(),
     );
@@ -123,7 +151,7 @@ export function movePluginStateEntries(
     const deleted = executeSqliteQuerySync(
       store.db,
       kysely
-        .deleteFrom("plugin_state_entries")
+        .deleteFrom("plugin_state_records")
         .where("plugin_id", "=", params.pluginId)
         .where("namespace", "=", params.sourceNamespace)
         .where("entry_key", "in", sqliteStringSet(keys))

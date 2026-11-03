@@ -638,7 +638,7 @@ describe("plugin state committed facts", () => {
           );
           expect(result).toEqual({ ok: true, value: changed });
           expect(
-            database.db.prepare("SELECT count(*) AS count FROM plugin_state_entries").get(),
+            database.db.prepare("SELECT count(*) AS count FROM plugin_state_records").get(),
           ).toEqual({ count: 0 });
           expect(owner.committed?.facts).toMatchObject({
             domain: "plugin-state",

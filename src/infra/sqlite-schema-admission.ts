@@ -75,6 +75,7 @@ export function captureSqliteSchemaFacts(
       schemaVersion,
       tables: new Set<string>(),
       views: new Set<string>(),
+      viewSql: new Map<string, string | null>(),
       tableSql: new Map<string, string | null>(),
       indexes: new Set<string>(),
       indexDefinitions: new Map<string, { table: string; sql: string | null }>(),
@@ -92,6 +93,7 @@ export function captureSqliteSchemaFacts(
           break;
         case "view":
           facts.views.add(row.name);
+          facts.viewSql.set(row.name, sql);
           break;
         case "index":
           facts.indexes.add(row.name);

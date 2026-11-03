@@ -21,6 +21,7 @@ import {
   stateDir,
 } from "../codex-install-utils.mjs";
 import { assertCodexReleasePackageContract } from "../codex-release-package-assertions.mjs";
+import { pluginStateObservationRelation } from "../plugin-state-observation.mjs";
 import { inspectCodexAudit } from "./audit-inspection.mjs";
 
 const command = process.argv[2];
@@ -126,7 +127,7 @@ function readCodexBinding(sessionId, sessionKey, entry) {
     const row = db
       .prepare(
         `SELECT value_json
-           FROM plugin_state_entries
+           FROM ${pluginStateObservationRelation(db)}
           WHERE plugin_id = ? AND namespace = ? AND entry_key = ?
             AND (expires_at IS NULL OR expires_at > ?)`,
       )

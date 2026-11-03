@@ -177,7 +177,7 @@ export function seedPluginStateSidecar(stateDir: string, canonicalCreatedAt: num
   try {
     shared
       .prepare(`
-        INSERT INTO plugin_state_entries (
+        INSERT INTO plugin_state_records (
           plugin_id, namespace, entry_key, value_json, created_at, expires_at
         ) VALUES (?, ?, ?, ?, ?, ?)
       `)

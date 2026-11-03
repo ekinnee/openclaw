@@ -1,16 +1,16 @@
 import type { Expression } from "kysely";
-import {
-  createSqliteQueryCache,
-  executeSqliteQuerySync,
-  prepareSqliteQuerySync,
-} from "../infra/kysely-sync.js";
+import { executeSqliteQuerySync, prepareSqliteQuerySync } from "../infra/kysely-sync.js";
 import type { EngineConnection } from "../infra/sql-connection.js";
 import { coerceRequiredSqliteNumber, normalizeSqliteNumber } from "../infra/sqlite-number.js";
+import { isPluginStateNativeBindingMutationScope } from "./plugin-state-native-binding-codec.js";
 import { pluginStatePublication } from "./plugin-state-publication.js";
 import {
+  assertPluginStateMutation,
   bindPluginStateEntry,
   countLivePluginStateNamespaceEntries,
   createPluginStateError,
+  createPluginStateReadQueryCache,
+  getPluginStateReadKysely,
   deleteExpiredPluginStateEntries,
   getPluginStateKysely,
   hasPluginStateEntry,
@@ -21,16 +21,21 @@ import {
   upsertPluginStateEntry,
   type PluginStateCountRow,
   type PluginStateDatabase,
+  type PluginStateReadRelation,
 } from "./plugin-state-store.kernel.js";
 import type { PluginStateOverflowPolicy } from "./plugin-state-store.types.js";
 
 type PluginStateCountParams = { pluginId: string; now: number };
-const pluginStateCountQuery = createSqliteQueryCache((db: EngineConnection) =>
+const pluginStateCountQuery = createPluginStateReadQueryCache((db, relation) =>
   prepareSqliteQuerySync<PluginStateCountParams, PluginStateCountRow>(db, (parameter) =>
-    selectLivePluginStateRows(db, {
-      pluginId: parameter((value) => value.pluginId),
-      now: parameter((value) => value.now),
-    }).select((eb) => eb.fn.countAll<number | bigint>().as("count")),
+    selectLivePluginStateRows(
+      db,
+      {
+        pluginId: parameter((value) => value.pluginId),
+        now: parameter((value) => value.now),
+      },
+      relation,
+    ).select((eb) => eb.fn.countAll<number | bigint>().as("count")),
   ),
 );
 
@@ -56,10 +61,14 @@ type PluginStateRetentionRow = {
   first_expiry: number | bigint | null;
 };
 
-function selectPluginStateRetention(db: EngineConnection, now: Expression<number>) {
+function selectPluginStateRetention(
+  db: EngineConnection,
+  now: Expression<number>,
+  relation: PluginStateReadRelation,
+) {
   // Expired rows trigger cleanup; only a live deadline invalidates the retained count.
-  return getPluginStateKysely(db)
-    .selectFrom("plugin_state_entries")
+  return getPluginStateReadKysely(db)
+    .selectFrom(relation)
     .select((eb) => [
       eb.fn
         .sum<number | bigint | null>(
@@ -80,11 +89,12 @@ function selectPluginStateRetention(db: EngineConnection, now: Expression<number
     ]);
 }
 
-const pluginStateRetentionQuery = createSqliteQueryCache((db: EngineConnection) =>
+const pluginStateRetentionQuery = createPluginStateReadQueryCache((db, relation) =>
   prepareSqliteQuerySync<PluginStateRetentionParams, PluginStateRetentionRow>(db, (parameter) =>
     selectPluginStateRetention(
       db,
       parameter((value) => value.now),
+      relation,
     )
       .where(
         "plugin_id",
@@ -106,7 +116,7 @@ type PluginStateRetentionBatchParams = {
 };
 // Separate indexed aggregates keep undeclared namespaces out of the query plan.
 const pluginStateRetentionBatchQueries = Array.from({ length: 4 }, (_, lastIndex) =>
-  createSqliteQueryCache((db: EngineConnection) =>
+  createPluginStateReadQueryCache((db, relation) =>
     prepareSqliteQuerySync<
       PluginStateRetentionBatchParams,
       PluginStateRetentionRow & { namespace: string }
@@ -115,6 +125,7 @@ const pluginStateRetentionBatchQueries = Array.from({ length: 4 }, (_, lastIndex
         selectPluginStateRetention(
           db,
           parameter((value) => value.now),
+          relation,
         )
           .select(parameter((value) => value.namespaces[index]!).as("namespace"))
           .where(
@@ -210,10 +221,15 @@ export function enforcePostRegisterLimits(params: {
     .orderBy("created_at", "asc")
     .orderBy("entry_key", "asc")
     .limit(namespaceCount - params.maxEntries);
+  if (isPluginStateNativeBindingMutationScope(params)) {
+    for (const row of executeSqliteQuerySync(params.store.db, keys).rows) {
+      assertPluginStateMutation(params.store.db, { ...params, key: row.entry_key });
+    }
+  }
   const result = executeSqliteQuerySync(
     params.store.db,
     kysely
-      .deleteFrom("plugin_state_entries")
+      .deleteFrom("plugin_state_records")
       .where("plugin_id", "=", params.pluginId)
       .where("namespace", "=", params.namespace)
       .where("entry_key", "in", keys)

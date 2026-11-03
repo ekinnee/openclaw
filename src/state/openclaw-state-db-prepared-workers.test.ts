@@ -38,20 +38,29 @@ const retainedTables = [
 
 afterEach(() => closeState());
 
-function readObligations(db: EngineConnection) {
+function readObligations(
+  db: EngineConnection,
+  pluginRelation: "plugin_state_entries" | "plugin_state_records" = "plugin_state_records",
+) {
   return Object.fromEntries(
-    retainedTables.map((table) => [table, readRows(db, `SELECT * FROM ${table}`)]),
+    retainedTables.map((table) => [
+      table,
+      readRows(db, `SELECT * FROM ${table === "plugin_state_entries" ? pluginRelation : table}`),
+    ]),
   );
 }
 
-function readSnapshot(db: EngineConnection) {
+function readSnapshot(
+  db: EngineConnection,
+  pluginRelation: "plugin_state_entries" | "plugin_state_records" = "plugin_state_records",
+) {
   return {
     version: readRow(db, "PRAGMA user_version"),
     metadata: readRows(db, "SELECT * FROM schema_meta"),
     machineState: readRows(db, "SELECT * FROM config_machine_state ORDER BY state_key"),
     schema: readRows(db, "SELECT type, name, sql FROM sqlite_schema ORDER BY type, name"),
     environments: readRows(db, "SELECT rowid, * FROM worker_environments"),
-    obligations: readObligations(db),
+    obligations: readObligations(db, pluginRelation),
   };
 }
 
@@ -65,6 +74,10 @@ function createLegacyWorkers(version = 16, publicationDeferred = false) {
   }
   closeState();
   using legacy = openNodeSqliteDatabase(databasePath);
+  // Project the actual predecessor relation before constructing v15/v16 content.
+  legacy.exec(`DROP VIEW plugin_state_entries;
+    ALTER TABLE plugin_state_records RENAME TO plugin_state_entries;
+    DELETE FROM config_machine_state WHERE state_key = 'state.schema.contentVersion';`);
   restorePreTemplateStateIdentifiersForTest(legacy);
   addPreCutoverClientCredentialTablesForTest(legacy);
   removePreparedWorkerOwnershipColumns(legacy);
@@ -107,7 +120,7 @@ function createLegacyWorkers(version = 16, publicationDeferred = false) {
           VALUES ('state.schema.contentVersion', '${version}', 1);
       `);
   }
-  return { options, databasePath, before: readSnapshot(legacy) };
+  return { options, databasePath, before: readSnapshot(legacy, "plugin_state_entries") };
 }
 
 describe("prepared worker schema migration", () => {
@@ -194,14 +207,14 @@ describe("prepared worker schema migration", () => {
     const legacy = openNodeSqliteDatabase(databasePath);
     legacy.exec(`CREATE TRIGGER fixture_reject_upgrade BEFORE UPDATE ON schema_meta
       BEGIN SELECT RAISE(ABORT, 'prepared migration rollback'); END;`);
-    const before = readSnapshot(legacy);
+    const before = readSnapshot(legacy, "plugin_state_entries");
     legacy.close();
     expect(await withBackup(options, () => repairState(options))).toEqual({
       changes: [],
       warnings: [expect.stringContaining("prepared migration rollback")],
     });
     using preserved = openNodeSqliteDatabase(databasePath, { readOnly: true });
-    expect(readSnapshot(preserved)).toEqual(before);
+    expect(readSnapshot(preserved, "plugin_state_entries")).toEqual(before);
   });
 
   it("retains preparation constraints and consumed bindings on reopen", async () => {

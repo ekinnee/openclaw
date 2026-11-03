@@ -25,6 +25,7 @@ import {
 } from "./port-descriptor.js";
 import {
   assertPostgresCatalog,
+  assertPostgresStateWriterFence,
   postgresCatalogQuery,
   readPostgresCatalog,
 } from "./postgres-catalog.js";
@@ -401,25 +402,27 @@ async function scan(
 }
 
 async function catalogEvidence(
-  endpoint: Extract<Endpoint, { engine: "postgres" }>,
+  { db, namespace }: Extract<Endpoint, { engine: "postgres" }>,
   descriptor: PortDescriptor,
   sourceProjection = false,
 ) {
-  await endpoint.db.query("SELECT set_config('search_path', $1, false)", [
-    quote(endpoint.namespace),
-  ]);
+  const { id, expectedCatalog, postgresDerivedTables, triggers } = descriptor;
+  await db.query("SELECT set_config('search_path', $1, false)", [quote(namespace)]);
   const facts = readPostgresCatalog(
-    (await endpoint.db.query(postgresCatalogQuery(endpoint.namespace, true))).rows[0].catalog,
+    (await db.query(postgresCatalogQuery(namespace, true))).rows[0].catalog,
   ).filter((f) => f.table !== "openclaw_schema_meta");
+  if (id === "state") {
+    assertPostgresStateWriterFence(facts, expectedCatalog, descriptor.version);
+  }
   if (
     !sourceProjection &&
     facts.some(
       (fact) =>
-        fact.kind === "viewDefinition" ||
+        (fact.kind.startsWith("view") && id !== "state") ||
         (fact.kind === "triggerDefinition" &&
           // Derived search tables carry only their generated maintenance triggers.
-          !descriptor.postgresDerivedTables?.includes(fact.table) &&
-          !descriptor.triggers?.some(
+          !postgresDerivedTables?.includes(fact.table) &&
+          !triggers?.some(
             (trigger) =>
               fact.value !== null &&
               typeof fact.value === "object" &&
@@ -436,15 +439,16 @@ async function catalogEvidence(
   if (!sourceProjection) {
     assertPostgresCatalog(
       facts.filter(
-        (f) =>
-          !f.kind.endsWith("Definition") && !descriptor.postgresDerivedTables?.includes(f.table),
+        (f) => !f.kind.endsWith("Definition") && !postgresDerivedTables?.includes(f.table),
       ),
-      descriptor.expectedCatalog,
+      id === "state"
+        ? expectedCatalog.filter((fact) => fact.kind !== "viewDefinition")
+        : expectedCatalog,
     );
   }
-  const invalid = await endpoint.db.query(
+  const invalid = await db.query(
     `SELECT 1 FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace WHERE n.nspname=$1 AND NOT c.convalidated UNION ALL SELECT 1 FROM pg_index i JOIN pg_class c ON c.oid=i.indrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname=$1 AND NOT i.indisvalid`,
-    [endpoint.namespace],
+    [namespace],
   );
   if (invalid.rowCount) {
     throw new DatabasePortDataError("Port catalog has unvalidated constraints or invalid indexes");
@@ -452,9 +456,7 @@ async function catalogEvidence(
   return facts.map((f) => ({
     table: f.table,
     kind: f.kind,
-    value: JSON.parse(
-      JSON.stringify(f.value).replaceAll(endpoint.namespace, "__port_schema__"),
-    ) as unknown,
+    value: JSON.parse(JSON.stringify(f.value).replaceAll(namespace, "__port_schema__")) as unknown,
   }));
 }
 

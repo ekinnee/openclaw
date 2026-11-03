@@ -21,7 +21,7 @@ import {
   type StateDomainChange,
 } from "../state/state-domain-publication.js";
 
-type PluginStateRow = Selectable<DB["plugin_state_entries"]>;
+type PluginStateRow = Selectable<DB["plugin_state_records"]>;
 type EntryKey = Pick<PluginStateRow, "plugin_id" | "namespace" | "entry_key">;
 type Receipt = SqliteCommitReceipt<PluginStateRow>;
 type PluginStateChange = StateDomainChange<PluginStateRow>;

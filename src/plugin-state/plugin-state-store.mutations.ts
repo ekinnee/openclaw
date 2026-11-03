@@ -9,6 +9,7 @@ import type {
 } from "./plugin-state-native-binding.types.js";
 import { pluginStatePublication } from "./plugin-state-publication.js";
 import {
+  assertPluginStateMutation,
   bindPluginStateEntry,
   deleteExpiredPluginStateEntries,
   deletePluginStateEntry,
@@ -33,14 +34,40 @@ export function deletePluginStateNativeBinding(
   store: PluginStateDatabase,
   plan: PluginStateNativeBindingPlan,
 ): PluginStateNativeBindingDeletion {
-  const row = selectPluginStateEntry(store.db, { ...plan, now: Date.now() });
+  const now = Date.now();
+  // Codex must qualify the physical original before TTL can certify absence.
+  const row =
+    plan.codec === "codex"
+      ? executeSqliteQuerySync(
+          store.db,
+          getPluginStateKysely(store.db)
+            .selectFrom("plugin_state_records")
+            .select(["entry_key", "value_json", "created_at", "expires_at"])
+            .where("plugin_id", "=", plan.pluginId)
+            .where("namespace", "=", plan.namespace)
+            .where("entry_key", "=", plan.key),
+        ).rows[0]
+      : selectPluginStateEntry(store.db, { ...plan, now });
+  const codexRaw =
+    plan.codec === "codex" && row
+      ? asOptionalRecord(parseStoredJson(row.value_json, "delete", store.path))
+      : undefined;
+  const codexParsed = codexRaw ? readPreparedPluginStateNativeBinding(plan, codexRaw) : undefined;
+  if (plan.codec === "codex" && row) {
+    if (codexRaw?.version !== 1 || codexParsed?.version !== 1) {
+      return { status: "conflict" };
+    }
+    if (row.expires_at !== null && row.expires_at <= now) {
+      return { status: plan.predicate.kind === "absent" ? "absent" : "conflict" };
+    }
+  }
   if (plan.predicate.kind === "absent") {
     return { status: row ? "conflict" : "absent" };
   }
-  const raw = row
-    ? asOptionalRecord(parseStoredJson(row.value_json, "delete", store.path))
-    : undefined;
-  const parsed = readPreparedPluginStateNativeBinding(plan, raw);
+  const raw =
+    codexRaw ??
+    (row ? asOptionalRecord(parseStoredJson(row.value_json, "delete", store.path)) : undefined);
+  const parsed = codexParsed ?? readPreparedPluginStateNativeBinding(plan, raw);
   const { lease, ...value } = parsed ?? {};
   if (
     !raw ||
@@ -79,10 +106,11 @@ export function clearPluginStateNamespace(
   db: EngineConnection,
   params: { pluginId: string; namespace: string },
 ): void {
+  assertPluginStateMutation(db, params);
   const result = executeSqliteQuerySync(
     db,
     getPluginStateKysely(db)
-      .deleteFrom("plugin_state_entries")
+      .deleteFrom("plugin_state_records")
       .where("plugin_id", "=", params.pluginId)
       .where("namespace", "=", params.namespace)
       .returning(["plugin_id", "namespace", "entry_key"]),

@@ -55,12 +55,12 @@ describe("onepassword list with SQLite grants", () => {
   function storedRows() {
     const { db } = openOpenClawStateDatabase({ env });
     const insert = db.prepare(
-      "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES ('onepassword', 'grants', ?, ?, ?, ?)",
+      "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES ('onepassword', 'grants', ?, ?, ?, ?)",
     );
     return {
       insert: (key: string, json: string, created = NOW, expires: number | null = null) =>
         insert.run(key, json, created, expires),
-      rows: () => db.prepare("SELECT * FROM plugin_state_entries ORDER BY entry_key").all(),
+      rows: () => db.prepare("SELECT * FROM plugin_state_records ORDER BY entry_key").all(),
     };
   }
 

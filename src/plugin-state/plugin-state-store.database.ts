@@ -77,9 +77,9 @@ export function isMissingPluginStateTableError(error: unknown): boolean {
   return (
     error instanceof Error &&
     ((hasErrnoCode(error, "ERR_SQLITE_ERROR") &&
-      error.message === "no such table: plugin_state_entries") ||
+      error.message === "no such table: plugin_state_records") ||
       (hasErrnoCode(error, "42P01") &&
-        error.message === 'relation "plugin_state_entries" does not exist'))
+        error.message === 'relation "plugin_state_records" does not exist'))
   );
 }
 

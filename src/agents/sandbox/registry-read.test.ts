@@ -509,7 +509,7 @@ it.each(["cached", "fresh"])(
     expect(isMainThread).toBe(true);
     await seed();
     runOpenClawStateWriteTransaction(({ db }) =>
-      execute(db, query<DB>(db).insertInto("plugin_state_entries").values(unrelatedRows)),
+      execute(db, query<DB>(db).insertInto("plugin_state_records").values(unrelatedRows)),
     );
     if (mode === "fresh") {
       await closeOpenClawStateDatabaseAsync();

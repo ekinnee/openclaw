@@ -33,12 +33,15 @@ function matrixSyncResponse(nextBatch: string): ISyncResponse {
   };
 }
 
-function matrixStateRowsSha256(databasePath: string): string {
+function matrixStateRowsSha256(
+  databasePath: string,
+  relation: "plugin_state_entries" | "plugin_state_records",
+): string {
   return withDatabase(databasePath, true, (database) => {
     const rows = database
       .prepare(
         `SELECT plugin_id, namespace, entry_key, value_json, created_at, expires_at
-         FROM plugin_state_entries
+         FROM ${relation}
          WHERE plugin_id = 'matrix'
          ORDER BY namespace, entry_key`,
       )
@@ -76,7 +79,7 @@ it("repairs active account state without opening token-root archives", () =>
     writeSource(databasePath, rawFixture);
     writeSource(archivedDatabasePath, rawFixture);
 
-    const beforeRepairRowsSha256 = matrixStateRowsSha256(databasePath);
+    const beforeRepairRowsSha256 = matrixStateRowsSha256(databasePath, "plugin_state_entries");
     const openStore = async (token: string) => {
       const store = await SqliteBackedMatrixSyncStore.create(root);
       await expect(store.getSavedSyncToken()).resolves.toBe(token);
@@ -111,7 +114,9 @@ it("repairs active account state without opening token-root archives", () =>
     );
     expect(doctor.warnings).toEqual([]);
     expectActiveOnly(doctor.changes);
-    expect(matrixStateRowsSha256(databasePath)).toBe(beforeRepairRowsSha256);
+    expect(matrixStateRowsSha256(databasePath, "plugin_state_records")).toBe(
+      beforeRepairRowsSha256,
+    );
     assert.deepStrictEqual(fs.readFileSync(archivedDatabasePath), rawFixture);
 
     const repairedStore = await openStore("cursor-a");

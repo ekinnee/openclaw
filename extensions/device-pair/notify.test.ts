@@ -228,7 +228,7 @@ describe("device-pair notify persistence", () => {
     const { db } = openOpenClawStateDatabase({ env });
     // Seed cold rows with absolute expiry; fake host time does not control the writer worker.
     const insert = db.prepare(
-      "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES ('device-pair', ?, ?, ?, 1, ?)",
+      "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES ('device-pair', ?, ?, ?, 1, ?)",
     );
     const value = JSON.stringify(subscriber);
     insert.run(
@@ -256,7 +256,7 @@ describe("device-pair notify persistence", () => {
     const { db } = openOpenClawStateDatabase({ env });
     // Corruption is a cold-storage fixture, not an external update to a live cached row.
     const insert = db.prepare(
-      "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES ('device-pair', ?, ?, ?, 1, NULL)",
+      "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES ('device-pair', ?, ?, ?, 1, NULL)",
     );
     insert.run(
       DEVICE_PAIR_NOTIFY_SUBSCRIBER_NAMESPACE,

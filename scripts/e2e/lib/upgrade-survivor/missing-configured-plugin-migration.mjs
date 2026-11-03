@@ -7,6 +7,7 @@ import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { readJson, write, writeJson } from "../fixtures/common.mjs";
 import { readPluginInstallRecords } from "../plugin-index-sqlite.mjs";
+import { pluginStateObservationRelation } from "../plugin-state-observation.mjs";
 import { readDatabase } from "./observations.mjs";
 
 const [command, ...args] = process.argv.slice(2);
@@ -349,7 +350,7 @@ function resumed(expectedVersion) {
       const key = `session-key:${specimen.agentId}:${createHash("sha256").update(specimen.sessionKey).digest("base64url")}`;
       const row = db
         .prepare(
-          "SELECT value_json FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
+          `SELECT value_json FROM ${pluginStateObservationRelation(db)} WHERE plugin_id = ? AND namespace = ? AND entry_key = ?`,
         )
         .get("codex", bindingNamespace, key);
       assert(row, `Codex did not import ${specimen.agentId}'s binding`);

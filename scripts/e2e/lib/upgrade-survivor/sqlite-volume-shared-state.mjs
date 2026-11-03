@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { readJson, write, writeJson } from "../fixtures/common.mjs";
+import { pluginStateObservationRelation } from "../plugin-state-observation.mjs";
 import { readDatabase } from "./observations.mjs";
 
 const VOLUME_PLUGIN_ID = "upgrade-survivor";
@@ -39,7 +40,7 @@ function assertJsonEqual(actual, expected, message) {
 function readVolumePluginRows(db) {
   return db
     .prepare(
-      "SELECT plugin_id, namespace, entry_key, value_json, created_at, expires_at FROM plugin_state_entries WHERE plugin_id = ? ORDER BY namespace, entry_key",
+      `SELECT plugin_id, namespace, entry_key, value_json, created_at, expires_at FROM ${pluginStateObservationRelation(db)} WHERE plugin_id = ? ORDER BY namespace, entry_key`,
     )
     .all(VOLUME_PLUGIN_ID);
 }

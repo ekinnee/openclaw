@@ -265,7 +265,7 @@ for the schema and update contract.
 
 ### Plugin state listing index
 
-Plugin keyed stores use the shared `plugin_state_entries` table. Its listing
+Plugin keyed stores use the shared `plugin_state_records` table. Its listing
 index includes `expires_at` after the existing plugin, namespace, creation-time,
 and entry-key columns, so live-row counts can read the index without fetching
 stored values. Quotas, TTL cutoffs, ordering, and row contents are unchanged.
@@ -276,12 +276,27 @@ repair builds temporary indexes and runs the existing table and full-file
 integrity checks; allow for extra disk space and work proportional to stored
 entries during the first repair.
 
-An older build can rebuild the same index back to its expected definition.
+Before the writer-fence cutover, an older build can rebuild the same index back to its expected definition.
 Full-schema read-only validation rejects a mismatched definition until a
 writable owner repairs it; lightweight readers that validate only the numeric
 schema version may read either shape. See the
 [accepted index design](https://github.com/openclaw/openclaw/issues/142244) for
 upgrade, reverse-repair, and performance proof requirements.
+
+The writer-fence cutover renames the physical table without changing its rows,
+keys, namespaces, quotas, or TTL behavior. The retired `plugin_state_entries`
+name becomes a constant, content-free view with no forwarding query or write
+triggers. This prevents a still-open older writer from modifying the renamed
+relation after upgrade. Current compatible builds keep the supported keyed-store
+APIs. This is an offline upgrade: stop serving work while Doctor changes the
+shared store, and use the matching build for startup and recovery afterward.
+
+The common mutation owner also preserves unsupported native-binding records,
+including expired records. Generic deletion, replacement, cleanup, moves, and
+Doctor repair cannot discard records outside this build's supported binding format. Ordinary
+namespaces retain their existing behavior. Historical read-only inspection can
+recognize supported unmarked legacy stores; recognition does not certify their
+original content provenance.
 
 ### Mentions Inbox
 

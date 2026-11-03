@@ -689,7 +689,7 @@ describe("memory-core doctor dreaming migration", () => {
     openOpenClawStateDatabase({ env });
     const db = new DatabaseSync(path.join(rootDir, "state", "state", "openclaw.sqlite"));
     try {
-      db.exec(`CREATE TRIGGER fail_host_import BEFORE INSERT ON plugin_state_entries
+      db.exec(`CREATE TRIGGER fail_host_import BEFORE INSERT ON plugin_state_records
         WHEN NEW.namespace = 'memory-host.events' AND json_extract(NEW.value_json, '$.event.query') = 'resume-750'
         BEGIN SELECT RAISE(ABORT, 'injected host import failure'); END`);
       await expect(hostEventsMigration().migrateLegacyState(migrationParams())).rejects.toThrow(

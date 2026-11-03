@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
+import { PLUGIN_STATE_WRITER_FENCE_SCHEMA_VERSION } from "../../state/openclaw-schema-versions.js";
 
 export type PostgresCatalogFact = { table: string; kind: string; value: unknown };
 type PostgresCatalogSource = {
@@ -60,6 +61,21 @@ export function expectedPostgresCatalog(data: PostgresCatalogSource): PostgresCa
       ).length,
     );
   }
+  for (const object of data.objects.filter((item) => item.kind === "view")) {
+    if (
+      !data.schema.endsWith("_state") ||
+      object.table !== "plugin_state_entries" ||
+      object.sql?.trim() !==
+        `CREATE VIEW "plugin_state_entries" AS SELECT 'upgrade-required'::text AS unsupported_format;`
+    ) {
+      throw new Error("Unsupported PostgreSQL view in generated catalog");
+    }
+    add(
+      "plugin_state_entries",
+      "viewDefinition",
+      "SELECT 'upgrade-required'::text AS unsupported_format;",
+    );
+  }
   return expected;
 }
 
@@ -78,6 +94,62 @@ export function assertPostgresCatalog(
   if (!isDeepStrictEqual(actual.map(canonical).toSorted(), expected.map(canonical).toSorted())) {
     throw new Error(
       "PostgreSQL catalog differs from its generated contract; use the matching OpenClaw version or restore the matching PostgreSQL schema and anchor.",
+    );
+  }
+}
+
+/** The retired state name is a physical writer fence, never a data projection. */
+export function assertPostgresStateWriterFence(
+  actual: readonly PostgresCatalogFact[],
+  expected: readonly PostgresCatalogFact[],
+  schemaVersion: number,
+): void {
+  const viewFacts = (facts: readonly PostgresCatalogFact[]) =>
+    facts.filter((fact) => fact.kind.startsWith("view"));
+  const views = viewFacts(actual);
+  const declared = viewFacts(expected);
+  if (
+    schemaVersion < PLUGIN_STATE_WRITER_FENCE_SCHEMA_VERSION &&
+    !views.length &&
+    !actual.some((fact) => fact.table === "plugin_state_records")
+  ) {
+    return;
+  }
+  const definition = {
+    table: "plugin_state_entries",
+    kind: "viewDefinition",
+    value: "SELECT 'upgrade-required'::text AS unsupported_format;",
+  };
+  const normalized = (facts: readonly PostgresCatalogFact[]) =>
+    facts.map((fact) =>
+      fact.kind === "viewDefinition" && typeof fact.value === "string"
+        ? { ...fact, value: fact.value.trim() }
+        : fact,
+    );
+  if (
+    schemaVersion < PLUGIN_STATE_WRITER_FENCE_SCHEMA_VERSION ||
+    !isDeepStrictEqual(normalized(declared), [definition]) ||
+    !isDeepStrictEqual(
+      normalized(views).map(canonical).toSorted(),
+      [
+        definition,
+        {
+          table: "plugin_state_entries",
+          kind: "viewColumnDefinition",
+          value: {
+            name: "unsupported_format",
+            type: "text",
+            position: 1,
+            relationKind: "v",
+          },
+        },
+      ]
+        .map(canonical)
+        .toSorted(),
+    )
+  ) {
+    throw new Error(
+      "PostgreSQL state writer fence differs from canonical format; use the matching OpenClaw version or restore the matching schema and anchor.",
     );
   }
 }
@@ -141,6 +213,12 @@ export function postgresCatalogQuery(namespace: string, includeDefinitions = fal
     UNION ALL SELECT a.relname, 'columnDefinition', jsonb_build_object('name', a.attname, 'default', a.default_expression, 'generated', a.attgenerated, 'identity', a.attidentity, 'collation', a.attcollation::regcollation::text) FROM attributes a
     UNION ALL SELECT r.relname, 'triggerDefinition', jsonb_build_object('name', t.tgname, 'definition', pg_catalog.pg_get_triggerdef(t.oid), 'enabled', t.tgenabled, 'function', pg_catalog.pg_get_functiondef(t.tgfoid)) FROM relations r JOIN pg_catalog.pg_trigger t ON t.tgrelid = r.oid WHERE NOT t.tgisinternal
     UNION ALL SELECT c.relname, 'viewDefinition', to_jsonb(pg_catalog.pg_get_viewdef(c.oid)) FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = ${literal} AND c.relkind IN ('v', 'm')
+    UNION ALL SELECT c.relname, 'viewColumnDefinition', jsonb_build_object('name', a.attname, 'type', pg_catalog.format_type(a.atttypid, a.atttypmod), 'position', a.attnum, 'relationKind', c.relkind)
+      FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace JOIN pg_catalog.pg_attribute a ON a.attrelid = c.oid WHERE n.nspname = ${literal} AND c.relkind IN ('v', 'm') AND a.attnum > 0 AND NOT a.attisdropped
+    UNION ALL SELECT c.relname, 'viewTriggerDefinition', jsonb_build_object('name', t.tgname, 'definition', pg_catalog.pg_get_triggerdef(t.oid), 'enabled', t.tgenabled, 'function', pg_catalog.pg_get_functiondef(t.tgfoid))
+      FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace JOIN pg_catalog.pg_trigger t ON t.tgrelid = c.oid WHERE n.nspname = ${literal} AND c.relkind IN ('v', 'm') AND NOT t.tgisinternal
+    UNION ALL SELECT c.relname, 'viewRuleDefinition', jsonb_build_object('name', r.rulename, 'definition', pg_catalog.pg_get_ruledef(r.oid))
+      FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace JOIN pg_catalog.pg_rewrite r ON r.ev_class = c.oid WHERE n.nspname = ${literal} AND c.relkind IN ('v', 'm') AND r.rulename <> '_RETURN'
     UNION ALL SELECT c.cfgname, 'textSearchDefinition', jsonb_build_object('token', m.maptokentype, 'order', m.mapseqno, 'dictionary', d.dictname, 'namespace', dn.nspname)
       FROM pg_catalog.pg_ts_config c JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace
       JOIN pg_catalog.pg_ts_config_map m ON m.mapcfg = c.oid JOIN pg_catalog.pg_ts_dict d ON d.oid = m.mapdict

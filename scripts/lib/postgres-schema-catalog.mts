@@ -851,6 +851,22 @@ function reportNonTableObjects(ctx: Context): void {
     const kind = String(row.type);
     const table = String(row.tbl_name);
     const name = String(row.name);
+    if (
+      kind === "view" &&
+      name === "plugin_state_entries" &&
+      /^CREATE VIEW(?: IF NOT EXISTS)? plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format$/u.test(
+        source,
+      )
+    ) {
+      ctx.record(
+        kind,
+        table,
+        name,
+        source,
+        `CREATE VIEW ${qualified(ctx, name)} AS SELECT 'upgrade-required'::text AS unsupported_format;`,
+      );
+      continue;
+    }
     const reason = `${kind} is not translated`;
     const item = ctx.record(kind, table, name, source, null, reason);
     if (row.type === "trigger") {

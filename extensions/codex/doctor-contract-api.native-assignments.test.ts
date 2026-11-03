@@ -25,6 +25,7 @@ import {
   closeOpenClawStateDatabaseAsync,
   openOpenClawStateDatabase,
 } from "openclaw/plugin-sdk/sqlite-runtime-testing";
+import { openNodeSqliteDatabase } from "openclaw/plugin-sdk/sqlite-worker-runtime";
 import { useAutoCleanupTempDirTracker, withEnvAsync } from "openclaw/plugin-sdk/test-env";
 import { Type } from "typebox";
 import { afterEach, describe, expect, it, onTestFinished, vi } from "vitest";
@@ -226,6 +227,64 @@ async function createFixture() {
 }
 
 describe("Codex native Task assignment upgrade", () => {
+  it("inspects ordinary predecessor task bindings without upgrading retained state", async () => {
+    const fixture = await createFixture();
+    fixture.seed({
+      id: "retained-task",
+      runId: "codex-thread:retained-child",
+      owner: fixture.owner,
+    });
+    await closeOpenClawStateDatabaseAsync();
+    const databasePath = path.join(fixture.params.stateDir, "state", "openclaw.sqlite");
+    {
+      using database = openNodeSqliteDatabase(databasePath);
+      database.exec(`BEGIN IMMEDIATE;
+        DROP VIEW plugin_state_entries;
+        ALTER TABLE plugin_state_records RENAME TO plugin_state_entries;
+        PRAGMA user_version=39;
+        UPDATE schema_meta SET schema_version=39 WHERE meta_key='primary';
+        UPDATE config_machine_state SET value_json='39' WHERE state_key='state.schema.contentVersion';
+        COMMIT;`);
+    }
+    const before = await fs.readFile(databasePath);
+
+    expect(await registeredMigration().detectLegacyState(fixture.params)).not.toBeNull();
+
+    expect(await fs.readFile(databasePath)).toEqual(before);
+  });
+
+  it.each(["mixed", "unknown"] as const)(
+    "refuses a %s retained task-binding layout without changing bytes",
+    async (layout) => {
+      const fixture = await createFixture();
+      fixture.seed({
+        id: "retained-task",
+        runId: "codex-thread:retained-child",
+        owner: fixture.owner,
+      });
+      await closeOpenClawStateDatabaseAsync();
+      const databasePath = path.join(fixture.params.stateDir, "state", "openclaw.sqlite");
+      {
+        using database = openNodeSqliteDatabase(databasePath);
+        database.exec(
+          layout === "mixed"
+            ? "DROP VIEW plugin_state_entries; CREATE TABLE plugin_state_entries (value_json TEXT)"
+            : "PRAGMA user_version=123456789",
+        );
+      }
+      const before = await fs.readFile(databasePath);
+
+      await expect(registeredMigration().detectLegacyState(fixture.params)).rejects.toThrow(
+        /schema|format|layout/i,
+      );
+      await expect(registeredMigration().migrateLegacyState(fixture.params)).rejects.toThrow(
+        /schema|format|layout/i,
+      );
+
+      expect(await fs.readFile(databasePath)).toEqual(before);
+    },
+  );
+
   it.each(["succeeded", "failed", "cancelled"] as const)(
     "settles an unbindable %s delivery as retained history and converges",
     async (status) => {

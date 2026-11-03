@@ -6,7 +6,7 @@ import Darwin.membership
 #endif
 
 struct OpenClawNativeStateSQLiteTests {
-    private static let currentSharedSchemaVersion: Int64 = 39
+    private static let currentSharedSchemaVersion: Int64 = 40
 
     @Test(arguments: [OpenClawNativeStateCanonicalTable.deviceIdentities, .deviceAuthTokens])
     func `shared adapter refuses credential creation`(_ table: OpenClawNativeStateCanonicalTable) throws {
@@ -24,8 +24,12 @@ struct OpenClawNativeStateSQLiteTests {
         }
     }
 
-    @Test(arguments: [false, true])
-    func `current shared schema admits retained tables and fences credentials`(readOnly: Bool) throws {
+    @Test(arguments: [false, true], [false, true])
+    func `current shared schema admits retained tables and fences credentials`(
+        readOnly: Bool,
+        deferredHeader: Bool) throws
+    {
+        let header = deferredHeader ? Self.currentSharedSchemaVersion - 1 : Self.currentSharedSchemaVersion
         try self.withDatabaseURL { writer, url in
             try writer.withImmediateTransaction {
                 try writer.ensureCanonicalTable(.macosPortGuardianRecords)
@@ -33,9 +37,12 @@ struct OpenClawNativeStateSQLiteTests {
                 INSERT INTO macos_port_guardian_records VALUES (4242,18789,'synthetic-command','remote',10);
                 """)
                 try self.createConfigMachineState(writer)
+                try self.createPluginStateTable(writer, name: "plugin_state_records")
                 try writer.execute("""
-                PRAGMA user_version = \(Self.currentSharedSchemaVersion);
-                UPDATE schema_meta SET schema_version = \(Self.currentSharedSchemaVersion)
+                CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format;
+                INSERT INTO config_machine_state VALUES ('state.schema.contentVersion','\(Self.currentSharedSchemaVersion)',1);
+                PRAGMA user_version = \(header);
+                UPDATE schema_meta SET schema_version = \(header)
                 """)
             }
             let original = try Data(contentsOf: url)
@@ -67,9 +74,100 @@ struct OpenClawNativeStateSQLiteTests {
                 }
                 #expect(try database.scalarText("SELECT command FROM macos_port_guardian_records") == "changed-command")
             }
-            #expect(try database.scalarInt64("PRAGMA user_version") == Self.currentSharedSchemaVersion)
-            #expect(try database.scalarInt64("SELECT schema_version FROM schema_meta") == Self
-                .currentSharedSchemaVersion)
+            #expect(try database.scalarInt64("PRAGMA user_version") == header)
+            #expect(try database.scalarInt64("SELECT schema_version FROM schema_meta") == header)
+            #expect(try database.scalarText("SELECT value_json FROM plugin_state_records") == #"{"retained":true}"#)
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func `ordinary predecessor preserves its native table contract`(readOnly: Bool) throws {
+        try self.withDatabaseURL { writer, url in
+            try writer.ensureCanonicalTable(.macosPortGuardianRecords)
+            try self.createConfigMachineState(writer)
+            try self.createPluginStateTable(writer, name: "plugin_state_entries")
+            try writer.execute("PRAGMA user_version=39; UPDATE schema_meta SET schema_version=39")
+            let original = try Data(contentsOf: url)
+
+            let database = try OpenClawNativeStateSQLite(
+                databaseURL: url, createIfMissing: false, readOnly: readOnly)
+            try database.ensureCanonicalTable(.macosPortGuardianRecords)
+
+            #expect(try database.scalarText("SELECT value_json FROM plugin_state_entries") == #"{"retained":true}"#)
+            #expect(try Data(contentsOf: url) == original)
+        }
+    }
+
+    @Test(arguments: [
+        "DROP VIEW plugin_state_entries; ALTER TABLE plugin_state_records RENAME TO plugin_state_entries",
+        "DROP VIEW plugin_state_entries; CREATE TABLE plugin_state_entries AS SELECT * FROM plugin_state_records",
+        "DROP TABLE plugin_state_records",
+        "DROP VIEW plugin_state_entries",
+        "DROP VIEW plugin_state_entries; CREATE VIEW plugin_state_entries AS SELECT * FROM plugin_state_records",
+        "DROP VIEW plugin_state_entries; CREATE VIEW plugin_state_entries AS SELECT 'changed' AS unsupported_format",
+        "CREATE TRIGGER unsafe_guard INSTEAD OF DELETE ON plugin_state_entries BEGIN DELETE FROM plugin_state_records; END",
+        "PRAGMA user_version=39; UPDATE schema_meta SET schema_version=39; DELETE FROM config_machine_state",
+        "UPDATE config_machine_state SET value_json='41'",
+        "UPDATE config_machine_state SET value_json='true'",
+        "UPDATE config_machine_state SET value_json='-1'",
+        "UPDATE config_machine_state SET value_json='{'",
+    ], [false, true])
+    func `writer fence mismatch refuses cold native access`(_ mutation: String, readOnly: Bool) throws {
+        try self.withDatabaseURL { writer, url in
+            try writer.ensureCanonicalTable(.macosPortGuardianRecords)
+            try self.createConfigMachineState(writer)
+            try self.createPluginStateTable(writer, name: "plugin_state_records")
+            try writer.execute("""
+            CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format;
+            INSERT INTO config_machine_state VALUES ('state.schema.contentVersion','40',1);
+            PRAGMA user_version=40;
+            UPDATE schema_meta SET schema_version=40;
+            \(mutation);
+            """)
+            let original = try Data(contentsOf: url)
+
+            #expect(throws: OpenClawNativeStateError.self) {
+                let database = try OpenClawNativeStateSQLite(
+                    databaseURL: url, createIfMissing: false, readOnly: readOnly)
+                try database.ensureCanonicalTable(.macosPortGuardianRecords)
+            }
+
+            #expect(try Data(contentsOf: url) == original)
+        }
+    }
+
+    @Test(arguments: [37, 38, 39, 40], [false, true])
+    func `experimental shared histories refuse the numeric floor`(version: Int, readOnly: Bool) throws {
+        for marker in [
+            "CREATE TABLE operator_approval_publication_fixture (value TEXT)",
+            "CREATE TABLE operator_approvals (source_provenance_json TEXT)",
+        ] {
+            try self.withDatabaseURL { writer, url in
+                try writer.ensureCanonicalTable(.macosPortGuardianRecords)
+                try self.createConfigMachineState(writer)
+                try self.createPluginStateTable(
+                    writer, name: version == 40 ? "plugin_state_records" : "plugin_state_entries")
+                if version == 40 {
+                    try writer.execute("""
+                    CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format;
+                    """)
+                }
+                try writer.execute("""
+                INSERT INTO config_machine_state VALUES ('state.schema.contentVersion','\(version)',1);
+                PRAGMA user_version=\(version);
+                UPDATE schema_meta SET schema_version=\(version);
+                \(marker);
+                """)
+                let original = try Data(contentsOf: url)
+
+                #expect(throws: OpenClawNativeStateError.self) {
+                    let database = try OpenClawNativeStateSQLite(
+                        databaseURL: url, createIfMissing: false, readOnly: readOnly)
+                    try database.ensureCanonicalTable(.macosPortGuardianRecords)
+                }
+
+                #expect(try Data(contentsOf: url) == original)
+            }
         }
     }
 
@@ -190,6 +288,17 @@ struct OpenClawNativeStateSQLiteTests {
         CREATE TABLE schema_meta (meta_key TEXT PRIMARY KEY, role TEXT, schema_version INTEGER);
         INSERT INTO schema_meta VALUES ('primary', 'global', 1);
         CREATE TABLE config_machine_state (state_key TEXT PRIMARY KEY, value_json TEXT, updated_at_ms INTEGER);
+        """)
+    }
+
+    private func createPluginStateTable(_ database: OpenClawNativeStateSQLite, name: String) throws {
+        try database.execute("""
+        CREATE TABLE \(name) (
+          plugin_id TEXT NOT NULL, namespace TEXT NOT NULL, entry_key TEXT NOT NULL,
+          value_json TEXT NOT NULL, created_at INTEGER NOT NULL, expires_at INTEGER,
+          PRIMARY KEY (plugin_id, namespace, entry_key)
+        ) STRICT;
+        INSERT INTO \(name) VALUES ('fixture','retained','key','{"retained":true}',1,NULL);
         """)
     }
 

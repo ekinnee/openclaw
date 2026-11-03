@@ -9,7 +9,7 @@ describe("missing plugin state table", () => {
     try {
       let failure: unknown;
       try {
-        db.prepare("SELECT * FROM plugin_state_entries").all();
+        db.prepare("SELECT * FROM plugin_state_records").all();
       } catch (error) {
         failure = error;
       }
@@ -20,10 +20,10 @@ describe("missing plugin state table", () => {
   });
 
   it.each([
-    ['relation "plugin_state_entries" does not exist', "42P01", true],
+    ['relation "plugin_state_records" does not exist', "42P01", true],
     ['relation "other_entries" does not exist', "42P01", false],
-    ['relation "plugin_state_entries" does not exist', "42501", false],
-    ['column "plugin_state_entries" does not exist', "42703", false],
+    ['relation "plugin_state_records" does not exist', "42501", false],
+    ['column "plugin_state_records" does not exist', "42703", false],
   ])("classifies normalized PostgreSQL error %s (%s)", (message, code, expected) => {
     const error = decodePostgresError({ name: "error", message, code });
     expect(isMissingPluginStateTableError(error)).toBe(expected);

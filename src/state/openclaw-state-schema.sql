@@ -1219,7 +1219,7 @@ CREATE TABLE IF NOT EXISTS agent_database_leases (
   provenance TEXT
 ) STRICT;
 
-CREATE TABLE IF NOT EXISTS plugin_state_entries (
+CREATE TABLE IF NOT EXISTS plugin_state_records (
   plugin_id TEXT NOT NULL,
   namespace TEXT NOT NULL,
   entry_key TEXT NOT NULL,
@@ -1230,11 +1230,13 @@ CREATE TABLE IF NOT EXISTS plugin_state_entries (
 ) STRICT;
 
 CREATE INDEX IF NOT EXISTS idx_plugin_state_expiry
-  ON plugin_state_entries(expires_at)
+  ON plugin_state_records(expires_at)
   WHERE expires_at IS NOT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_plugin_state_listing
-  ON plugin_state_entries(plugin_id, namespace, created_at, entry_key, expires_at);
+  ON plugin_state_records(plugin_id, namespace, created_at, entry_key, expires_at);
+
+CREATE VIEW IF NOT EXISTS plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format;
 
 CREATE TABLE IF NOT EXISTS channel_ingress_events (
   queue_name TEXT NOT NULL,

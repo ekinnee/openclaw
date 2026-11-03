@@ -45,7 +45,7 @@ type Operation = "register" | "entries" | "count";
 const updateJson = (db: StoreDatabase, namespace: string, key: string, json: string) =>
   db
     .prepare(
-      "UPDATE plugin_state_entries SET value_json = ? WHERE plugin_id = 'voice-call' AND namespace = ? AND entry_key = ?",
+      "UPDATE plugin_state_records SET value_json = ? WHERE plugin_id = 'voice-call' AND namespace = ? AND entry_key = ?",
     )
     .run(json, namespace, key);
 
@@ -219,7 +219,7 @@ it("preserves errors before later malformed metadata", async () => {
   const second = expectDefined(rows[1], "later persisted event");
   await mutateOfflineCallStore(storePath, (db) => {
     const timestamp = db.prepare(
-      "UPDATE plugin_state_entries SET created_at = ? WHERE namespace = ? AND entry_key = ?",
+      "UPDATE plugin_state_records SET created_at = ? WHERE namespace = ? AND entry_key = ?",
     );
     timestamp.run(1, EVENTS, first.key);
     timestamp.run(2, EVENTS, second.key);

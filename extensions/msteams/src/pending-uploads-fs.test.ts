@@ -82,7 +82,7 @@ describe("msteams pending uploads (fs-backed)", () => {
       throw new Error("expected upload chunks");
     }
     const { db } = openOpenClawStateDatabase({ env });
-    db.prepare("UPDATE plugin_state_entries SET value_json = ? WHERE entry_key = ?").run(
+    db.prepare("UPDATE plugin_state_records SET value_json = ? WHERE entry_key = ?").run(
       "invalid JSON",
       later.key,
     );

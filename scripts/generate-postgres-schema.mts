@@ -23,6 +23,7 @@ import { MEMORY_PATH_POSTGRES_INDEXES } from "../packages/memory-host-sdk/src/ho
 import { CLIENT_CREDENTIAL_LEGACY_TABLES_SQL } from "../src/infra/client-credential-schema.ts";
 import {
   assertPostgresCatalog,
+  assertPostgresStateWriterFence,
   expectedPostgresCatalog,
   postgresCatalogQuery,
   readPostgresCatalog,
@@ -76,7 +77,7 @@ const sqliteOnlyAllowList = sqliteOnlyNulGuards.map((column) => ({
 }));
 
 function tableStatements(data: Catalog): string[] {
-  return ["function", "table", "index", "foreignKey", "triggerFunction", "trigger"].flatMap(
+  return ["function", "table", "view", "index", "foreignKey", "triggerFunction", "trigger"].flatMap(
     (kind) =>
       data.objects
         .filter(
@@ -599,7 +600,15 @@ async function verifyPostgres(
 ): Promise<void> {
   for (const data of Object.values(catalogs)) {
     const actual = readPostgresCatalog(await querySql(postgresCatalogQuery(data.schema)));
-    assertPostgresCatalog(actual, expectedPostgresCatalog(data));
+    const expected = expectedPostgresCatalog(data);
+    assertPostgresCatalog(
+      actual,
+      expected.filter((fact) => !fact.kind.endsWith("Definition")),
+    );
+    if (data.schema.endsWith("_state")) {
+      const physical = readPostgresCatalog(await querySql(postgresCatalogQuery(data.schema, true)));
+      assertPostgresStateWriterFence(physical, expected, 40);
+    }
     if (data.schema.endsWith("_agent")) {
       await assertPostgresTriggers(data, querySql);
     }
@@ -787,6 +796,11 @@ function generateStatePortMetadata(
     if (eager.has(match[1]!)) {
       sqliteRanges.push([match.index, match.index + match[0].length]);
     }
+  }
+  for (const match of sqlite.matchAll(
+    /CREATE VIEW IF NOT EXISTS plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format;/gu,
+  )) {
+    sqliteRanges.push([match.index, match.index + match[0].length]);
   }
   return {
     ...schema(eager, files["state.postgres.sql"]!),

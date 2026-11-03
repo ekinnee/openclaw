@@ -47,7 +47,8 @@ public enum OpenClawNativeStateSQLiteValueType: Equatable, Sendable {
 public final class OpenClawNativeStateSQLite: @unchecked Sendable {
     // Keep aligned with OPENCLAW_STATE_SCHEMA_VERSION for backend-owned native surfaces.
     // Device credentials have a separate, exact table contract. Native clients never upgrade this database.
-    private static let maximumSupportedSchemaVersion: Int64 = 39
+    private static let maximumSupportedSchemaVersion: Int64 = 40
+    private static let pluginStateWriterFenceSchemaVersion: Int64 = 40
     private static let defaultBusyTimeoutMilliseconds: Int32 = 5000
 
     private struct SchemaObject: Hashable {
@@ -262,6 +263,10 @@ public final class OpenClawNativeStateSQLite: @unchecked Sendable {
         if readOnly {
             try self.admitReadOnlySchema()
         } else {
+            let version = try self.scalarInt64("PRAGMA user_version")
+            if version > 0 {
+                try self.validateSharedDatabaseMetadata(userVersion: version)
+            }
             try Self.secureDatabaseFiles(databaseURL)
         }
     }
@@ -509,6 +514,9 @@ public final class OpenClawNativeStateSQLite: @unchecked Sendable {
     }
 
     private func validateSharedDatabaseMetadata(userVersion: Int64) throws {
+        guard userVersion <= Self.maximumSupportedSchemaVersion else {
+            throw OpenClawNativeStateError("The shared state database requires a newer OpenClaw app")
+        }
         guard try self.schemaObjectExists(type: "table", name: "schema_meta") else {
             throw OpenClawNativeStateError("Versioned OpenClaw state database is missing schema_meta")
         }
@@ -523,6 +531,70 @@ public final class OpenClawNativeStateSQLite: @unchecked Sendable {
             throw OpenClawNativeStateError(
                 "OpenClaw state database schema metadata does not match its global schema version")
         }
+        var contentVersion: Int64 = 0
+        if try self.schemaObjectExists(type: "table", name: "config_machine_state") {
+            let content = try self.prepare("""
+            SELECT value_json FROM config_machine_state WHERE state_key = 'state.schema.contentVersion' LIMIT 1
+            """)
+            if try content.step() == .row {
+                let json = try content.requiredText(at: 0, field: "shared state content version")
+                guard let version = try? JSONDecoder().decode(Int64.self, from: Data(json.utf8)), version >= 0 else {
+                    throw OpenClawNativeStateError("The shared state content version is invalid")
+                }
+                contentVersion = version
+            }
+        }
+        // An active older updater can retain its physical header while content commits forward.
+        // This recognizes that reader floor; it never authorizes migration or database repair.
+        let effectiveVersion = max(userVersion, contentVersion)
+        guard effectiveVersion <= Self.maximumSupportedSchemaVersion else {
+            throw OpenClawNativeStateError("The shared state database requires a newer OpenClaw app")
+        }
+        try self.validatePluginStateStorageLayout(version: effectiveVersion)
+    }
+
+    private func validatePluginStateStorageLayout(version: Int64) throws {
+        let catalog = try self.prepare("""
+        SELECT type, name, sql, tbl_name FROM sqlite_schema
+        WHERE name IN ('plugin_state_entries', 'plugin_state_records', 'operator_approvals')
+           OR (type = 'table' AND name GLOB 'operator_approval_publication_*')
+           OR (type = 'trigger' AND tbl_name = 'plugin_state_entries')
+        """)
+        var oldTable = false
+        var currentTable = false
+        var guardSQL: String?
+        var guardTrigger = false
+        var experimental = false
+        while try catalog.step() == .row {
+            let type = try catalog.requiredText(at: 0, field: "schema object type")
+            let name = try catalog.requiredText(at: 1, field: "schema object name")
+            if type == "table" {
+                oldTable = oldTable || name == "plugin_state_entries"
+                currentTable = currentTable || name == "plugin_state_records"
+                experimental = experimental || name.hasPrefix("operator_approval_publication_")
+                if name == "operator_approvals" {
+                    let sql = try catalog.requiredText(at: 2, field: "approval schema")
+                    experimental = experimental || sql.range(
+                        of: "\\bsource_provenance_json\\b", options: .regularExpression) != nil
+                }
+            } else if type == "view", name == "plugin_state_entries" {
+                guardSQL = try catalog.requiredText(at: 2, field: "writer fence schema")
+            } else if type == "trigger" {
+                let target = try catalog.requiredText(at: 3, field: "trigger table")
+                guardTrigger = guardTrigger || target == "plugin_state_entries"
+            }
+        }
+        let failure = OpenClawNativeStateError(
+            "Unsupported or conflicting shared-state writer-fence layout; preserve this store and use its matching OpenClaw build")
+        guard !experimental, !(oldTable && currentTable) else { throw failure }
+        if version < Self.pluginStateWriterFenceSchemaVersion {
+            guard !currentTable, guardSQL == nil else { throw failure }
+            return
+        }
+        let expected = "CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format"
+        let normalized = guardSQL?.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+            .trimmingCharacters(in: CharacterSet(charactersIn: ";"))
+        guard currentTable, !oldTable, normalized == expected, !guardTrigger else { throw failure }
     }
 
     private func validateTableShape(_ table: CanonicalTable) throws {

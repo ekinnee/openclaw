@@ -387,7 +387,7 @@ describe("Telegram registered SQLite offset repair", () => {
   ];
   function insert(db: EngineConnection) {
     return db.prepare(
-      "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)",
+      "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)",
     );
   }
   function seed(db: EngineConnection) {
@@ -399,7 +399,7 @@ describe("Telegram registered SQLite offset repair", () => {
   function rows(db: EngineConnection) {
     return db
       .prepare(
-        "SELECT entry_key, value_json, created_at, expires_at FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ? ORDER BY entry_key",
+        "SELECT entry_key, value_json, created_at, expires_at FROM plugin_state_records WHERE plugin_id = ? AND namespace = ? ORDER BY entry_key",
       )
       .all("telegram", namespace);
   }
@@ -538,7 +538,7 @@ describe("Telegram registered SQLite offset repair", () => {
     await withDoctorState(async ({ env }) => {
       const { db } = openOpenClawStateDatabase({ env });
       seed(db);
-      db.prepare("UPDATE plugin_state_entries SET value_json = ? WHERE entry_key = 'second'").run(
+      db.prepare("UPDATE plugin_state_records SET value_json = ? WHERE entry_key = 'second'").run(
         raw,
       );
       db.exec("BEGIN");
@@ -616,7 +616,7 @@ describe("Telegram registered SQLite offset repair", () => {
         afterSnapshot(async (backup) => {
           if (change === "row") {
             database.db
-              .prepare("UPDATE plugin_state_entries SET value_json = ? WHERE entry_key = 'second'")
+              .prepare("UPDATE plugin_state_records SET value_json = ? WHERE entry_key = 'second'")
               .run('{"version":3,"lastUpdateId":123,"botId":null,"tokenFingerprint":null}');
           }
           if (change === "generation") {

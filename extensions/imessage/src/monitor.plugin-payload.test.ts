@@ -310,7 +310,7 @@ describe("iMessage plugin payload attachments", () => {
       try {
         const persisted = database
           .prepare(
-            "SELECT value_json FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ?",
+            "SELECT value_json FROM plugin_state_records WHERE plugin_id = ? AND namespace = ?",
           )
           .all("imessage", "imessage.sent-echoes");
         expect(persisted).toEqual(

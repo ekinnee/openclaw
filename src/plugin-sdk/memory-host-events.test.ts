@@ -181,7 +181,7 @@ describe("memory host event journal helpers", () => {
     await append("retained");
     const before = await stored();
     const { db } = openOpenClawStateDatabase({ env });
-    db.exec(`CREATE TRIGGER fail_memory_journal BEFORE INSERT ON plugin_state_entries
+    db.exec(`CREATE TRIGGER fail_memory_journal BEFORE INSERT ON plugin_state_records
       WHEN NEW.namespace = 'memory-host.events'
       BEGIN SELECT RAISE(ABORT, 'injected journal write failure'); END`);
     try {

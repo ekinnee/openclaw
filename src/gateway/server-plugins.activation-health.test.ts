@@ -35,7 +35,7 @@ function readPersistedCount(databasePath: string, engineId: string) {
   try {
     return database
       .prepare(
-        "SELECT count(*) AS count FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
+        "SELECT count(*) AS count FROM plugin_state_records WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
       )
       .get(
         "core:context-engine-quarantine-health",

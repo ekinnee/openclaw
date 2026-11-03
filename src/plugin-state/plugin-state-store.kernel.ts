@@ -12,8 +12,13 @@ import {
 import type { EngineConnection } from "../infra/sql-connection.js";
 import { isPostgresSqlConnection } from "../infra/sql-connection.js";
 import { coerceRequiredSqliteNumber, normalizeSqliteNumber } from "../infra/sqlite-number.js";
+import { resolvePluginStateReadRelation } from "../state/openclaw-state-db-schema-version.js";
 import type { DB as OpenClawStateKyselyDatabase } from "../state/openclaw-state-db.generated.js";
 import { createPluginStateError, parseStoredJson } from "./plugin-state-error.js";
+import {
+  assertPluginStateNativeBindingMutationValue,
+  isPluginStateNativeBindingMutationScope,
+} from "./plugin-state-native-binding-codec.js";
 import { pluginStatePublication } from "./plugin-state-publication.js";
 import type {
   PluginStateEntry,
@@ -34,9 +39,15 @@ export function isRetainedPluginStateNamespace(namespace: string): boolean {
 }
 export const PLUGIN_STATE_EXPIRY_BATCH_ROWS = 1_024;
 
-type PluginStateStoreDatabase = Pick<OpenClawStateKyselyDatabase, "plugin_state_entries">;
+type PluginStateStoreDatabase = Pick<OpenClawStateKyselyDatabase, "plugin_state_records">;
+export type PluginStateReadRelation = "plugin_state_entries" | "plugin_state_records";
+// Retained read layouts share these six columns. The retired current view is
+// never selected as row data; the physical format owner decides the relation.
+type PluginStateReadDatabase = PluginStateStoreDatabase & {
+  plugin_state_entries: PluginStateStoreDatabase["plugin_state_records"];
+};
 
-export type PluginStateRow = Selectable<PluginStateStoreDatabase["plugin_state_entries"]>;
+export type PluginStateRow = Selectable<PluginStateStoreDatabase["plugin_state_records"]>;
 export type PluginStateReadRow = Omit<PluginStateRow, "plugin_id" | "namespace">;
 
 export type PluginStateDatabase = {
@@ -96,6 +107,25 @@ export function getPluginStateKysely(db: EngineConnection) {
   return getNodeSqliteKysely<PluginStateStoreDatabase>(db);
 }
 
+export function getPluginStateReadKysely(db: EngineConnection) {
+  return getNodeSqliteKysely<PluginStateReadDatabase>(db);
+}
+
+export function getPluginStateReadRelation(db: EngineConnection): PluginStateReadRelation {
+  // Preserve the existing bootstrap missing-table handling when no relation exists.
+  return resolvePluginStateReadRelation(db) ?? "plugin_state_records";
+}
+
+/** Physical relation and connection jointly own each compiled read family. */
+export function createPluginStateReadQueryCache<Queries extends object>(
+  create: (db: EngineConnection, relation: PluginStateReadRelation) => Queries,
+): (db: EngineConnection) => Queries {
+  const legacy = createSqliteQueryCache((db) => create(db, "plugin_state_entries"));
+  const current = createSqliteQueryCache((db) => create(db, "plugin_state_records"));
+  return (db) =>
+    getPluginStateReadRelation(db) === "plugin_state_entries" ? legacy(db) : current(db);
+}
+
 export function selectLivePluginStateRows(
   db: EngineConnection,
   params: {
@@ -103,9 +133,10 @@ export function selectLivePluginStateRows(
     namespace?: string | Expression<string>;
     now: number | Expression<number>;
   },
+  relation: PluginStateReadRelation = getPluginStateReadRelation(db),
 ) {
-  let query = getPluginStateKysely(db)
-    .selectFrom("plugin_state_entries")
+  let query = getPluginStateReadKysely(db)
+    .selectFrom(relation)
     .where("plugin_id", "=", params.pluginId);
   if (params.namespace !== undefined) {
     query = query.where("namespace", "=", params.namespace);
@@ -148,10 +179,35 @@ export function bindPluginStateEntry(params: {
   };
 }
 
+/** The current write transaction observes physical originals, including expired rows. */
+export function assertPluginStateMutation(
+  db: EngineConnection,
+  scope: { pluginId: string; namespace: string; key?: string },
+  prospectiveValueJson?: string,
+): void {
+  if (!isPluginStateNativeBindingMutationScope(scope)) {
+    return;
+  }
+  let query = getPluginStateKysely(db)
+    .selectFrom("plugin_state_records")
+    .select("value_json")
+    .where("plugin_id", "=", scope.pluginId)
+    .where("namespace", "=", scope.namespace);
+  if (scope.key !== undefined) {
+    query = query.where("entry_key", "=", scope.key);
+  }
+  for (const row of iterateSqliteQuerySync(db, query)) {
+    assertPluginStateNativeBindingMutationValue(scope, row.value_json);
+  }
+  if (prospectiveValueJson !== undefined) {
+    assertPluginStateNativeBindingMutationValue(scope, prospectiveValueJson);
+  }
+}
+
 const pluginStateUpsertQuery = createSqliteQueryCache((db: EngineConnection) =>
   prepareSqliteQuerySync<PluginStateRow, PluginStateRow>(db, (parameter) =>
     getPluginStateKysely(db)
-      .insertInto("plugin_state_entries")
+      .insertInto("plugin_state_records")
       .values({
         plugin_id: parameter((value) => value.plugin_id),
         namespace: parameter((value) => value.namespace),
@@ -173,6 +229,11 @@ const pluginStateUpsertQuery = createSqliteQueryCache((db: EngineConnection) =>
 
 export function upsertPluginStateEntry(db: EngineConnection, row: PluginStateRow): void {
   assertPluginStateKey(db, row.entry_key, "register");
+  assertPluginStateMutation(
+    db,
+    { pluginId: row.plugin_id, namespace: row.namespace, key: row.entry_key },
+    row.value_json,
+  );
   const result = pluginStateUpsertQuery(db)(row);
   for (const current of result.rows) {
     pluginStatePublication.stagePostimage(db, current);
@@ -182,7 +243,7 @@ export function upsertPluginStateEntry(db: EngineConnection, row: PluginStateRow
 const pluginStateInsertIfAbsentQuery = createSqliteQueryCache((db: EngineConnection) =>
   prepareSqliteQuerySync<PluginStateRow & { now: number }, PluginStateRow>(db, (parameter) =>
     getPluginStateKysely(db)
-      .insertInto("plugin_state_entries")
+      .insertInto("plugin_state_records")
       .values({
         plugin_id: parameter((value) => value.plugin_id),
         namespace: parameter((value) => value.namespace),
@@ -200,7 +261,7 @@ const pluginStateInsertIfAbsentQuery = createSqliteQueryCache((db: EngineConnect
             expires_at: (eb) => eb.ref("excluded.expires_at"),
           })
           .where(
-            "plugin_state_entries.expires_at",
+            "plugin_state_records.expires_at",
             "<=",
             parameter((value) => value.now),
           ),
@@ -215,6 +276,11 @@ export function insertPluginStateEntryIfAbsent(
   now: number,
 ): boolean {
   assertPluginStateKey(db, row.entry_key, "register");
+  assertPluginStateMutation(
+    db,
+    { pluginId: row.plugin_id, namespace: row.namespace, key: row.entry_key },
+    row.value_json,
+  );
   const result = pluginStateInsertIfAbsentQuery(db)({ ...row, now });
   for (const current of result.rows) {
     pluginStatePublication.stagePostimage(db, current);
@@ -223,13 +289,13 @@ export function insertPluginStateEntryIfAbsent(
 }
 
 type PluginStateEntryLookup = { pluginId: string; namespace: string; key: string; now: number };
-const pluginStateEntryExistsQuery = createSqliteQueryCache((db: EngineConnection) =>
+const pluginStateEntryExistsQuery = createPluginStateReadQueryCache((db, relation) =>
   prepareSqliteQuerySync<PluginStateEntryLookup, { entry_key: string }>(db, (parameter) => {
     const pluginId = parameter((value) => value.pluginId);
     const namespace = parameter((value) => value.namespace);
     const key = parameter((value) => value.key);
     const now = parameter((value) => value.now);
-    return selectLivePluginStateRows(db, { pluginId, namespace, now })
+    return selectLivePluginStateRows(db, { pluginId, namespace, now }, relation)
       .select("entry_key")
       .where("entry_key", "=", key);
   }),
@@ -241,13 +307,13 @@ export function hasPluginStateEntry(db: EngineConnection, params: PluginStateEnt
 }
 
 // Retain compilation with the physical connection; keys and expiry stay invocation-local.
-const pluginStateEntryQuery = createSqliteQueryCache((db: EngineConnection) =>
+const pluginStateEntryQuery = createPluginStateReadQueryCache((db, relation) =>
   prepareSqliteQuerySync<PluginStateEntryLookup, PluginStateReadRow>(db, (parameter) => {
     const pluginId = parameter((value) => value.pluginId);
     const namespace = parameter((value) => value.namespace);
     const key = parameter((value) => value.key);
     const now = parameter((value) => value.now);
-    return selectLivePluginStateRows(db, { pluginId, namespace, now })
+    return selectLivePluginStateRows(db, { pluginId, namespace, now }, relation)
       .select(["entry_key", "value_json", "created_at", "expires_at"])
       .where("entry_key", "=", key);
   }),
@@ -310,10 +376,11 @@ export function deletePluginStateEntryRow(
   params: { pluginId: string; namespace: string; key: string; now?: number },
 ) {
   assertPluginStateKey(db, params.key, "delete");
+  assertPluginStateMutation(db, params);
   const result = executeSqliteQuerySync(
     db,
     getPluginStateKysely(db)
-      .deleteFrom("plugin_state_entries")
+      .deleteFrom("plugin_state_records")
       .where("plugin_id", "=", params.pluginId)
       .where("namespace", "=", params.namespace)
       .where("entry_key", "=", params.key)
@@ -334,7 +401,7 @@ export function deletePluginStateEntryRow(
 const pluginStateExpiryQuery = createSqliteQueryCache((db: EngineConnection) =>
   prepareSqliteQuerySync<number, { expires_at: number | bigint | null }>(db, (parameter) =>
     getPluginStateKysely(db)
-      .selectFrom("plugin_state_entries")
+      .selectFrom("plugin_state_records")
       .select("expires_at")
       .where("expires_at", "is not", null)
       .where(
@@ -363,21 +430,38 @@ export function deleteExpiredPluginStateEntries(
   }
   // Leave namespace scans unsorted to avoid an unbounded sort under the write lock.
   const expiredEntries = kysely
-    .selectFrom("plugin_state_entries")
+    .selectFrom("plugin_state_records")
     .select(["plugin_id", "namespace", "entry_key"])
     .where("expires_at", "is not", null)
     .where("expires_at", "<=", now)
     .where("plugin_id", "=", scope.pluginId)
     .where("namespace", "=", scope.namespace);
+  // Reuse the exact inspected victims: a different projection can choose a different index order.
+  const guardedVictims = isPluginStateNativeBindingMutationScope(scope)
+    ? executeSqliteQuerySync(
+        db,
+        expiredEntries.select("value_json").limit(PLUGIN_STATE_EXPIRY_BATCH_ROWS),
+      ).rows
+    : undefined;
+  for (const row of guardedVictims ?? []) {
+    assertPluginStateNativeBindingMutationValue(scope, row.value_json);
+  }
   const result = executeSqliteQuerySync(
     db,
     kysely
-      .deleteFrom("plugin_state_entries")
+      .deleteFrom("plugin_state_records")
       .where((expression) =>
         expression(
           expression.refTuple("plugin_id", "namespace", "entry_key"),
           "in",
           expiredEntries
+            .$if(guardedVictims !== undefined, (query) =>
+              query.where(
+                "entry_key",
+                "in",
+                guardedVictims!.map((row) => row.entry_key),
+              ),
+            )
             .limit(PLUGIN_STATE_EXPIRY_BATCH_ROWS)
             .$asTuple("plugin_id", "namespace", "entry_key"),
         ),
@@ -390,13 +474,17 @@ export function deleteExpiredPluginStateEntries(
 
 type PluginStateNamespaceCountParams = { pluginId: string; namespace: string; now: number };
 export type PluginStateCountRow = { count: number | bigint };
-const pluginStateNamespaceCountQuery = createSqliteQueryCache((db: EngineConnection) =>
+const pluginStateNamespaceCountQuery = createPluginStateReadQueryCache((db, relation) =>
   prepareSqliteQuerySync<PluginStateNamespaceCountParams, PluginStateCountRow>(db, (parameter) =>
-    selectLivePluginStateRows(db, {
-      pluginId: parameter((value) => value.pluginId),
-      namespace: parameter((value) => value.namespace),
-      now: parameter((value) => value.now),
-    }).select((eb) => eb.fn.countAll<number | bigint>().as("count")),
+    selectLivePluginStateRows(
+      db,
+      {
+        pluginId: parameter((value) => value.pluginId),
+        namespace: parameter((value) => value.namespace),
+        now: parameter((value) => value.now),
+      },
+      relation,
+    ).select((eb) => eb.fn.countAll<number | bigint>().as("count")),
   ),
 );
 
@@ -415,7 +503,7 @@ export function allocatePluginStateNamespaceCreatedAt(
   const row = executeSqliteQueryTakeFirstSync(
     db,
     getPluginStateKysely(db)
-      .selectFrom("plugin_state_entries")
+      .selectFrom("plugin_state_records")
       .select((eb) => eb.fn.max<number | bigint>("created_at").as("max_created_at"))
       .where("plugin_id", "=", params.pluginId)
       .where("namespace", "=", params.namespace),

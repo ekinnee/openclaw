@@ -116,21 +116,19 @@ export async function collectMatrixInboundDedupeSources(
     : { status: "incomplete", ...roots, warnings };
 }
 
-function selectLegacySqliteRows(db: DatabaseSync): LegacySqliteRow[] {
-  const table = db
-    .prepare(
-      `SELECT 1 AS present
-       FROM sqlite_master
-       WHERE type = 'table' AND name = 'plugin_state_entries'`,
-    )
-    .get();
-  if (!table) {
+function selectLegacySqliteRows(
+  db: DatabaseSync,
+  relation: ReturnType<
+    typeof import("openclaw/plugin-sdk/sqlite-worker-runtime").resolvePluginStateReadRelation
+  >,
+): LegacySqliteRow[] {
+  if (!relation) {
     return [];
   }
   return db
     .prepare(
       `SELECT namespace, entry_key, value_json, expires_at
-       FROM plugin_state_entries
+       FROM ${relation}
        WHERE plugin_id = ? AND namespace IN (?, ?)
        ORDER BY namespace ASC, created_at ASC, entry_key ASC`,
     )
@@ -189,11 +187,12 @@ function parseLegacySqliteRow(row: {
 export async function readLegacyInboundDedupeSqliteSource(
   storageRootDir: string,
 ): Promise<{ markers: LegacyInboundDedupeMarker[]; legacyRowCount: number }> {
-  const { openNodeSqliteDatabase } = await import("openclaw/plugin-sdk/sqlite-worker-runtime");
+  const { openNodeSqliteDatabase, resolvePluginStateReadRelation } =
+    await import("openclaw/plugin-sdk/sqlite-worker-runtime");
   const databasePath = path.join(storageRootDir, STATE_DATABASE_RELATIVE_PATH);
   const db = openNodeSqliteDatabase(databasePath, { readOnly: true });
   try {
-    const rows = selectLegacySqliteRows(db);
+    const rows = selectLegacySqliteRows(db, resolvePluginStateReadRelation(db));
     const markers: LegacyInboundDedupeMarker[] = [];
     const now = Date.now();
     for (const row of rows) {
@@ -223,23 +222,27 @@ export async function readLegacyInboundDedupeSqliteSource(
 
 /** Deletes only the two retired Matrix namespaces after a successful import. */
 export async function retireLegacyInboundDedupeSqliteRows(storageRootDir: string): Promise<void> {
-  const { openNodeSqliteDatabase, runSqliteImmediateTransactionSync } =
-    await import("openclaw/plugin-sdk/sqlite-worker-runtime");
+  const {
+    openNodeSqliteDatabase,
+    runSqliteImmediateTransactionSync,
+    resolvePluginStateReadRelation,
+  } = await import("openclaw/plugin-sdk/sqlite-worker-runtime");
   const databasePath = path.join(storageRootDir, STATE_DATABASE_RELATIVE_PATH);
   const db = openNodeSqliteDatabase(databasePath);
   try {
     // Plan outside the write transaction, then re-read after BEGIN IMMEDIATE
     // before deleting. The predicates intentionally cannot touch other Matrix
     // namespaces or another plugin's rows.
-    if (selectLegacySqliteRows(db).length === 0) {
+    if (selectLegacySqliteRows(db, resolvePluginStateReadRelation(db)).length === 0) {
       return;
     }
     runSqliteImmediateTransactionSync(db, () => {
-      if (selectLegacySqliteRows(db).length === 0) {
+      const relation = resolvePluginStateReadRelation(db);
+      if (!relation || selectLegacySqliteRows(db, relation).length === 0) {
         return;
       }
       db.prepare(
-        `DELETE FROM plugin_state_entries
+        `DELETE FROM ${relation}
          WHERE plugin_id = ? AND namespace IN (?, ?)`,
       ).run(MATRIX_PLUGIN_ID, LEGACY_SQLITE_NAMESPACE, LEGACY_MARKERS_NAMESPACE);
     });

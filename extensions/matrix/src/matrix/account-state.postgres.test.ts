@@ -156,7 +156,7 @@ describe.skipIf(!connection)("Matrix account-root PostgreSQL persistence", () =>
       expect(secondaryAnchor?.engine).toBe("postgres");
       expect(primaryAnchor?.schema).not.toBe(secondaryAnchor?.schema);
       const result = await client.query(
-        `SELECT count(*)::int AS chunks FROM "${primaryAnchor!.schema}".plugin_state_entries WHERE namespace = $1 AND value_json::jsonb->>'kind' = 'snapshot-chunk'`,
+        `SELECT count(*)::int AS chunks FROM "${primaryAnchor!.schema}".plugin_state_records WHERE namespace = $1 AND value_json::jsonb->>'kind' = 'snapshot-chunk'`,
         ["idb-snapshot"],
       );
       expect(result.rows[0].chunks).toBeGreaterThan(10);

@@ -11,7 +11,11 @@ import {
   getPostgresPhysicalFacts,
   requireNativeDatabaseFile,
 } from "../infra/database-engine/physical-facts.js";
-import { assertPostgresCatalog } from "../infra/database-engine/postgres-catalog.js";
+import {
+  assertPostgresCatalog,
+  assertPostgresStateWriterFence,
+  type PostgresCatalogFact,
+} from "../infra/database-engine/postgres-catalog.js";
 import {
   postgresIndexOrderingMigration,
   withLegacyPostgresIndexOrdering,
@@ -52,6 +56,10 @@ import { withLegacyWorkerResourceReceipts } from "./openclaw-state-db-schema-v37
 import { withLegacyRepositoryDiskAuthority } from "./openclaw-state-db-schema-v38-repository-disk.js";
 import { withLegacyWorkerRetention } from "./openclaw-state-db-schema-v39-worker-retention.js";
 import {
+  assertSupportedStateProtectionHistory,
+  withLegacyPluginStateStorage,
+} from "./openclaw-state-db-schema-v40-plugin-state.js";
+import {
   admitStateSchemaFacts,
   PostgresSchemaAdmissionUnavailableError,
 } from "./openclaw-state-db-schema-version.js";
@@ -61,6 +69,26 @@ import { statePostgresRuntime as runtime } from "./postgres-schema.generated/run
 
 const recovery =
   "Use the matching OpenClaw version or restore the matching PostgreSQL schema and anchor.";
+
+/** The schema owner supplies the captured transaction catalog, never a runtime projection. */
+export function assertStatePostgresStorageLayout(
+  catalog: readonly PostgresCatalogFact[],
+  version: number,
+): void {
+  assertSupportedStateProtectionHistory(
+    catalog.filter((fact) => fact.kind === "table").map((fact) => fact.table),
+    catalog.some(
+      (fact) =>
+        fact.table === "operator_approvals" &&
+        fact.kind === "column" &&
+        fact.value !== null &&
+        typeof fact.value === "object" &&
+        "name" in fact.value &&
+        fact.value.name === "source_provenance_json",
+    ),
+  );
+  assertPostgresStateWriterFence(catalog, runtime.expectedCatalog, version);
+}
 
 export function stateEngineInput() {
   const selected = getDatabaseEngineSelection();
@@ -111,6 +139,7 @@ export function admitStatePostgres(db: PostgresSqlConnection, fresh: boolean): v
   const tables = new Set(
     facts.catalog.filter((fact) => fact.kind === "table").map((fact) => fact.table),
   );
+  assertStatePostgresStorageLayout(facts.catalog, facts.version);
   const absent = new Set(
     runtime.fragments.flatMap((fragment) =>
       fragment.tables.some((table) => tables.has(table)) ? [] : fragment.tables,
@@ -122,7 +151,9 @@ export function admitStatePostgres(db: PostgresSqlConnection, fresh: boolean): v
       facts.catalog.filter(
         (fact) => !fact.kind.endsWith("Definition") && fact.table !== "openclaw_schema_meta",
       ),
-      runtime.expectedCatalog.filter((fact) => !absent.has(fact.table)),
+      runtime.expectedCatalog.filter(
+        (fact) => !fact.kind.endsWith("Definition") && !absent.has(fact.table),
+      ),
     );
   }
   if (fresh) {
@@ -190,9 +221,13 @@ function statePostgresVersionSql(version: number): string {
 }
 
 function createStatePostgresMigrations(): StoreSchema["postgresMigrations"] {
-  const statePostgresSchemaV38 = {
+  const statePostgresSchemaV39 = {
     ...statePostgresSchema,
-    postgres: withLegacyWorkerRetention(statePostgresSchema.postgres),
+    postgres: withLegacyPluginStateStorage(statePostgresSchema.postgres),
+  };
+  const statePostgresSchemaV38 = {
+    ...statePostgresSchemaV39,
+    postgres: withLegacyWorkerRetention(statePostgresSchemaV39.postgres),
   };
   const statePostgresSchemaV37 = {
     postgres: withLegacyRepositoryDiskAuthority(statePostgresSchemaV38.postgres),
@@ -403,9 +438,18 @@ function createStatePostgresMigrations(): StoreSchema["postgresMigrations"] {
     {
       version: 39,
       fromSchema: statePostgresSchemaV38,
-      schema: statePostgresSchema,
+      schema: statePostgresSchemaV39,
       sql: `ALTER TABLE worker_environments ADD COLUMN retention_json text COLLATE "C";
         ${statePostgresVersionSql(39)}`,
+    },
+    {
+      version: 40,
+      fromSchema: statePostgresSchemaV39,
+      schema: statePostgresSchema,
+      sql: `ALTER TABLE plugin_state_entries RENAME TO plugin_state_records;
+        ALTER TABLE plugin_state_records RENAME CONSTRAINT plugin_state_entries_pkey TO plugin_state_records_pkey;
+        CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required'::text AS unsupported_format;
+        ${statePostgresVersionSql(40)}`,
     },
   ];
 }

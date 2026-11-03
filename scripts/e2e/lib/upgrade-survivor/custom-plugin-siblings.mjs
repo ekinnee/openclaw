@@ -46,7 +46,7 @@ function seedActivationHealth(databasePath, engineId) {
   }));
   try {
     const insert = database.prepare(
-      "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, NULL)",
+      "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, NULL)",
     );
     for (const entry of entries) {
       insert.run(
@@ -438,7 +438,7 @@ function assertActivation() {
   assert.equal(config.plugins.slots.contextEngine, pluginId);
   readDatabase(activation.databasePath, (database) => {
     const read = database.prepare(
-      "SELECT value_json FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
+      "SELECT value_json FROM plugin_state_records WHERE plugin_id = ? AND namespace = ? AND entry_key = ?",
     );
     const rows = activation.entries.map(({ key }) =>
       read.get("core:context-engine-quarantine-health", "runtime-quarantines", key),

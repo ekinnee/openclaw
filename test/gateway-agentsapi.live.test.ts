@@ -277,7 +277,7 @@ it.skipIf(!isLiveTestEnabled() || process.env.OPENCLAW_LIVE_AGENTS_API !== "1")(
         try {
           for (const row of database
             .prepare(
-              "SELECT value_json FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ?",
+              "SELECT value_json FROM plugin_state_records WHERE plugin_id = ? AND namespace = ?",
             )
             .all("agentsapi", "agentsapi-sessions")) {
             const record = asOptionalRecord(JSON.parse(String(row.value_json)));

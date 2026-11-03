@@ -711,7 +711,7 @@ describe("existing shared-state schema admission", () => {
       name: "drifted canonical index",
       sql: `DROP INDEX idx_plugin_state_listing;
             CREATE INDEX idx_plugin_state_listing
-              ON plugin_state_entries(plugin_id, namespace, created_at, entry_key);`,
+              ON plugin_state_records(plugin_id, namespace, created_at, entry_key);`,
     },
     {
       name: "retired cron history",

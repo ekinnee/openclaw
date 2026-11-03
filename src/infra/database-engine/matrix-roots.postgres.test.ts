@@ -59,7 +59,7 @@ const cryptoValue = JSON.stringify({
   data: Buffer.from("synthetic Matrix crypto session: 🦞\0").toString("base64"),
 });
 const selectEntries =
-  "SELECT namespace, entry_key, value_json FROM plugin_state_entries WHERE plugin_id = 'matrix' ORDER BY namespace, entry_key";
+  "SELECT namespace, entry_key, value_json FROM plugin_state_records WHERE plugin_id = 'matrix' ORDER BY namespace, entry_key";
 type MatrixPaths = {
   resolveMatrixAccountStorageRoot(params: {
     stateDir: string;
@@ -137,7 +137,7 @@ describe.skipIf(!connection)("Matrix declared account-root database portability"
             env: { ...state.env, OPENCLAW_STATE_DIR: path.dirname(path.dirname(file)) },
           });
           db.prepare(
-            "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at) VALUES ('matrix', 'idb-snapshot', ?, ?, 1)",
+            "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at) VALUES ('matrix', 'idb-snapshot', ?, ?, 1)",
           ).run(`chunk-${index}`, cryptoValue);
         }
         await closeOpenClawStateDatabaseAsync();
@@ -213,7 +213,7 @@ describe.skipIf(!connection)("Matrix declared account-root database portability"
         {
           using db = openNodeSqliteDatabase(files[0]!);
           db.prepare(
-            "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at) VALUES ('matrix', 'inbound-dedupe', ?, ?, ?)",
+            "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at) VALUES ('matrix', 'inbound-dedupe', ?, ?, ?)",
           ).run(legacyKey, JSON.stringify(legacy), legacy.ts);
         }
         await expect(preflight()).rejects.toThrow(
@@ -283,7 +283,7 @@ describe.skipIf(!connection)("Matrix declared account-root database portability"
     assert(anchor.engine === "postgres");
     namespaces.add(anchor.namespace);
     const result = await client.query(
-      selectEntries.replace("plugin_state_entries", `"${anchor.namespace}".plugin_state_entries`),
+      selectEntries.replace("plugin_state_records", `"${anchor.namespace}".plugin_state_records`),
     );
     return { anchor, entries: result.rows };
   }

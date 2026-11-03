@@ -26,7 +26,7 @@ const tempDirs = useAutoCleanupTempDirTracker((cleanup) =>
 it("upgrades the plugin listing index through runtime without rewriting entries", async () => {
   const index = "idx_plugin_state_listing";
   const oldColumns = "plugin_id, namespace, created_at, entry_key";
-  const insertSql = `INSERT INTO plugin_state_entries VALUES
+  const insertSql = `INSERT INTO plugin_state_records VALUES
         ('plugin', 'written', 'live', '{ "value": 1 }', 10, NULL),
         ('plugin', 'written', 'at-cutoff', '{ "value": 2 }', 10, 1000),
         ('plugin', 'sibling', 'expired', '{ "value": 3 }', 20, 999),
@@ -40,8 +40,8 @@ it("upgrades the plugin listing index through runtime without rewriting entries"
   const databasePath = resolveOpenClawStateSqlitePath(options.env);
   fs.mkdirSync(path.dirname(databasePath), { recursive: true });
   fs.copyFileSync(templatePath, databasePath);
-  const entriesSql = "SELECT * FROM plugin_state_entries ORDER BY plugin_id, namespace, entry_key";
-  const oldIndexSql = `CREATE INDEX ${index} ON plugin_state_entries(${oldColumns});`;
+  const entriesSql = "SELECT * FROM plugin_state_records ORDER BY plugin_id, namespace, entry_key";
+  const oldIndexSql = `CREATE INDEX ${index} ON plugin_state_records(${oldColumns});`;
   const oldSchema = OPENCLAW_STATE_SCHEMA_SQL.replace(
     new RegExp(`CREATE INDEX IF NOT EXISTS ${index}\\s[^;]+;`, "u"),
     oldIndexSql,

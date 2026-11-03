@@ -742,7 +742,7 @@ it("flushes worker writes before host close without host SQL", async () => {
   }
   using reopened = new DatabaseSync(database.path, { readOnly: true });
   expect(
-    readRow(reopened, "SELECT value_json FROM plugin_state_entries WHERE entry_key = 'retained'"),
+    readRow(reopened, "SELECT value_json FROM plugin_state_records WHERE entry_key = 'retained'"),
   ).toEqual({ value_json: '"final"' });
 });
 

@@ -24,6 +24,7 @@ import {
   type SessionStoreTarget as DoctorSessionStoreTarget,
 } from "../config/sessions/targets.js";
 import type { OpenClawConfig } from "../config/types.openclaw.js";
+import { preparePluginStateNativeBindingMutation } from "../plugin-state/plugin-state-native-binding-codec.js";
 import { pluginStatePublication } from "../plugin-state/plugin-state-publication.js";
 import { runWriteTransaction } from "../plugin-state/plugin-state-store.database.js";
 import {
@@ -35,7 +36,10 @@ import {
   pluginStateDoctorEntriesInKeyRange,
   type OpenKeyedStoreOptions,
 } from "../plugin-state/plugin-state-store.js";
-import { getPluginStateKysely } from "../plugin-state/plugin-state-store.kernel.js";
+import {
+  getPluginStateKysely,
+  assertPluginStateMutation,
+} from "../plugin-state/plugin-state-store.kernel.js";
 import {
   observedPluginStateRow,
   type PluginDoctorRawStateEntry,
@@ -334,6 +338,7 @@ async function repairPluginStateEntriesForDoctor(params: {
   if (!rows.length) {
     return { changes: [], warnings: [] };
   }
+  preparePluginStateNativeBindingMutation({ pluginId, namespace }, env);
   authority.assertCurrent();
   const databasePath = resolveOpenClawStateSqlitePath(env);
   const identity = readDatabasePathIdentitySync(databasePath);
@@ -344,7 +349,7 @@ async function repairPluginStateEntriesForDoctor(params: {
   const validate = (db: EngineConnection) => {
     for (const { entry } of rows) {
       const query = getPluginStateKysely(db)
-        .selectFrom("plugin_state_entries")
+        .selectFrom("plugin_state_records")
         .select("entry_key")
         .where((eb) => observedPluginStateRow(eb, { pluginId, namespace }, entry));
       if (!executeSqliteQuerySync(db, query).rows.length) {
@@ -376,10 +381,11 @@ async function repairPluginStateEntriesForDoctor(params: {
       authority.assertOwnedInTransaction(db);
       validate(db);
       for (const { entry, key, valueJson } of rows) {
+        assertPluginStateMutation(db, { pluginId, namespace, key }, valueJson);
         executeSqliteQuerySync(
           db,
           getPluginStateKysely(db)
-            .updateTable("plugin_state_entries")
+            .updateTable("plugin_state_records")
             .set({ value_json: valueJson })
             .where("plugin_id", "=", pluginId)
             .where("namespace", "=", namespace)

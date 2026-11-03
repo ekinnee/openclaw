@@ -1,7 +1,10 @@
 import { expect, it } from "vitest";
 import { openNodeSqliteDatabase } from "../node-sqlite.js";
 import { admitDatabasePortDescriptor } from "./port-descriptor.js";
-import { fixtureDescriptor } from "./port-provider-fixture.test-support.js";
+import {
+  fixtureDescriptor,
+  stateWriterFenceFixtureDescriptor,
+} from "./port-provider-fixture.test-support.js";
 import { requireDatabasePortProvider, sqliteDatabasePortProvider } from "./port-provider.js";
 import { inspectDatabasePort } from "./port.worker.js";
 
@@ -90,4 +93,60 @@ it("selects the registered family by id and admitted SQLite tables", () => {
   using source = openNodeSqliteDatabase(":memory:");
   source.exec("CREATE TABLE workboard_schema_migrations (id TEXT)");
   expect(sqliteDatabasePortProvider(source)).toBe(requireDatabasePortProvider("workboard"));
+});
+
+it("admits the canonical retired state name while inspecting only retained table rows", async () => {
+  const descriptor = stateWriterFenceFixtureDescriptor();
+  using db = openNodeSqliteDatabase(":memory:");
+  db.exec(descriptor.sqlite);
+  db.prepare("INSERT INTO plugin_state_records VALUES (?, ?)").run(
+    "future",
+    '{"version":5,"producingWindow":"B","original":"A"}',
+  );
+  const result = await inspectDatabasePort({ engine: "sqlite", db }, descriptor);
+  expect(Object.keys(result.tables)).toEqual(["plugin_state_records"]);
+  expect(result.tables.plugin_state_records?.rows).toBe(1);
+  expect(db.prepare("SELECT * FROM plugin_state_entries").get()).toEqual({
+    unsupported_format: "upgrade-required",
+  });
+  expect(() => db.exec("DROP TABLE IF EXISTS plugin_state_entries")).toThrow(/DROP VIEW/);
+});
+
+it.each([
+  ["missing", "DROP VIEW plugin_state_entries"],
+  [
+    "changed constant",
+    "DROP VIEW plugin_state_entries; CREATE VIEW plugin_state_entries AS SELECT 'different' AS unsupported_format",
+  ],
+  [
+    "changed column",
+    "DROP VIEW plugin_state_entries; CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS value_json",
+  ],
+  [
+    "forwarding view",
+    "DROP VIEW plugin_state_entries; CREATE VIEW plugin_state_entries AS SELECT value AS unsupported_format FROM plugin_state_records",
+  ],
+  [
+    "write trigger",
+    "CREATE TRIGGER guard_delete INSTEAD OF DELETE ON plugin_state_entries BEGIN DELETE FROM plugin_state_records; END",
+  ],
+])("refuses a %s SQLite state guard before export", async (_name, sql) => {
+  const descriptor = stateWriterFenceFixtureDescriptor();
+  using db = openNodeSqliteDatabase(":memory:");
+  db.exec(descriptor.sqlite + sql);
+  await expect(admitDatabasePortDescriptor({ engine: "sqlite", db }, descriptor)).rejects.toThrow(
+    /state writer fence|Unknown SQLite table, trigger or view/,
+  );
+});
+
+it.each([
+  ["ordinary plugin", "synthetic", 40],
+  ["older state", "state", 39],
+] as const)("refuses a guard presented by an %s descriptor", async (_name, id, version) => {
+  const descriptor = { ...stateWriterFenceFixtureDescriptor(), id, version };
+  using db = openNodeSqliteDatabase(":memory:");
+  db.exec(descriptor.sqlite);
+  await expect(admitDatabasePortDescriptor({ engine: "sqlite", db }, descriptor)).rejects.toThrow(
+    /state writer fence|Unknown SQLite table, trigger or view/,
+  );
 });

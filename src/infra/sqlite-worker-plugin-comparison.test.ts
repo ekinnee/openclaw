@@ -87,7 +87,7 @@ describe("plugin state data-only comparison", () => {
       const before = await store.observe("counter");
       const { db } = native();
       // Native binding transactions carry their own receipt, without plugin-state postimages.
-      executeSqliteQuerySync(db, getPluginStateKysely(db).deleteFrom("plugin_state_entries"));
+      executeSqliteQuerySync(db, getPluginStateKysely(db).deleteFrom("plugin_state_records"));
       const change = action === "set" ? set(2) : keep();
       const conflict = await store.compareAndApply("counter", before.comparison, change);
       expect(conflict).toMatchObject({ status: "conflict", current: { value: undefined } });
@@ -184,7 +184,7 @@ describe("plugin state data-only comparison", () => {
       executeSqliteQuerySync(
         native.db,
         getPluginStateKysely(native.db)
-          .selectFrom("plugin_state_entries")
+          .selectFrom("plugin_state_records")
           .select("entry_key")
           .orderBy("entry_key"),
       ).rows;

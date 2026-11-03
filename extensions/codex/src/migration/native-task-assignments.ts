@@ -65,13 +65,15 @@ type LegacyTask = {
 };
 type LegacyDatabase = {
   task_runs: LegacyTask;
-  plugin_state_entries: {
-    plugin_id: string;
-    namespace: string;
-    entry_key: string;
-    value_json: string;
-    expires_at: number | null;
-  };
+  plugin_state_entries: BindingRow;
+  plugin_state_records: BindingRow;
+};
+type BindingRow = {
+  plugin_id: string;
+  namespace: string;
+  entry_key: string;
+  value_json: string;
+  expires_at: number | null;
 };
 const importSchema = z
   .object({ version: z.literal(1), taskIds: z.array(z.string().min(1)) })
@@ -137,10 +139,15 @@ async function inspect(params: Params) {
   }
   const { bindingStoreKey, readStoredCodexAppServerBinding } = await loadSessionBindingRecord();
   const { withSqliteReadOnlyInspection } = await loadSqliteRuntime();
-  const { executeSqliteQuerySync, getNodeSqliteKysely, tableExists } =
-    await import("openclaw/plugin-sdk/sqlite-worker-runtime");
+  const {
+    executeSqliteQuerySync,
+    getNodeSqliteKysely,
+    tableExists,
+    resolvePluginStateReadRelation,
+  } = await import("openclaw/plugin-sdk/sqlite-worker-runtime");
   return await withSqliteReadOnlyInspection(source, (db) => {
-    if (!tableExists(db, "task_runs") || !tableExists(db, "plugin_state_entries")) {
+    const relation = resolvePluginStateReadRelation(db);
+    if (!tableExists(db, "task_runs") || !relation) {
       return [];
     }
     const sql = getNodeSqliteKysely<LegacyDatabase>(db);
@@ -180,7 +187,7 @@ async function inspect(params: Params) {
       const binding = executeSqliteQuerySync(
         db,
         sql
-          .selectFrom("plugin_state_entries")
+          .selectFrom(relation)
           .select("value_json")
           .where("plugin_id", "=", "codex")
           .where("namespace", "=", CODEX_APP_SERVER_BINDING_NAMESPACE)
@@ -297,10 +304,18 @@ async function settleHistoricalDelivery(
     runSqliteImmediateTransactionSync,
   } = await loadSqliteRuntime();
   const { readStoredCodexAppServerBinding } = await loadSessionBindingRecord();
+  const { resolvePluginStateReadRelation } =
+    await import("openclaw/plugin-sdk/sqlite-worker-runtime");
   const db = openNodeSqliteDatabase(resolveExistingSqliteFileUri(databasePath(params)));
   try {
     const sql = getNodeSqliteKysely<LegacyDatabase>(db);
     runSqliteImmediateTransactionSync(db, () => {
+      const relation = resolvePluginStateReadRelation(db);
+      if (!relation) {
+        throw new Error(
+          "Original requester binding storage is unavailable; preserve the retained task",
+        );
+      }
       const current = executeSqliteQuerySync(
         db,
         sql.selectFrom("task_runs").select(taskColumns).where("task_id", "=", task.task_id),
@@ -317,7 +332,7 @@ async function settleHistoricalDelivery(
       const binding = executeSqliteQuerySync(
         db,
         sql
-          .selectFrom("plugin_state_entries")
+          .selectFrom(relation)
           .select("value_json")
           .where("plugin_id", "=", "codex")
           .where("namespace", "=", CODEX_APP_SERVER_BINDING_NAMESPACE)

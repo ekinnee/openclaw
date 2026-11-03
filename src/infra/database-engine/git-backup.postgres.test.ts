@@ -147,7 +147,7 @@ describe.skipIf(!connection)("PostgreSQL Git backup discovery and verification",
       INSERT INTO config_machine_state VALUES ('authProfiles.fixture','"synthetic-config-credential"',1);
       INSERT INTO config_machine_state VALUES ('ordinary.fixture','"retained"',1);
       INSERT INTO secret_store_entries VALUES ('team','','synthetic','synthetic-retained-secret','secret',1,1,NULL,NULL,NULL);
-      INSERT INTO plugin_state_entries (plugin_id,namespace,entry_key,value_json,created_at)
+      INSERT INTO plugin_state_records (plugin_id,namespace,entry_key,value_json,created_at)
         VALUES ('matrix','fixture','retained','{"marker":"matrix retained"}',1);`;
     const fixtures = [
       { file: shared, descriptor: stateDescriptor, seed: stateSeed },
@@ -291,7 +291,7 @@ describe.skipIf(!connection)("PostgreSQL Git backup discovery and verification",
       ).toEqual([]);
       expect(ordinaryRows(file)).toEqual([{ value_json: '"retained"' }]);
       expect(
-        exportedRows(file, "SELECT value_json FROM plugin_state_entries WHERE plugin_id='matrix'"),
+        exportedRows(file, "SELECT value_json FROM plugin_state_records WHERE plugin_id='matrix'"),
       ).toEqual([{ value_json: '{"marker":"matrix retained"}' }]);
       expect((await fs.readFile(file)).includes(Buffer.from("synthetic-retained-secret"))).toBe(
         false,

@@ -98,7 +98,9 @@ describe("startup migration lease", () => {
     expect({
       version: readRow("PRAGMA user_version"),
       meta: readRow("SELECT role, schema_version FROM schema_meta WHERE meta_key = 'primary'"),
-      plugin: readRow("SELECT 1 AS present FROM sqlite_schema WHERE name = 'plugin_state_entries'"),
+      plugin: readRow(
+        "SELECT 1 AS present FROM sqlite_schema WHERE type = 'table' AND name = 'plugin_state_records'",
+      ),
     }).toEqual({
       version: { user_version: OPENCLAW_STATE_SCHEMA_VERSION },
       meta: { role: "global", schema_version: OPENCLAW_STATE_SCHEMA_VERSION },

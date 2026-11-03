@@ -113,6 +113,9 @@ const migrationTables: Readonly<
   },
   state: {
     ...SCHEMA_MIGRATION_BACKUP_TABLES.state,
+    // The physical rename is metadata-only; both source/destination names are
+    // inspected at their corresponding phase. Backup remains the full image.
+    40: ["plugin_state_entries", "plugin_state_records"],
     2: ["audit_events", "audit_identity_keys", "sqlite_sequence"],
     4: ["session_watch_cursors"],
     7: ["commitments"],

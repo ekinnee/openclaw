@@ -45,7 +45,9 @@ export const OPENCLAW_AGENT_SCHEMA_VERSION = 39;
 // v7 retires the inert shared commitments table.
 // v6 makes every committed shared-state table part of the canonical runtime schema.
 // v5 records durable cloud-worker result refs on pending workspace fences.
-export const OPENCLAW_STATE_SCHEMA_VERSION = 39;
+// Local staging allocation for the writer-fence prerequisite, not an upstream allocation.
+export const PLUGIN_STATE_WRITER_FENCE_SCHEMA_VERSION = 40;
+export const OPENCLAW_STATE_SCHEMA_VERSION = 40;
 
 export type OpenClawSchemaVersions = {
   state: number;

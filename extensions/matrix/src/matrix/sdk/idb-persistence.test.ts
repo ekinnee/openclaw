@@ -280,7 +280,7 @@ describe("Matrix IndexedDB persistence", () => {
     });
     expect(
       corrupt.db
-        .prepare("UPDATE plugin_state_entries SET value_json = ? WHERE entry_key = ?")
+        .prepare("UPDATE plugin_state_records SET value_json = ? WHERE entry_key = ?")
         .run("invalid JSON", laterChunk.key).changes,
     ).toBe(1);
     await closeOpenClawStateDatabaseAsync();

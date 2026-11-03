@@ -194,7 +194,7 @@ describe.skipIf(!connection)("whole-archive PostgreSQL restore", () => {
                 ...matrixRoots.map((file, index) => ({
                   family: "state",
                   file,
-                  table: "plugin_state_entries",
+                  table: "plugin_state_records",
                   column: "value_json",
                   value: JSON.stringify({ matrix: index }),
                 })),
@@ -245,7 +245,7 @@ describe.skipIf(!connection)("whole-archive PostgreSQL restore", () => {
                       if (matrixRoots.includes(store.file)) {
                         source
                           .prepare(
-                            "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at) VALUES ('matrix', 'idb-snapshot', 'chunk', ?, 1)",
+                            "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at) VALUES ('matrix', 'idb-snapshot', 'chunk', ?, 1)",
                           )
                           .run(store.value);
                       } else {

@@ -182,7 +182,7 @@ describe("SqliteBackedMatrixSyncStore", () => {
     const { db } = openOpenClawStateDatabase({ env: options.env });
     // Seed corrupt bytes before the runtime publishes any cached chunk facts.
     const insert = db.prepare(
-      "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES ('matrix', 'sync-cache', ?, ?, 1, NULL)",
+      "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES ('matrix', 'sync-cache', ?, ?, 1, NULL)",
     );
     insert.run(
       "current:meta",

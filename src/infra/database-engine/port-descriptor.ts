@@ -3,9 +3,12 @@ import { isDeepStrictEqual } from "node:util";
 import type { OpenClawConfig } from "../../config/types.openclaw.js";
 import type { PluginManifestRecord } from "../../plugins/manifest-registry.js";
 import type { resolvePluginMetadataSnapshot } from "../../plugins/plugin-metadata-snapshot.js";
+import { PLUGIN_STATE_WRITER_FENCE_SCHEMA_VERSION } from "../../state/openclaw-schema-versions.js";
 import { readTableColumns } from "../../state/openclaw-state-db-schema-helpers.js";
 import { executeSqliteQueryTakeFirstSync, getNodeSqliteKysely } from "../kysely-sync.js";
 import { assertSqliteIntegrity } from "../sqlite-integrity.js";
+import { coerceRequiredSqliteNumber } from "../sqlite-number.js";
+import { createSqliteTableContractReader } from "../sqlite-schema-catalog.js";
 import { admitSqliteSchema, getAdmittedSqliteSchemaFacts } from "../sqlite-schema-facts.js";
 import { normalizeSchemaSql } from "../sqlite-schema-sql.js";
 import type { PortDescriptor, PortEndpoint } from "./port-types.js";
@@ -139,6 +142,65 @@ export function inspectSqlitePortSchema(
   admitSqliteSchema(db);
   const facts = getAdmittedSqliteSchemaFacts(db);
   const descriptor = facts ? selectFragments(baseDescriptor, facts.tables) : baseDescriptor;
+  const declaredViews = descriptor.expectedCatalog.filter((fact) => fact.kind.startsWith("view"));
+  const fencedState =
+    descriptor.id === "state" && descriptor.version >= PLUGIN_STATE_WRITER_FENCE_SCHEMA_VERSION;
+  if (fencedState || facts?.views.size || declaredViews.length) {
+    const view =
+      facts?.views.size === 1 && facts.views.has("plugin_state_entries")
+        ? createSqliteTableContractReader(db, ["plugin_state_entries"]).readView(
+            "plugin_state_entries",
+          )
+        : undefined;
+    if (
+      !fencedState ||
+      !isDeepStrictEqual(
+        declaredViews.map((fact) => ({
+          table: fact.table,
+          kind: fact.kind,
+          value: typeof fact.value === "string" ? fact.value.trim() : fact.value,
+        })),
+        [
+          {
+            table: "plugin_state_entries",
+            kind: "viewDefinition",
+            value: "SELECT 'upgrade-required'::text AS unsupported_format;",
+          },
+        ],
+      ) ||
+      view?.sql !==
+        normalizeSchemaSql(
+          "CREATE VIEW plugin_state_entries AS SELECT 'upgrade-required' AS unsupported_format",
+        ) ||
+      view.triggers.length ||
+      !isDeepStrictEqual(
+        view.columns.map((column) => ({
+          cid: coerceRequiredSqliteNumber(column.cid),
+          name: column.name,
+          type: column.type,
+          notnull: coerceRequiredSqliteNumber(column.notnull),
+          dflt_value: column.dflt_value,
+          pk: coerceRequiredSqliteNumber(column.pk),
+          hidden: coerceRequiredSqliteNumber(column.hidden),
+        })),
+        [
+          {
+            cid: 0,
+            name: "unsupported_format",
+            type: "",
+            notnull: 0,
+            dflt_value: null,
+            pk: 0,
+            hidden: 0,
+          },
+        ],
+      )
+    ) {
+      throw new DatabasePortDataError(
+        "Unknown SQLite table, trigger or view; state writer fence differs from canonical format",
+      );
+    }
+  }
   const retained = descriptor.retainedSqliteTables?.filter((name) => facts?.tables.has(name)) ?? [];
   for (const table of retained) {
     const query = getNodeSqliteKysely<Record<string, Record<string, never>>>(db)
@@ -157,7 +219,6 @@ export function inspectSqlitePortSchema(
   ];
   if (
     !facts ||
-    facts.views.size ||
     [...facts.triggers].some(
       ([name, trigger]) =>
         !sourceTriggers.some(

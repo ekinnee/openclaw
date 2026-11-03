@@ -73,7 +73,9 @@ import {
 } from "./openclaw-state-db-schema-v36-template-names.js";
 import { stateWorkerDiskMigrations } from "./openclaw-state-db-schema-v38-repository-disk.js";
 import { stateWorkerRetentionMigration } from "./openclaw-state-db-schema-v39-worker-retention.js";
+import { statePluginStorageMigration } from "./openclaw-state-db-schema-v40-plugin-state.js";
 import {
+  admitStateSchemaFacts,
   assertSupportedStateSchemaVersion,
   readStateSchemaContentVersion,
   type StateSchemaVersionFacts,
@@ -91,6 +93,7 @@ import {
 import {
   readStateSchemaPublicationBlocker,
   resolveStateSchemaVersionToPublish,
+  writeStateSchemaContentVersion,
 } from "./openclaw-state-schema-publication.js";
 import { getOpenClawStatePredecessorSchema } from "./openclaw-state-schema-runtime.js";
 import { OPENCLAW_STATE_SCHEMA_SQL } from "./openclaw-state-schema.js";
@@ -162,6 +165,7 @@ export function prepareStateDatabaseSchemaRepair(
       inspectOwnership: true,
     });
   const admit = () => {
+    admitStateSchemaFacts(database, pathname);
     assertSupportedStateSchemaVersion(database, pathname);
     if (danglingWorkshopIndex) {
       assertWriteAllowed();
@@ -323,6 +327,9 @@ export function markCurrentStateSchemaVersion(
     return;
   }
   const version = resolveStateSchemaVersionToPublish(db);
+  if (version === OPENCLAW_STATE_SCHEMA_VERSION) {
+    writeStateSchemaContentVersion(db);
+  }
   if (readSqliteUserVersion(db) !== version) {
     db.exec(`PRAGMA user_version = ${version};`);
   }
@@ -537,6 +544,7 @@ export const versionedStateMigrations = [
   stateTemplateNamesMigration,
   ...stateWorkerDiskMigrations,
   stateWorkerRetentionMigration,
+  statePluginStorageMigration,
 ] as const;
 
 /** Recent version migrations own only their tables; Doctor owns unrelated historical repair. */
@@ -563,6 +571,7 @@ export function migrateBoundedStateSchema(
     stateTemplateNamesMigration,
     ...stateWorkerDiskMigrations,
     stateWorkerRetentionMigration,
+    statePluginStorageMigration,
   ];
   const pending = migrations.filter(({ version }) => version > previousVersion);
   // An undeclared destination keeps the legacy full runner and full-backup requirement.
@@ -685,6 +694,9 @@ export function runStateSchemaMigrationTransaction<T>(
 export function writeCurrentStateSchemaMetadata(db: DatabaseSync, now: number): void {
   const kysely = getNodeSqliteKysely<Pick<DB, "schema_meta">>(db);
   const schemaVersion = resolveStateSchemaVersionToPublish(db);
+  if (schemaVersion === OPENCLAW_STATE_SCHEMA_VERSION) {
+    writeStateSchemaContentVersion(db);
+  }
   if (readSqliteUserVersion(db) !== schemaVersion) {
     db.exec(`PRAGMA user_version = ${schemaVersion};`);
   }

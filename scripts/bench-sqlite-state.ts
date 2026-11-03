@@ -322,7 +322,7 @@ function seedDeliveryQueue(db: DatabaseSync, count: number): void {
 
 function seedPluginState(db: DatabaseSync, count: number): void {
   const insert = db.prepare(`
-    INSERT INTO plugin_state_entries (
+    INSERT INTO plugin_state_records (
       plugin_id, namespace, entry_key, value_json, created_at, expires_at
     ) VALUES (?, ?, ?, ?, ?, ?)
   `);
@@ -657,7 +657,7 @@ function runHotQueries(params: {
       id: "plugin-state.namespace.live",
       queryParams: [SQLITE_PERF_PLUGIN_ID, SQLITE_PERF_PLUGIN_NAMESPACE, SQLITE_PERF_PLUGIN_NOW],
       sql: `SELECT plugin_id, namespace, entry_key, value_json, created_at, expires_at
-         FROM plugin_state_entries
+         FROM plugin_state_records
         WHERE plugin_id = ? AND namespace = ?
           AND (expires_at IS NULL OR expires_at > ?)
         ORDER BY created_at ASC, entry_key ASC`,

@@ -55,6 +55,7 @@ import {
   inspectStateSqlite,
   stateEngineInput,
   stateEngineSchema,
+  assertStatePostgresStorageLayout,
 } from "./openclaw-state-db-engine.js";
 import { openTrackedStateDatabase } from "./openclaw-state-db-handle.js";
 import {
@@ -213,7 +214,8 @@ function openNativeStateDatabase(
             });
           }
         },
-        beforeMigrate: (database, fromVersion, sourceTables) => {
+        beforeMigrate: (database, fromVersion, sourceTables, sourceCatalog) => {
+          assertStatePostgresStorageLayout(sourceCatalog, fromVersion);
           prepareClientCredentialMigration(database, {
             path: params.pathname,
             env: params.env,

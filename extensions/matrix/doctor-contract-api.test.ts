@@ -12,7 +12,10 @@ import {
   createChannelIngressQueueForTests,
   resetPluginStateStoreForTests,
 } from "openclaw/plugin-sdk/plugin-state-test-runtime";
-import { closeOpenClawStateDatabaseAsync } from "openclaw/plugin-sdk/sqlite-runtime-testing";
+import {
+  closeOpenClawStateDatabaseAsync,
+  openOpenClawStateDatabase,
+} from "openclaw/plugin-sdk/sqlite-runtime-testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   MATRIX_INBOUND_DEDUPE_TTL_MS,
@@ -38,7 +41,11 @@ import {
   MATRIX_IDB_SNAPSHOT_FILENAME,
   writeMatrixIdbSnapshotJson,
 } from "./src/matrix/crypto-state-store.js";
-import { importInboundDedupeMarkersToIngress } from "./src/matrix/monitor/inbound-dedupe-migration.js";
+import {
+  importInboundDedupeMarkersToIngress,
+  readLegacyInboundDedupeSqliteSource,
+  retireLegacyInboundDedupeSqliteRows,
+} from "./src/matrix/monitor/inbound-dedupe-migration.js";
 import { installMatrixTestRuntime } from "./src/test-runtime.js";
 import { useAutoCleanupTempDirTracker } from "./test-support.js";
 
@@ -242,18 +249,27 @@ describe("matrix doctor contract state migrations", () => {
     expect(failedArchive.notices).toBeUndefined();
   });
 
-  it("detects, imports, and retires schema-v1 inbound dedupe rows without upgrading the source", async () => {
-    const sqliteRoot = accountStorageRoot(stateDir, "ops");
-    const homeRoot = accountStorageRoot(stateDir, "home", "fedcba9876543210");
-    const roomId = "!room:example.org";
-    const now = Date.now();
-    const legacyKey = (eventId: string) =>
-      `ops:${createHash("sha256").update(`ops\0${roomId}\0${eventId}`).digest("hex")}`;
-    const legacyDatabasePath = path.join(sqliteRoot, "state", "openclaw.sqlite");
-    {
-      using legacyDb = createLegacyDatabase(legacyDatabasePath);
-      legacyDb.exec(`
-        INSERT INTO plugin_state_entries VALUES
+  it.each(["legacy", "current"] as const)(
+    "detects, imports, and retires %s inbound dedupe rows without upgrading the source",
+    async (layout) => {
+      const sqliteRoot = accountStorageRoot(stateDir, "ops");
+      const homeRoot = accountStorageRoot(stateDir, "home", "fedcba9876543210");
+      const roomId = "!room:example.org";
+      const now = Date.now();
+      const legacyKey = (eventId: string) =>
+        `ops:${createHash("sha256").update(`ops\0${roomId}\0${eventId}`).digest("hex")}`;
+      const legacyDatabasePath = path.join(sqliteRoot, "state", "openclaw.sqlite");
+      const relation = layout === "legacy" ? "plugin_state_entries" : "plugin_state_records";
+      if (layout === "current") {
+        openOpenClawStateDatabase({ env: { ...process.env, OPENCLAW_STATE_DIR: sqliteRoot } });
+        await closeOpenClawStateDatabaseAsync();
+      } else {
+        using _ = createLegacyDatabase(legacyDatabasePath);
+      }
+      {
+        withDatabase(legacyDatabasePath, false, (legacyDb) =>
+          legacyDb.exec(`
+        INSERT INTO ${relation} VALUES
           ('matrix', 'inbound-dedupe', '${legacyKey("$committed")}',
            '{"roomId":"${roomId}","eventId":"$committed","ts":${now - 60_000}}', 1, ${now + 60_000}),
           ('matrix', 'inbound-dedupe', '${legacyKey("$stale")}',
@@ -262,46 +278,79 @@ describe("matrix doctor contract state migrations", () => {
           ('matrix', 'inbound-dedupe-migrations', 'ops:legacy-json-marker', '{"importedAt":${now}}', 4, ${now + 60_000}),
           ('matrix', 'credentials', 'keep-matrix', '{"keep":true}', 5, NULL),
           ('other-plugin', 'inbound-dedupe', 'keep-other', '{"keep":true}', 6, NULL);
-      `);
-    }
-    writeSqliteDedupeSource(homeRoot, "home", "$home-committed", now - 60_000);
-    await expectPendingDedupe();
-    const expectLegacySchema = () =>
-      withDatabase(legacyDatabasePath, true, (db) => {
-        expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 1 });
+      `),
+        );
+      }
+      writeSqliteDedupeSource(homeRoot, "home", "$home-committed", now - 60_000);
+      await expectPendingDedupe();
+      const sourceSchema = () =>
+        withDatabase(legacyDatabasePath, true, (db) => {
+          if (layout === "legacy") {
+            expect(db.prepare("PRAGMA user_version").get()).toEqual({ user_version: 1 });
+            expect(
+              db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all(),
+            ).toEqual([{ name: "plugin_state_entries" }]);
+          }
+          return {
+            header: db.prepare("PRAGMA user_version").get(),
+            catalog: db
+              .prepare("SELECT type, name, sql FROM sqlite_schema ORDER BY type, name")
+              .all(),
+          };
+        });
+      const before = sourceSchema();
+      expect((await migrate(DEDUPE)).warnings).toEqual([]);
+      await expectEnqueue("ops", "$committed");
+      await expectEnqueue("ops", "$stale", "accepted");
+      await expectEnqueue("home", "$home-committed");
+      expect(sourceSchema()).toEqual(before);
+      withDatabase(legacyDatabasePath, true, (retiredDb) => {
         expect(
-          db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name").all(),
-        ).toEqual([{ name: "plugin_state_entries" }]);
-      });
-    expectLegacySchema();
-    expect((await migrate(DEDUPE)).warnings).toEqual([]);
-    await expectEnqueue("ops", "$committed");
-    await expectEnqueue("ops", "$stale", "accepted");
-    await expectEnqueue("home", "$home-committed");
-    expectLegacySchema();
-    withDatabase(legacyDatabasePath, true, (retiredDb) => {
-      expect(
-        retiredDb
-          .prepare(
-            `SELECT plugin_id, namespace, entry_key, value_json
-             FROM plugin_state_entries
+          retiredDb
+            .prepare(
+              `SELECT plugin_id, namespace, entry_key, value_json
+             FROM ${relation}
              ORDER BY plugin_id ASC, namespace ASC, entry_key ASC`,
-          )
-          .all(),
-      ).toEqual(
-        [
-          ["matrix", "credentials", "keep-matrix"],
-          ["other-plugin", "inbound-dedupe", "keep-other"],
-        ].map(([plugin_id, namespace, entry_key]) => ({
-          plugin_id,
-          namespace,
-          entry_key,
-          value_json: '{"keep":true}',
-        })),
+            )
+            .all(),
+        ).toEqual(
+          [
+            ["matrix", "credentials", "keep-matrix"],
+            ["other-plugin", "inbound-dedupe", "keep-other"],
+          ].map(([plugin_id, namespace, entry_key]) => ({
+            plugin_id,
+            namespace,
+            entry_key,
+            value_json: '{"keep":true}',
+          })),
+        );
+      });
+      await expect(detect(DEDUPE)).resolves.toBeNull();
+    },
+  );
+
+  it.each(["mixed", "unknown"] as const)(
+    "preserves a %s dedupe source before read or retirement",
+    async (layout) => {
+      const root = accountStorageRoot(stateDir, "unsupported");
+      const databasePath = writeSqliteDedupeSource(root, "unsupported", "$retained", Date.now());
+      withDatabase(databasePath, false, (db) => {
+        db.exec(
+          layout === "mixed"
+            ? "CREATE TABLE plugin_state_records AS SELECT * FROM plugin_state_entries"
+            : "PRAGMA user_version=123456789",
+        );
+      });
+      const before = fs.readFileSync(databasePath);
+      await expect(readLegacyInboundDedupeSqliteSource(root)).rejects.toThrow(
+        /schema|format|layout/i,
       );
-    });
-    await expect(detect(DEDUPE)).resolves.toBeNull();
-  });
+      await expect(retireLegacyInboundDedupeSqliteRows(root)).rejects.toThrow(
+        /schema|format|layout/i,
+      );
+      expect(fs.readFileSync(databasePath)).toEqual(before);
+    },
+  );
 
   it("does not require inbound dedupe migration for a fresh runtime account root", async () => {
     const storageRootDir = accountStorageRoot(stateDir);

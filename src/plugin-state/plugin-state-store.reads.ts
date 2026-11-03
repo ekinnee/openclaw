@@ -1,18 +1,18 @@
 import { toUSVString } from "node:util";
 import { err, ok, type Result } from "@openclaw/normalization-core/result";
+import { sql } from "kysely";
 import { jsonArrayTextElement } from "../infra/database-engine/json-values.js";
 import {
-  createSqliteQueryCache,
   executeSqliteQuerySync,
   prepareSqliteQuerySync,
   sqliteStringSet,
   sqliteStringSetEntries,
 } from "../infra/kysely-sync.js";
-import type { EngineConnection } from "../infra/sql-connection.js";
 import {
   assertPluginStateKey,
   createPluginStateError,
-  getPluginStateKysely,
+  createPluginStateReadQueryCache,
+  getPluginStateReadKysely,
   selectPluginStateEntriesInKeyRange,
   selectLivePluginStateRows,
   iteratePluginStateEntries,
@@ -20,6 +20,7 @@ import {
   rowToEntry,
   type PluginStateDatabase,
   type PluginStateReadRow,
+  type PluginStateRow,
 } from "./plugin-state-store.kernel.js";
 import {
   PluginStateStoreError,
@@ -129,14 +130,14 @@ export function listPluginStateEntriesInKeyRange(
 }
 
 type PluginStateBatchParams = { pluginId: string; entriesJson: string; now: number };
-const pluginStateBatchQuery = createSqliteQueryCache((db: EngineConnection) =>
+const pluginStateBatchQuery = createPluginStateReadQueryCache((db, relation) =>
   prepareSqliteQuerySync<PluginStateBatchParams, PluginStateReadRow & { position: number }>(
     db,
     (parameter) =>
-      getPluginStateKysely(db)
+      getPluginStateReadKysely(db)
         .selectFrom(sqliteStringSetEntries(parameter((value) => value.entriesJson)).as("requested"))
         // Keep requested keys outermost so each row seeks the complete primary key.
-        .crossJoin("plugin_state_entries")
+        .crossJoin(sql<PluginStateRow>`${sql.table(relation)}`.as("plugin_rows"))
         .where(
           "plugin_id",
           "=",

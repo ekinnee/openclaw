@@ -206,7 +206,7 @@ describe("msteams polls", () => {
       ...bindings
     ) {
       if (
-        /^select\b.*\bfrom "plugin_state_entries"/iu.test(this.sourceSQL) &&
+        /^select\b.*\bfrom "plugin_state_(?:entries|records)"/iu.test(this.sourceSQL) &&
         this.sourceSQL.includes('"value_json"') &&
         !this.sourceSQL.includes('"entry_key" =') &&
         bindings.includes("poll-vote-buckets")
@@ -277,7 +277,7 @@ describe("msteams polls", () => {
       const database = new DatabaseSync(path.join(stateDir, "state", "openclaw.sqlite"));
       try {
         database.exec(`
-          UPDATE plugin_state_entries SET created_at = CASE entry_key
+          UPDATE plugin_state_records SET created_at = CASE entry_key
             WHEN 'first' THEN 1 WHEN 'failing' THEN 2 ELSE 3 END
           WHERE plugin_id = 'msteams' AND namespace = 'poll-vote-buckets';
         `);
@@ -285,16 +285,16 @@ describe("msteams polls", () => {
         database.exec(
           failure === "delete"
             ? `
-          CREATE TRIGGER fail_bucket_delete BEFORE DELETE ON plugin_state_entries
+          CREATE TRIGGER fail_bucket_delete BEFORE DELETE ON plugin_state_records
           WHEN OLD.plugin_id = 'msteams' AND OLD.namespace = 'poll-vote-buckets'
             AND OLD.entry_key = 'failing'
           BEGIN SELECT RAISE(ABORT, 'bucket deletion failed'); END;
         `
             : `
-          CREATE TRIGGER corrupt_bucket AFTER DELETE ON plugin_state_entries
+          CREATE TRIGGER corrupt_bucket AFTER DELETE ON plugin_state_records
           WHEN OLD.plugin_id = 'msteams' AND OLD.namespace = 'polls'
             AND OLD.entry_key = 'expired-a'
-          BEGIN UPDATE plugin_state_entries SET value_json = '${failure === "null value" ? "null" : "{"}'
+          BEGIN UPDATE plugin_state_records SET value_json = '${failure === "null value" ? "null" : "{"}'
             WHERE plugin_id = 'msteams' AND namespace = 'poll-vote-buckets'
               AND entry_key = 'failing'; END;
         `,
@@ -313,7 +313,7 @@ describe("msteams polls", () => {
         const newPollKey = pollStateKey("new");
         const remaining = database
           .prepare(
-            "SELECT namespace, entry_key FROM plugin_state_entries WHERE plugin_id = 'msteams' ORDER BY namespace, entry_key",
+            "SELECT namespace, entry_key FROM plugin_state_records WHERE plugin_id = 'msteams' ORDER BY namespace, entry_key",
           )
           .all();
         expect(remaining).toEqual([

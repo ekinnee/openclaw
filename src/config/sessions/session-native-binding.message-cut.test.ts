@@ -88,7 +88,7 @@ it("vetoes rewind before A COMMIT when the native binding delete fails", () =>
         prepared = true;
         fixture.shared.db
           .prepare(
-            "UPDATE plugin_state_entries SET value_json = ? WHERE plugin_id = ? AND entry_key = ?",
+            "UPDATE plugin_state_records SET value_json = ? WHERE plugin_id = ? AND entry_key = ?",
           )
           .run("{ corrupt synthetic binding", "codex", fixture.bindingKey);
       }

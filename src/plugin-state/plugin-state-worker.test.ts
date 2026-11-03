@@ -100,7 +100,7 @@ const updateRow = (
   value: string | bigint,
 ) =>
   openOpenClawStateDatabase()
-    .db.prepare(`UPDATE plugin_state_entries SET ${column} = ? ${rowScope} AND entry_key = ?`)
+    .db.prepare(`UPDATE plugin_state_records SET ${column} = ? ${rowScope} AND entry_key = ?`)
     .run(value, plugin, namespace, key);
 function authority(reason: string | Error) {
   let current = true;
@@ -140,7 +140,7 @@ it.for([false, true])(
     const writer = new DatabaseSync(databasePath);
     try {
       writer
-        .prepare(`UPDATE plugin_state_entries SET value_json = ? ${rowScope} AND entry_key = ?`)
+        .prepare(`UPDATE plugin_state_records SET value_json = ? ${rowScope} AND entry_key = ?`)
         .run("invalid JSON", pluginId, namespace, "key");
     } finally {
       writer.close();
@@ -510,7 +510,7 @@ it("persists exact journal bytes without host SQL or creating an absent read sou
   const rowsIn = (namespace: string) =>
     db
       .prepare(
-        "SELECT entry_key, value_json FROM plugin_state_entries WHERE plugin_id = ? AND namespace = ?",
+        "SELECT entry_key, value_json FROM plugin_state_records WHERE plugin_id = ? AND namespace = ?",
       )
       .all("memory-core", namespace);
   const rows = rowsIn("memory-host.events");
@@ -626,7 +626,7 @@ it.for(["created_at", "expires_at"] as const)(
     updateRow(pluginId, namespace, "unsafe", column, 9223372036854775807n);
     const { db } = openOpenClawStateDatabase();
     const snapshot = db.prepare(
-      `SELECT * FROM plugin_state_entries ${rowScope} ORDER BY entry_key`,
+      `SELECT * FROM plugin_state_records ${rowScope} ORDER BY entry_key`,
     );
     snapshot.setReadBigInts(true);
     const before = snapshot.all(pluginId, namespace);
@@ -699,7 +699,7 @@ it("preserves ordered claims, scalar equality, expiry, and corrupt JSON errors",
   seed("slack", options.namespace, [{ key: "expired", value: 0, expiresAt: 1 }]);
   expect(await store.registerIfAbsent("entry", 2)).toBe(false);
   const db = openOpenClawStateDatabase().db;
-  expect(db.prepare("SELECT 1 FROM plugin_state_entries WHERE expires_at = 1").all()).toEqual([]);
+  expect(db.prepare("SELECT 1 FROM plugin_state_records WHERE expires_at = 1").all()).toEqual([]);
   claims.mockRestore();
   const deletion = store.delete("entry");
   expect(await store.registerIfAbsent("entry", 1)).toBe(true);
@@ -783,7 +783,7 @@ describe.skipIf(!mixedAgentConnection)("PostgreSQL complete plugin-state views",
       expect.stringContaining("REPEATABLE READ READ ONLY"),
     );
     expect(
-      queries.mock.calls.map(([sql]) => sql).filter((sql) => sql.includes("plugin_state_entries")),
+      queries.mock.calls.map(([sql]) => sql).filter((sql) => sql.includes("plugin_state_records")),
     ).toEqual([
       expect.stringContaining("octet_length"),
       expect.stringContaining('select "entry_key", "value_json"'),
@@ -793,7 +793,7 @@ describe.skipIf(!mixedAgentConnection)("PostgreSQL complete plugin-state views",
       withEngineStoreAdmission(() => loadNamespaceRows(database, { ...scope, maxBytes: 289 })),
     ).toBeUndefined();
     expect(
-      queries.mock.calls.map(([sql]) => sql).filter((sql) => sql.includes("plugin_state_entries")),
+      queries.mock.calls.map(([sql]) => sql).filter((sql) => sql.includes("plugin_state_records")),
     ).toEqual([expect.stringContaining("octet_length")]);
     const modulePath = fileURLToPath(
       new URL("./plugin-state-operation.test-support.ts", import.meta.url),

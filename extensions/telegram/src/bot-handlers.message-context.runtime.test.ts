@@ -225,7 +225,7 @@ describe("automatic Telegram retained history workload", () => {
     });
     const { db } = openOpenClawStateDatabase({ env: state.env });
     const kysely =
-      getNodeSqliteKysely<Pick<OpenClawStateKyselyDatabaseForTests, "plugin_state_entries">>(db);
+      getNodeSqliteKysely<Pick<OpenClawStateKyselyDatabaseForTests, "plugin_state_records">>(db);
     for (let offset = 0; offset < archiveSize; offset += 512) {
       const rows = Array.from({ length: Math.min(512, archiveSize - offset) }, (_, index) => {
         const messageId = offset + index + 1;
@@ -245,7 +245,7 @@ describe("automatic Telegram retained history workload", () => {
           expires_at: null,
         };
       });
-      executeSqliteQuerySync(db, kysely.insertInto("plugin_state_entries").values(rows));
+      executeSqliteQuerySync(db, kysely.insertInto("plugin_state_records").values(rows));
     }
   });
 

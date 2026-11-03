@@ -235,7 +235,7 @@ async function seedChild() {
   for (let offset = 0; offset < chunks; offset += 32) {
     stateOwner.runOpenClawStateWriteTransaction(({ db }) => {
       const insert = db.prepare(
-        "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, NULL)",
+        "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, NULL)",
       );
       for (let n = offset; n < Math.min(offset + 32, chunks); n++) {
         insert.run("synthetic-scale", "retained", String(n), JSON.stringify(nextText()), now);

@@ -37,7 +37,7 @@ it.each([false, true])("awaits read-only worker findings (existing=%s)", (existi
     const rows = () =>
       openOpenClawStateDatabase({ env: state.env })
         .db.prepare(
-          "SELECT * FROM plugin_state_entries WHERE namespace = ? ORDER BY plugin_id, entry_key",
+          "SELECT * FROM plugin_state_records WHERE namespace = ? ORDER BY plugin_id, entry_key",
         )
         .all("warm-images");
     if (existing) {

@@ -51,7 +51,7 @@ describe("plugin-state-store.import", () => {
   describe("doctor plugin state import", () => {
     it("preserves a transaction-abort failure and reopens without committing its batch prefix", () => {
       const db = openOpenClawStateDatabase().db;
-      db.exec(`CREATE TEMP TRIGGER abort_import BEFORE INSERT ON plugin_state_entries
+      db.exec(`CREATE TEMP TRIGGER abort_import BEFORE INSERT ON plugin_state_records
       WHEN NEW.entry_key = 'row-750' BEGIN SELECT RAISE(ROLLBACK, 'import transaction aborted'); END`);
       let failure: unknown;
       try {
@@ -84,7 +84,7 @@ describe("plugin-state-store.import", () => {
         clock = 10_001;
         return 0;
       });
-      db.exec(`CREATE TEMP TRIGGER advance_clock AFTER INSERT ON plugin_state_entries
+      db.exec(`CREATE TEMP TRIGGER advance_clock AFTER INSERT ON plugin_state_records
       WHEN NEW.entry_key = 'first' BEGIN SELECT advance_import_clock(); END`);
       const limited = { ...options, maxEntries: 2, overflowPolicy: "reject-new" as const };
       const source = [
@@ -250,7 +250,7 @@ describe("plugin-state-store.prepared", () => {
                 (result) =>
                   result.type === "return" &&
                   result.value.sql.startsWith(
-                    'select count(*) as "count" from "plugin_state_entries"',
+                    'select count(*) as "count" from "plugin_state_records"',
                   ),
               );
               expect(counts).toHaveLength(1);

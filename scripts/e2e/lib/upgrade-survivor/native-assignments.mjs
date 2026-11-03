@@ -10,6 +10,7 @@ import { inspectNpmPackageTarball } from "../../../prepublish-plugin-registry-ar
 import { readTcpPortEnv } from "../env-limits.mjs";
 import { readJson } from "../fixtures/common.mjs";
 import { readPluginInstallRecords } from "../plugin-index-sqlite.mjs";
+import { pluginStateObservationRelation } from "../plugin-state-observation.mjs";
 import { readDatabase } from "./observations.mjs";
 
 const SESSION_KEY = "agent:native-proof:upgrade-native-proof";
@@ -160,7 +161,7 @@ function snapshot() {
     const bindingKey = fs.existsSync(baselinePath) ? readJson(baselinePath).binding.key : undefined;
     const bindings = db
       .prepare(
-        "SELECT entry_key, value_json FROM plugin_state_entries WHERE plugin_id = 'codex' AND namespace = 'app-server-thread-bindings'",
+        `SELECT entry_key, value_json FROM ${pluginStateObservationRelation(db)} WHERE plugin_id = 'codex' AND namespace = 'app-server-thread-bindings'`,
       )
       .all()
       .map((row) => ({ key: row.entry_key, value: JSON.parse(row.value_json) }))
@@ -182,7 +183,7 @@ function captureInventory(stage) {
     readDatabase(path.join(required("OPENCLAW_STATE_DIR"), "state", "openclaw.sqlite"), (db) => {
       const row = db
         .prepare(
-          "SELECT value_json FROM plugin_state_entries WHERE plugin_id = 'codex' AND namespace = 'app-server-thread-bindings' AND entry_key = ?",
+          `SELECT value_json FROM ${pluginStateObservationRelation(db)} WHERE plugin_id = 'codex' AND namespace = 'app-server-thread-bindings' AND entry_key = ?`,
         )
         .get(baseline.binding.key);
       const stored = row ? JSON.parse(row.value_json) : undefined;

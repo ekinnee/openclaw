@@ -276,7 +276,7 @@ describe("createHostedOutboundMediaStore", () => {
     const { db } = openOpenClawStateDatabase();
     const sql = getNodeSqliteKysely<OpenClawStateKyselyDatabaseForTests>(db);
     const persistedRows = sql
-      .selectFrom("plugin_state_entries")
+      .selectFrom("plugin_state_records")
       .select("namespace")
       .select((eb) => eb("expires_at", "-", eb.ref("created_at")).as("ttlMs"))
       .where("plugin_id", "=", "fixture-plugin")
@@ -479,7 +479,7 @@ describe("hosted media bulk read error order", () => {
         const { db } = openOpenClawStateDatabase();
         // Seed corruption before a keyed write receipt can cache a valid chunk.
         db.prepare(
-          "INSERT INTO plugin_state_entries (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, NULL)",
+          "INSERT INTO plugin_state_records (plugin_id, namespace, entry_key, value_json, created_at, expires_at) VALUES (?, ?, ?, ?, ?, NULL)",
         ).run("fixture-plugin", `bulk-${early}-chunks`, key(1), "invalid JSON", Date.now());
         const store = createMediaStore({
           metadataStore,

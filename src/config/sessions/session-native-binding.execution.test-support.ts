@@ -82,7 +82,9 @@ export function captureCommandWorker(type: string) {
 
 export const bindingWrites = (queries: readonly string[]) =>
   queries.filter((sql) =>
-    /\b(?:delete\s+from|insert(?:\s+or\s+\w+)?\s+into)\s+["`]?plugin_state_entries\b/i.test(sql),
+    /\b(?:delete\s+from|insert(?:\s+or\s+\w+)?\s+into)\s+["`]?plugin_state_(?:entries|records)\b/i.test(
+      sql,
+    ),
   );
 
 export function expectNoSql(queries: readonly string[], pattern: RegExp) {

@@ -5,6 +5,7 @@ import { executeSqliteQuerySync, iterateSqliteQuerySync } from "../infra/kysely-
 import { isPostgresSqlConnection } from "../infra/sql-connection.js";
 import { runSqliteReadSnapshotSync } from "../infra/sqlite-transaction.js";
 import type { SqliteWorkerCommand } from "../infra/sqlite-worker-contract.js";
+import { loadValidatedPublicSurfaceModule } from "../plugins/public-surface-loader.js";
 import { captureOpenClawStateDatabaseReadAdmission } from "../state/openclaw-state-db-cache.js";
 import type {
   OpenClawStateDatabase,
@@ -12,6 +13,10 @@ import type {
 } from "../state/openclaw-state-db-contract.js";
 import { hasOpenClawStateTablesBeyondStartupCheckpoint } from "../state/openclaw-state-db-schema-helpers.js";
 import { runOpenClawStateWriteTransaction } from "../state/openclaw-state-db.js";
+import {
+  preparePluginStateNativeBindingMutation,
+  assertPluginStateNativeBindingMutationValue,
+} from "./plugin-state-native-binding-codec.js";
 import type {
   PluginStateOperationCommit,
   PluginStateOperationInput,
@@ -33,7 +38,8 @@ import {
   deletePluginStateEntry,
   lookupPluginStateEntry,
   countLivePluginStateNamespaceEntries,
-  getPluginStateKysely,
+  getPluginStateReadKysely,
+  getPluginStateReadRelation,
   PLUGIN_STATE_NAMESPACE_MAX_ROWS,
   pluginStateNamespaceRowBytes,
   type PluginStateDatabase,
@@ -76,8 +82,8 @@ function loadPluginStateNamespaceRows(
   store: PluginStateDatabase,
   params: { pluginId: string; namespace: string; maxBytes: number },
 ): PluginStateReadRow[] | undefined {
-  const query = getPluginStateKysely(store.db)
-    .selectFrom("plugin_state_entries")
+  const query = getPluginStateReadKysely(store.db)
+    .selectFrom(getPluginStateReadRelation(store.db))
     .where("plugin_id", "=", params.pluginId)
     .where("namespace", "=", params.namespace)
     .limit(PLUGIN_STATE_NAMESPACE_MAX_ROWS + 1);
@@ -194,11 +200,16 @@ function operationHandlerKey(input: PluginStateOperationInput): string {
 
 /** Load plugin code before entering any native read or write transaction. */
 export async function preparePluginStateOperation(input: PluginStateOperationInput): Promise<void> {
+  for (const index of input.writeStores) {
+    const scope = input.stores[index];
+    if (scope) {
+      preparePluginStateNativeBindingMutation(scope);
+    }
+  }
   const key = operationHandlerKey(input);
   if (operationHandlers.has(key)) {
     return;
   }
-  const { loadValidatedPublicSurfaceModule } = await import("../plugins/public-surface-loader.js");
   const loaded = loadValidatedPublicSurfaceModule({
     ...input.module,
     surfaceLabel: "plugin state operation",
@@ -248,6 +259,39 @@ export function executePluginStateCommand(
         ),
       ),
     );
+  try {
+    if (command.type === "pluginState.executeOperation") {
+      for (const index of command.input.writeStores) {
+        const scope = command.input.stores[index];
+        if (scope) {
+          preparePluginStateNativeBindingMutation(scope, options.env);
+        }
+      }
+    } else if (
+      command.type !== "pluginState.loadNamespace" &&
+      command.type !== "pluginState.observe" &&
+      "pluginId" in command.input &&
+      "namespace" in command.input
+    ) {
+      preparePluginStateNativeBindingMutation(command.input, options.env);
+      if (command.type === "pluginState.moveEntries") {
+        preparePluginStateNativeBindingMutation(
+          { pluginId: command.input.pluginId, namespace: command.input.sourceNamespace },
+          options.env,
+        );
+      }
+      if ("valueJson" in command.input) {
+        assertPluginStateNativeBindingMutationValue(command.input, command.input.valueJson);
+      }
+      if (command.type === "pluginState.replace") {
+        for (const entry of command.input.entries) {
+          assertPluginStateNativeBindingMutationValue(command.input, entry.valueJson);
+        }
+      }
+    }
+  } catch (error) {
+    return failure(error);
+  }
   if (command.type === "pluginState.loadNamespace") {
     try {
       return ok(

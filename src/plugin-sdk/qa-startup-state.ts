@@ -365,7 +365,7 @@ export async function collectQaStartupState(env: NodeJS.ProcessEnv) {
           pluginState: executeSqliteQuerySync(
             shared,
             sharedDb
-              .selectFrom("plugin_state_entries")
+              .selectFrom("plugin_state_records")
               .select(["plugin_id", "namespace", "entry_key", "value_json", "expires_at"])
               .orderBy("plugin_id")
               .orderBy("namespace")
