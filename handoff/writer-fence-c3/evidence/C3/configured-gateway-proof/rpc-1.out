@@ -1,0 +1,8 @@
+{
+  "proof": true,
+  "phase": "prime",
+  "ordinary": true,
+  "persisted": true,
+  "cas": true,
+  "retainedMove": true
+}

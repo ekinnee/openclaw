@@ -1,0 +1,259 @@
+{
+  "startUtc": "2026-11-03T14:10:08.788611+00:00",
+  "startMonotonic": 240329.060934106,
+  "scratch": "${DISPOSABLE_RUNTIME}/writer-fence-built-proof-42qapkbe",
+  "oldRoot": "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-baseline",
+  "candidateRoot": "${DISPOSABLE_RUNTIME}/package",
+  "oldManifestSha256": "e3b242ae89613816bcccd73a1203f0eccc760d4d4752b2d4439bf8d8750da08e",
+  "candidateIdentitySha256": "cb90bde5fcf482770ad37f46b1f7af3c92d8c1831c8133ee09d352d5e1fc5178",
+  "credentialValuesOmitted": true,
+  "commands": [
+    {
+      "label": "old-held",
+      "argv": [
+        "/usr/bin/node",
+        "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-baseline/openclaw.mjs",
+        "writer-fence-proof"
+      ]
+    },
+    {
+      "label": "candidate-doctor",
+      "argv": [
+        "/usr/bin/node",
+        "${DISPOSABLE_RUNTIME}/openclaw.mjs",
+        "doctor",
+        "--repair",
+        "--non-interactive",
+        "--yes",
+        "--no-workspace-suggestions"
+      ]
+    },
+    {
+      "label": "old-cold-cli",
+      "argv": [
+        "/usr/bin/node",
+        "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-baseline/openclaw.mjs",
+        "writer-fence-proof"
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "boundary": "PRIMED",
+      "ordinaryPositive": true,
+      "processId": 13341,
+      "families": [
+        "sync",
+        "legacy-async",
+        "v2",
+        "cas",
+        "delete",
+        "clear",
+        "retained-move",
+        "ttl"
+      ]
+    },
+    {
+      "boundary": "RELEASED"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "sync.register"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "sync.register",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "sync.delete"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "sync.delete",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "sync.clear"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "sync.clear",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "sync.expiry-trigger"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "sync.expiry-trigger",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "legacy.register"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "legacy.register",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "legacy.delete"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "legacy.delete",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "legacy.clear"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "legacy.clear",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "v2.register"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "v2.register",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "v2.cas"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "v2.cas",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "v2.delete"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "v2.delete",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "v2.clear"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "v2.clear",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "v2.expiry-trigger"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "v2.expiry-trigger",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "INVOKED",
+      "operation": "v2.move"
+    },
+    {
+      "boundary": "REFUSED",
+      "operation": "v2.move",
+      "code": "PLUGIN_STATE_WRITE_FAILED",
+      "causeCodes": [
+        "PLUGIN_STATE_WRITE_FAILED",
+        "ERR_SQLITE_ERROR"
+      ],
+      "category": "retired-relation"
+    },
+    {
+      "boundary": "SETTLED"
+    }
+  ],
+  "doctorExpiredRowDelta": 0,
+  "ordinarySentinels": {
+    "beforeDoctor": "cbd3b96b83e1a0d0b6ac03f3596a4aae07561e8bcc2a191dbb26d10bb1f29421",
+    "afterDoctorBeforeOldRelease": "cbd3b96b83e1a0d0b6ac03f3596a4aae07561e8bcc2a191dbb26d10bb1f29421",
+    "afterOldRelease": "cbd3b96b83e1a0d0b6ac03f3596a4aae07561e8bcc2a191dbb26d10bb1f29421",
+    "exactPreservation": true,
+    "rowCount": 12
+  },
+  "endUtc": "2026-11-03T14:10:57.421604+00:00",
+  "seconds": 48.63299405699945,
+  "ownedChildrenJoined": true,
+  "oldOutputDrift": [],
+  "ownedProcessGroupsRemaining": [],
+  "scratchPreserved": true
+}

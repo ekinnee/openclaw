@@ -1,0 +1,35 @@
+{
+  "observedUTC": "2026-11-03T00:53:26.305528+00:00",
+  "sourceChecksum": "c12149b1de17ebcd9abf571a11e46c1ddd53719cbff100ba97980575b76978e9",
+  "reviewCommit": "cd221dc61baf2acb8aa227e0630e94b3660b1957",
+  "fullPatch": {
+    "bytes": 1404566,
+    "sha256": "9c37e11c4db3f4f3a7fc4844cca42b9cf7fc9270b2caecb6331798a2064c62f5"
+  },
+  "f2DeltaPatch": {
+    "bytes": 7518,
+    "sha256": "d649a1b4b94647a8950b34711889f004c75f2e6a9875618efe65782caa4330aa"
+  },
+  "f2Numstat": "2\t2\tconfig/test-lines-allocations/retained-binding-writer-fence.txt\n71\t4\tsrc/state/openclaw-state-db-plugin-writer-fence.test.ts\n4\t0\tsrc/state/openclaw-state-db-schema-v40-plugin-state.ts\n",
+  "productionDelta": {
+    "paths": 1,
+    "additions": 4,
+    "deletions": 0
+  },
+  "testDelta": {
+    "paths": 1,
+    "additions": 71,
+    "deletions": 4,
+    "netLiteralLF": 67
+  },
+  "metadataDelta": "existingexactallocation1094->1161, scalar unchanged",
+  "wholePrerequisite": {
+    "allPaths": 121,
+    "productionAndGeneratorMetadataPaths": 39,
+    "productionAdditions": 956,
+    "productionDeletions": 141,
+    "productionNet": 815,
+    "productionGross": 1097
+  },
+  "noPrimaryCommit": true
+}

@@ -1,0 +1,401 @@
+[
+  {
+    "bundlePath": "decisions/historical/integration-delivery-decision-20261103.md",
+    "bundleSha256": "cfec3ff07b65b8034fb56ad62c9c1c7cd8c9c070d64a08db2763d4ad24f8c7f0",
+    "originalRelativePath": "integration-delivery-decision-20261103.md",
+    "originalSha256": "cfec3ff07b65b8034fb56ad62c9c1c7cd8c9c070d64a08db2763d4ad24f8c7f0",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "decisions/historical/local-dependency-map-20261103.md",
+    "bundleSha256": "85567f6a039a4a3fe67ac6919a366cbe2eaa896ed25fd000b0233e989d239f12",
+    "originalRelativePath": "local-dependency-map-20261103.md",
+    "originalSha256": "85567f6a039a4a3fe67ac6919a366cbe2eaa896ed25fd000b0233e989d239f12",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/evidence-limits.json",
+    "bundleSha256": "bfc324a0207512ae14e06c1d9dcc9d6590bef58c4be5d9f5e2bdda0c6c34ca82",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/evidence-limits.json",
+    "originalSha256": "bfc324a0207512ae14e06c1d9dcc9d6590bef58c4be5d9f5e2bdda0c6c34ca82",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/acceptance-matrix.json",
+    "bundleSha256": "e338e61e96787b9ec0be067275de258c4764ec18bf60a26303a5dfd71c704924",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/acceptance-matrix.json",
+    "originalSha256": "e338e61e96787b9ec0be067275de258c4764ec18bf60a26303a5dfd71c704924",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/sanitized-terminal.txt",
+    "bundleSha256": "cd8d4be7a3d1c8173a3393881d52c5ba1344cac7cd5468b0d28f83481eeee11f",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/sanitized-terminal.txt",
+    "originalSha256": "cd8d4be7a3d1c8173a3393881d52c5ba1344cac7cd5468b0d28f83481eeee11f",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/current-archive-identity.json",
+    "bundleSha256": "4cf9928591aed7241a246d481a0b03709a936241183ede954c2d123f6befc747",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/current-archive-identity.json",
+    "originalSha256": "b43b234ef48fc268a36dc78b01bb3b29b2ec4865ed03f831af98b3f4bf81e9f3",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/C3/build-result.json",
+    "bundleSha256": "afe2739fefc43846348f5636504c4f6e3e49751f68b4f1a6f7d908cbf3d8348c",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/build-result.json",
+    "originalSha256": "539fa7b4e5f7c96cea833110d31c6f9e2211db9c139fcd7a6b3c4b4c39c8d620",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/C3/normal-proof/receipt.json",
+    "bundleSha256": "289c729406113323d88ab1d8f3d4a449fda86531ee45c4796d83158882c7f55a",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/normal-proof/receipt.json",
+    "originalSha256": "fd85a553dcc620a7ca76564d767f6f266c7a1008fde5e14fd86761e68ad3cef4",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/C3/normal-proof/old-held.out",
+    "bundleSha256": "91f231eb5fa818f3bd2a96035386b39d5b2288399ddc780112199fbb1a6a3128",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/normal-proof/old-held.out",
+    "originalSha256": "91f231eb5fa818f3bd2a96035386b39d5b2288399ddc780112199fbb1a6a3128",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/normal-proof/candidate-doctor.out",
+    "bundleSha256": "0d31f30123fa93f39ca86b09e7bd1328e9b27ded51e6f571357a3a3b471cac80",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/normal-proof/candidate-doctor.out",
+    "originalSha256": "ca1afe6cca1f3990f46f0438c3d65c381e128881854c7f43b471eec80a89c735",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/C3/normal-proof/candidate-doctor.err",
+    "bundleSha256": "a5f3288e53abe197c68603053e24c9f35604b209f1e8598f9e62076ea44da5b7",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/normal-proof/candidate-doctor.err",
+    "originalSha256": "a5f3288e53abe197c68603053e24c9f35604b209f1e8598f9e62076ea44da5b7",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/normal-proof/old-cold-cli.out",
+    "bundleSha256": "8c11bace0eed0325cc42f6f1cbed5395c29287a298780dcf83452d8e43dbeec8",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/normal-proof/old-cold-cli.out",
+    "originalSha256": "8c11bace0eed0325cc42f6f1cbed5395c29287a298780dcf83452d8e43dbeec8",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/normal-proof/old-cold-cli.err",
+    "bundleSha256": "80e90fc5ff55444ea72b7468bd49095c89d88153a90e1a43f386853146a3a216",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/normal-proof/old-cold-cli.err",
+    "originalSha256": "80e90fc5ff55444ea72b7468bd49095c89d88153a90e1a43f386853146a3a216",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/normal-continuation/old-cold-gateway.err",
+    "bundleSha256": "fa7c57ceb532c2d932b3443b6cce5858ff07cac35b22bb0c5e1605a0ee7a5e9d",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/normal-continuation/old-cold-gateway.err",
+    "originalSha256": "241f8f78dd40f3ccfe74f7916928d64419254f21bd8554b7046439467d3d5898",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/C3/configured-gateway-proof/receipt.json",
+    "bundleSha256": "7f25d7299b4efe284a0e2382cf62054aa926ca542a7ab79f9d228edc19b86be5",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/configured-gateway-proof/receipt.json",
+    "originalSha256": "e337d69564334be32d6770c01a473b94f39c264a3d4d553d0bd57985df15f0b8",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/C3/configured-gateway-proof/rpc-1.out",
+    "bundleSha256": "b6519a516e8cd0720dd4c813def4c8ef32cc0a55cb2e37ad132df3bd21822980",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/configured-gateway-proof/rpc-1.out",
+    "originalSha256": "b6519a516e8cd0720dd4c813def4c8ef32cc0a55cb2e37ad132df3bd21822980",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/configured-gateway-proof/rpc-2.out",
+    "bundleSha256": "16dbc7e01e76b878c6b1af7e7d37482845edf9370d8cc6ffd89ad60105c0e341",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/configured-gateway-proof/rpc-2.out",
+    "originalSha256": "16dbc7e01e76b878c6b1af7e7d37482845edf9370d8cc6ffd89ad60105c0e341",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/C3/sdk-proof/receipt.json",
+    "bundleSha256": "95e77681c1867e06e7bfe0d15169114083613f7d1e1517b5f732bba21b41a52e",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/sdk-proof/receipt.json",
+    "originalSha256": "d43d16d356f42432b0ccbc1104b6249bcdd9cb2453b11cd365b3c862428ee73f",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/F2/static-results.json",
+    "bundleSha256": "027e1341aaf875121cfa85471d26e7d2813b156da6a92e2266946d205d6fa67f",
+    "originalRelativePath": "f2-index-correction/static-results.json",
+    "originalSha256": "45a36d729c8ae7740c985aac7a6fe82d68ee48e4cb59c553dca0dc4ca5f4c6b9",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/F2/measurements.json",
+    "bundleSha256": "bf267f933b031723b61d21d80379ee48bbe6193d21f1e16f0f376ce4ef9ca6fc",
+    "originalRelativePath": "f2-index-correction/measurements.json",
+    "originalSha256": "bf267f933b031723b61d21d80379ee48bbe6193d21f1e16f0f376ce4ef9ca6fc",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/F2/regression-red-result.json",
+    "bundleSha256": "469f364f6418ee36743acb32394f5134c30a787772e2dc8a41ddceed62a75507",
+    "originalRelativePath": "f2-index-correction/regression-red-result.json",
+    "originalSha256": "2772e54dfe35f0ee4ad80144951f36870f9f5af68bdbb7d070b09d096d52a674",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/F2/regression-red.log",
+    "bundleSha256": "b7f215ab700e9b211c83a927cc266d7e8a1694b7dcdb31d884f5233e715978dd",
+    "originalRelativePath": "f2-index-correction/regression-red.log",
+    "originalSha256": "2892cd05fa6d991518bf40d7d13e82c6fd67dd9d69dba7270c660b60198f3ed1",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/F2/regression-green-result.json",
+    "bundleSha256": "667bf7f9641aa77c5fe8b6bce00483a5c1ff906bc89857c07e84e527dbc6fbb9",
+    "originalRelativePath": "f2-index-correction/regression-green-result.json",
+    "originalSha256": "667bf7f9641aa77c5fe8b6bce00483a5c1ff906bc89857c07e84e527dbc6fbb9",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/F2/regression-green.log",
+    "bundleSha256": "f5221802fa1e4edc4c2866b78cd8db2e5b23db9ebda2d44f2753627e7d691136",
+    "originalRelativePath": "f2-index-correction/regression-green.log",
+    "originalSha256": "c375a09fbe577c53a76987a2677fbad5f1509ab3d90833bcd7c23efa373239d4",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/F2/exact-catalog-mismatch.json",
+    "bundleSha256": "3fc0ea513ae9292c0db3cc4aae3b73ebb249e1ff3c14547e7315147b04334fb8",
+    "originalRelativePath": "f2-index-correction/exact-catalog-mismatch.json",
+    "originalSha256": "84f1881103e3c114c0598549b6dbcb8b471d949f11dfc3877e25790ad48760d7",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/F2/official-9a-plugin-state.sql",
+    "bundleSha256": "399bb5cba4bffee679b455c5cc196df252893d7eec82f6b52e5ccc22698e9b67",
+    "originalRelativePath": "f2-index-correction/official-9a-plugin-state.sql",
+    "originalSha256": "399bb5cba4bffee679b455c5cc196df252893d7eec82f6b52e5ccc22698e9b67",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/F2/tsconfig.test.json",
+    "bundleSha256": "5779db2f16e59f0157d5f1713df309330903e89114326889021e671981cf1d29",
+    "originalRelativePath": "f2-index-correction/tsconfig.test.json",
+    "originalSha256": "869d47883c02a9b01f0ffd0b4ce659600cd164b06eac0dbc26609c32260a834e",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/historical/sqlite/qualification.json",
+    "bundleSha256": "33018fb27e2805afb8e1357df218b4094f23d5365fe6e8231019c4b0a203fe99",
+    "originalRelativePath": "sqlite/qualification.json",
+    "originalSha256": "b39205e2fa84b9247f2be2cd8b8c4d32a2c17ca317adf6f2e658d8bd42f7b0ff",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/historical/sqlite/p-frozen-validation/closeout.json",
+    "bundleSha256": "46445ff8605fb3784cd1ec77f01add5664d44b66a3a7f915505acc7815dcf1a8",
+    "originalRelativePath": "sqlite/p-frozen-validation/closeout.json",
+    "originalSha256": "15d25cc9a89d9b23350df0db138d9c500a924a8675ea0d5c7ae087d6e5610c90",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/historical/postgres/native-result.json",
+    "bundleSha256": "fe4c52d0472a1972cac036d99a04bd3f6700f8d5fa8ac3e4bd79c7bf82af757a",
+    "originalRelativePath": "postgres/native-result.json",
+    "originalSha256": "5f93ece097cd5ffc0bdc5eb40b60d2ad79290751e4d6bab9175a2310a82e15c6",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/historical/postgres/bridge-result.json",
+    "bundleSha256": "fcc7666d2de28977404c4a7ad0ac2a949656fad7dd312ddbb23efe858c00bd6e",
+    "originalRelativePath": "postgres/bridge-result.json",
+    "originalSha256": "6f8d7a8b2f92d4fa4bd2ad3627ef4b17cfeeff0128f42483356a8bfd0201d8a5",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/historical/postgres/state-store-proof/completion.json",
+    "bundleSha256": "0aef70eef7f417b368b57fd17b0680a15d21faf5c2a4d5b8e28a35b34a54e0d0",
+    "originalRelativePath": "postgres/state-store-proof/completion.json",
+    "originalSha256": "0aef70eef7f417b368b57fd17b0680a15d21faf5c2a4d5b8e28a35b34a54e0d0",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/historical/postgres/port-checks/completion.json",
+    "bundleSha256": "05b60f79ec2272efaff2f7be7cf43820d841cdf93d214b9dc55da66d16fe7653",
+    "originalRelativePath": "postgres/port-checks/completion.json",
+    "originalSha256": "05b60f79ec2272efaff2f7be7cf43820d841cdf93d214b9dc55da66d16fe7653",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "evidence/historical/mutation-restore/restore-results.json",
+    "bundleSha256": "3d8a84051354d8dc9dc35cfea3e9417cbdf7193ace1da8a95a48e078bed75506",
+    "originalRelativePath": "mutation-restore/restore-results.json",
+    "originalSha256": "b3693cc78248c74118c801dc3b5d39f8b5e29bbacaf6d7b5b6efe2474e4cd5e5",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/historical/mutation-restore/restore-isolated-receipt.json",
+    "bundleSha256": "79858cf1666a12da07dd8b147a3e06a7c126a27b99af6ddb720dc4c126c88dcc",
+    "originalRelativePath": "mutation-restore/restore-isolated-receipt.json",
+    "originalSha256": "a28bddbb0d10127f12a6b5ef6376d456115de9863474c311bb9858aa51adbef1",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "evidence/historical/lead/full-rollback.log.fixture-2",
+    "bundleSha256": "06e4db64e68f43ea9078a50477cb3c1ee61dce9a0bed7fe437dbfd1735fc2907",
+    "originalRelativePath": "lead/full-rollback.log.fixture-2",
+    "originalSha256": "0a6b75eb7752b3a57c1ec6d9952e4f9468a85baba4516991041be7fd17509814",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/normal-entry/plugin/index.mjs",
+    "bundleSha256": "17d14298205add7aef5242126a99e26acb46aa6eae7d7fe63c8867fb33aaf6c4",
+    "originalRelativePath": "runtime/normal-entry-harness/plugin/index.mjs",
+    "originalSha256": "17d14298205add7aef5242126a99e26acb46aa6eae7d7fe63c8867fb33aaf6c4",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "fixtures/normal-entry/plugin/package.json",
+    "bundleSha256": "a13bbb8bf920e279b4da5a335cffb755b8b9deb74035b9fc56fd379076b90747",
+    "originalRelativePath": "runtime/normal-entry-harness/plugin/package.json",
+    "originalSha256": "a13bbb8bf920e279b4da5a335cffb755b8b9deb74035b9fc56fd379076b90747",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "fixtures/normal-entry/plugin/openclaw.plugin.json",
+    "bundleSha256": "0ced322e0d9c8a7b2ba8712ce29297a28c2848fcc596c7d6ebae0bb19d91813f",
+    "originalRelativePath": "runtime/normal-entry-harness/plugin/openclaw.plugin.json",
+    "originalSha256": "0ced322e0d9c8a7b2ba8712ce29297a28c2848fcc596c7d6ebae0bb19d91813f",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "fixtures/normal-entry/orchestrate.py",
+    "bundleSha256": "6136c1b7649cf4c3c5631ca898a33d10c7b54637b106580391c96e7e91aedac4",
+    "originalRelativePath": "runtime/normal-entry-harness/orchestrate.py",
+    "originalSha256": "6136c1b7649cf4c3c5631ca898a33d10c7b54637b106580391c96e7e91aedac4",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "fixtures/normal-entry/built-sdk-future-binding.mjs",
+    "bundleSha256": "12ba4fc630c28a8d00b18ea417b36087017e08cfc07a8641bce760e8535e6db3",
+    "originalRelativePath": "runtime/normal-entry-harness/built-sdk-future-binding.mjs",
+    "originalSha256": "de20ad26e39a5fb8b0a3d09e522aa6f23ed139fffacf67cd455c9944b4c32b3a",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/normal-entry/old-entry-inputs.json",
+    "bundleSha256": "4248ff7ef28539cf877236ce0558c1507ee15772b43302bee4e21883f6ca4453",
+    "originalRelativePath": "runtime/normal-entry-harness/old-entry-inputs.json",
+    "originalSha256": "edf0c8dadb3785e224210c848cb2e2039950e4a57411684b82ee2482b63cb828",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/normal-entry/README.md",
+    "bundleSha256": "0ffb9b86ab26cdfcc5e35504dd39c6dc05a208de1e8883c5c5f86539de32397e",
+    "originalRelativePath": "runtime/normal-entry-harness/README.md",
+    "originalSha256": "fcb604656034c7f8745c9b1df8a59d9a3a2f8d248833200deba43f87a6611306",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/normal-entry/old-built-output-manifest.json",
+    "bundleSha256": "e3b242ae89613816bcccd73a1203f0eccc760d4d4752b2d4439bf8d8750da08e",
+    "originalRelativePath": "sqlite/baseline-package/built-output-manifest.json",
+    "originalSha256": "e3b242ae89613816bcccd73a1203f0eccc760d4d4752b2d4439bf8d8750da08e",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "fixtures/historical/postgres/native-mechanism.mjs",
+    "bundleSha256": "af35c61597428fa46ed8837d7fafdb2f6aab44e4155fcbb22362e005b50e4df2",
+    "originalRelativePath": "postgres/native-mechanism.mjs",
+    "originalSha256": "ef69b1b45ddd5e47464b441e361dc060f2cbb186dc2290550f0505dc49949847",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/postgres/bridge-mechanism.mjs",
+    "bundleSha256": "b6cb7e39825096f781424878af0dc95cdb9b1eec6cd1a2d5b03f103e2d266a77",
+    "originalRelativePath": "postgres/bridge-mechanism.mjs",
+    "originalSha256": "1076cf77b79babca3d6a438d833d69aba195f424ec29d37af6e8adc06b6c7050",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/postgres/build-bridge.mjs",
+    "bundleSha256": "cc2731db899a5edc3a96b253c1fb5f8aa015967255799879458db0a67cf73ab9",
+    "originalRelativePath": "postgres/build-bridge.mjs",
+    "originalSha256": "3f3339fec81dd27d8537b23515524c019edd3365288036f3ae067fc7b0c2db28",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/postgres/bridge-inputs.json",
+    "bundleSha256": "3a092a1caf51069d9c928fa44f11bb000079a000e89d0d08ff387df97d90472c",
+    "originalRelativePath": "postgres/bridge-inputs.json",
+    "originalSha256": "e51d4b1c8472757689a9a719ec3b3eb579b38e2c32b338f096df7f25d80659e2",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/mutation-restore/restore-mechanism.mts",
+    "bundleSha256": "62bdc40de490b7633fbd7a99cd890a02966875212b00f33344c0653ef50bdf6f",
+    "originalRelativePath": "mutation-restore/restore-mechanism.mts",
+    "originalSha256": "612458ccc4936022ba7e394d407d469fc6372c9e9d0ccf6dba4478a59334a5f2",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/mutation-restore/mutation-boundaries.post-name.mts",
+    "bundleSha256": "c9cd978cc788f3e82f178fd42b13662ebf3867c47e3a8634db2c30e7272431fc",
+    "originalRelativePath": "mutation-restore/mutation-boundaries.post-name.mts",
+    "originalSha256": "f54c3a40c1cb7335140da7b452538f748746b15b53651919e4a9b1227ee34fd1",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/mutation-restore/public-mutations.post-name.mts",
+    "bundleSha256": "fce31ed6eb9bca6ea3665aa9bacc41c3fbf8ebaf20ada39b8ce5749f2f2dae91",
+    "originalRelativePath": "mutation-restore/public-mutations.post-name.mts",
+    "originalSha256": "6c77075854df892fc398f91369bc39a26080122a4a47ca3fdc1f1c11cc39526d",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/mutation-restore/codec-double.post-name.mts",
+    "bundleSha256": "478ccff8bd2885c169b01f8ad87e26d5782a4602ba65edac5c509e6b1bf53b65",
+    "originalRelativePath": "mutation-restore/codec-double.post-name.mts",
+    "originalSha256": "8f1957b5b35ff8e6a4add64b9067e51bd28acde960c59432580eb35b3a4c4965",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/mutation-restore/tsconfig.guard.json",
+    "bundleSha256": "fc1742a1bfa542eac7158eb3af817093e845d73c3d3ab7d9f0e12afd25418ca2",
+    "originalRelativePath": "mutation-restore/tsconfig.guard.json",
+    "originalSha256": "5778880b9239e25af3d7c3be662e82f69fc4bb27973bd87015119cd776cd6c35",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/C3-configured-gateway-continuation.py",
+    "bundleSha256": "3af240c767a9806f688a7a676982d8d27c0a4deac28ba0fe7b7f5a653e7ad059",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/continue-proof.py",
+    "originalSha256": "3af240c767a9806f688a7a676982d8d27c0a4deac28ba0fe7b7f5a653e7ad059",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "fixtures/historical/stage-package.py",
+    "bundleSha256": "c4d95cd40664c44ccee6289015c99ab5bc2b0d5b54b64cc428a8a3cc0795df29",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/package-install-preparation/stage-package.py",
+    "originalSha256": "c4d95cd40664c44ccee6289015c99ab5bc2b0d5b54b64cc428a8a3cc0795df29",
+    "transformation": "byte-identical"
+  },
+  {
+    "bundlePath": "fixtures/historical/workspace-owners.json",
+    "bundleSha256": "a846fc6e734a01340cd237b6105259b4b7b77a9046f215c2031d0279e46ad9b9",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/package-install-preparation/workspace-owners.json",
+    "originalSha256": "e97cff331eadcb0a0726e661a776d0936085b9ddd9c9a0b5263918c6fa7ad8d0",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  },
+  {
+    "bundlePath": "fixtures/historical/qualified-promotions.json",
+    "bundleSha256": "f9354e7d62223b0ff33a8f33cd1142bacdb6939008bdfd86fbd7a161ee150869",
+    "originalRelativePath": "f2-index-correction/completion-envelope/resume-disk-tmp-20261103/package-install-preparation/qualified-promotions.json",
+    "originalSha256": "4e323b56041797bc104f89603c0005c4f455d8923ac5e7414f51c0948bf920c2",
+    "transformation": "Public selection: operational paths replaced; build receipt omits raw resource payloads; original artifact digest retained."
+  }
+]

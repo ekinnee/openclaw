@@ -1,0 +1,9 @@
+{
+  "root": "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-baseline",
+  "commit": "9a1a7541d53f6e5f26e26b44a5806e0d09c81903",
+  "files": {
+    "openclaw.mjs": "fca855a910792b669426b4a64e69743e5dd74f7df84f110df7c7e0881b530b3e",
+    "package.json": "7fa41a090a069267ff4651a9323f1208dac48cc3816d8a920734bb90f745d7ca",
+    "pnpm-lock.yaml": "101b4a2ffbf9dcd0ddaf00412655406de24ec219cb3595a80426f9c3cdf14f16"
+  }
+}

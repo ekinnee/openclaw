@@ -1,0 +1,145 @@
+{
+  "qualifiedUtc": "2026-11-02T17:56:06.293601+00:00",
+  "inputManifestSha256": "e0c0fe28c3ed9aa66d5f3ef947f2828de3d636a131baeee127f5af3e02191be8",
+  "runs": [
+    {
+      "run": "node-engine-1",
+      "status": "passed",
+      "layer": "supporting-raw-native-engine",
+      "durationMs": 20894.493934000002,
+      "ordinaryMethods": null,
+      "nativeRefusedMethods": [],
+      "engineCases": [
+        "prepared-old-dml-and-queued-cutover",
+        "earlier-writer-serializes-before-cutover",
+        "wal-old-snapshot-cannot-escalate",
+        "rollback-journal-reader-blocks-commit-then-atomic-rollback"
+      ],
+      "runtimeRoot": null
+    },
+    {
+      "run": "bun-engine-1",
+      "status": "passed",
+      "layer": "supporting-raw-native-engine",
+      "durationMs": 2336.749992,
+      "ordinaryMethods": null,
+      "nativeRefusedMethods": [],
+      "engineCases": [
+        "prepared-old-dml-and-queued-cutover",
+        "earlier-writer-serializes-before-cutover",
+        "wal-old-snapshot-cannot-escalate",
+        "rollback-journal-reader-blocks-commit-then-atomic-rollback"
+      ],
+      "runtimeRoot": null
+    },
+    {
+      "run": "node-production-3",
+      "status": "passed",
+      "layer": "source-loaded-original-shipped-sync-keyed-store-compatibility",
+      "durationMs": 5072.888325,
+      "ordinaryMethods": [
+        "register",
+        "registerIfAbsent",
+        "update",
+        "deleteIf",
+        "delete",
+        "consume",
+        "clear"
+      ],
+      "nativeRefusedMethods": [
+        "register",
+        "registerIfAbsent",
+        "update",
+        "deleteIf",
+        "delete",
+        "consume",
+        "clear"
+      ],
+      "engineCases": [],
+      "runtimeRoot": "${DISPOSABLE_RUNTIME}/writer-fence-sqlite-YwLvwT"
+    },
+    {
+      "run": "bun-production-1",
+      "status": "passed",
+      "layer": "source-loaded-original-shipped-sync-keyed-store-compatibility",
+      "durationMs": 1852.7767760000002,
+      "ordinaryMethods": [
+        "register",
+        "registerIfAbsent",
+        "update",
+        "deleteIf",
+        "delete",
+        "consume",
+        "clear"
+      ],
+      "nativeRefusedMethods": [
+        "register",
+        "registerIfAbsent",
+        "update",
+        "deleteIf",
+        "delete",
+        "consume",
+        "clear"
+      ],
+      "engineCases": [],
+      "runtimeRoot": "${DISPOSABLE_RUNTIME}/writer-fence-sqlite-0rR3XT"
+    },
+    {
+      "run": "node-async-1",
+      "status": "passed",
+      "layer": "source-loaded-original-async-keyed-store-and-worker",
+      "durationMs": 14896.000807,
+      "ordinaryMethods": [
+        "register",
+        "registerIfAbsent",
+        "cas",
+        "delete",
+        "consume",
+        "clear"
+      ],
+      "nativeRefusedMethods": [
+        "register",
+        "registerIfAbsent",
+        "cas",
+        "delete",
+        "consume",
+        "clear"
+      ],
+      "engineCases": [],
+      "runtimeRoot": "${DISPOSABLE_RUNTIME}/writer-fence-sqlite-95gVuD"
+    },
+    {
+      "run": "bun-async-1",
+      "status": "passed",
+      "layer": "source-loaded-original-async-keyed-store-and-worker",
+      "durationMs": 1562.505236,
+      "ordinaryMethods": [
+        "register",
+        "registerIfAbsent",
+        "cas",
+        "delete",
+        "consume",
+        "clear"
+      ],
+      "nativeRefusedMethods": [
+        "register",
+        "registerIfAbsent",
+        "cas",
+        "delete",
+        "consume",
+        "clear"
+      ],
+      "engineCases": [],
+      "runtimeRoot": "${DISPOSABLE_RUNTIME}/writer-fence-sqlite-hrArSd"
+    }
+  ],
+  "reportLabelCorrection": "The unchanged production report template labels its assertion list with sync seven-method/same-main-handle wording even for async runs. Those labels are not additional evidence. Actual async coverage is six positive methods and six native refusal results, including CAS, via the normal shared-state worker. Same-main-handle assertion applies only to sync runs. Native view/column errors after a higher physical header establish the retained warm worker path rather than a fresh cold header refusal. Use prime.positives/refusals/boundaries and this qualified receipt for coverage. Raw reports remain unchanged.",
+  "limitations": [
+    "No production source changed; cutover is artifact-owned native SQL, not an implemented migration.",
+    "Source runs start with canonical upstream schema39; the synthetic header123456789 is not a schema allocation. Original schema_meta rows were intentionally preserved and checked, so this experiment is not valid migrated-state admission or full format-coherence proof.",
+    "No old/new packaged Gateway startup or complete compatibility conversion was tested.",
+    "Updated-name ordinary positive is native SQL, not a new converted production writer.",
+    "The harness does not claim all processes stopped or unrelated tables blocked.",
+    "Modern future-format mutation policy, real full matched rollback, drift classification, update restart and packaged proof remain outside this SQLite lane."
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "sourceBase": "9a1a7541d53f6e5f26e26b44a5806e0d09c81903",
+  "C3SourceChecksum": "c12149b1de17ebcd9abf571a11e46c1ddd53719cbff100ba97980575b76978e9",
+  "historicalReviewCommit": "cd221dc61baf2acb8aa227e0630e94b3660b1957",
+  "sourceTransferCommit": "9a9eab182c87e2d2fc29b00f04ad9e10d80383f2",
+  "reviewRelationship": "identical Git tree; transfer changes only history/commit metadata and separate handoff files",
+  "initial": {
+    "canonical": "20 passes, 119 paths/576 hunks; one accepted F1 source-codec move finding",
+    "localClaw": "same F1 finding",
+    "correction": "existing owner correction; three affected canonical passes and source Claw confirmation clean"
+  },
+  "F2": {
+    "range": "ac42872a1d3b6bf0d35e6619bac71179b398d649..cd221dc61baf2acb8aa227e0630e94b3660b1957",
+    "scope": "three-path index-convergence correction, not renewed whole-candidate review",
+    "canonical": "scoped-clean; no actionable P0-P2",
+    "localClaw": "completed; no actionable code/security findings; overall/proof F due then-missing packaged upgrade proof",
+    "laterProof": "C3 archive dd835bda\u2026 reached selected packaged upgrade/old-writer/current Gateway/restart/SDK gates; no retroactive bot verdict claimed"
+  },
+  "limitations": [
+    "Raw reviewer prompts/transcripts and private contextual evidence not published. These are faithful scope/verdict summaries, not a newly executed review.",
+    "Interrupted engine attempts do not count as clean assessments.",
+    "Integration changes require affected owner/context review and new integrated package proof."
+  ]
+}

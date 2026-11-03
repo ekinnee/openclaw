@@ -1,0 +1,44 @@
+{
+  "command": [
+    "node",
+    "scripts/test-projects.mts",
+    "src/state/openclaw-state-db-plugin-writer-fence.test.ts",
+    "--",
+    "--maxWorkers=1",
+    "-t",
+    "upgrades official39 without changing retained rows, and reopens the ordinary API"
+  ],
+  "environment": {
+    "PATH": "${OPERATOR_HOME}/@pnpm/exe.linux-x64:${OPERATOR_HOME}:/usr/local/bin:/usr/bin:/bin",
+    "HOME": "${DISPOSABLE_RUNTIME}/home",
+    "TMPDIR": "${DISPOSABLE_RUNTIME}/tmp",
+    "XDG_CONFIG_HOME": "${DISPOSABLE_RUNTIME}/config",
+    "XDG_CACHE_HOME": "${DISPOSABLE_RUNTIME}/cache",
+    "OPENCLAW_STATE_DIR": "${DISPOSABLE_RUNTIME}/state",
+    "NODE_COMPILE_CACHE": "${DISPOSABLE_RUNTIME}/node",
+    "OPENCLAW_VITEST_FS_MODULE_CACHE_PATH": "${ARTIFACTS}/sqlite/remaining-callers/validation/fs",
+    "OPENCLAW_VITEST_RUNTIME": "node",
+    "OPENCLAW_NODE_TEST_PLAN_CONTINUE_ON_FAILURE": "1",
+    "CI": "1",
+    "COREPACK_ENABLE_NETWORK": "0"
+  },
+  "startUtc": "2026-11-02T23:53:56.545755+00:00",
+  "startMonotonic": 188956.818056327,
+  "workerAllocationUpperBoundStartUtc": "2026-11-02T23:48:00Z",
+  "observedStartUtc": "2026-11-02T23:50:02Z",
+  "sourceHashes": {
+    "src/state/openclaw-state-db-plugin-writer-fence.test.ts": "648cfad0f47bc8affc84de63cfdde1404e01973829f2c57b487be1bca85d4d5a",
+    "src/state/openclaw-state-db-schema-v40-plugin-state.ts": "e05890dab27a16105f530fda0148aa95decfff28934cff940066283928312c1a",
+    "src/state/openclaw-state-schema.sql": "20678cc2c3733f3ed2a093ff6d3758f4c39b96a5a4a559de8a59b5d7e3122c92",
+    "src/state/openclaw-state-schema.test-support.ts": "3b8ebc79698e83c8e5167b6c589f66008657b1f09588c07d69502d23230199ae"
+  },
+  "intendedRed": "FullDoctorwarnings exactly idx_plugin_state_expiry and idx_plugin_state_listing shape mismatch, notfixture/sourcebootstrap failure",
+  "static": "supportedoxfmt+node--checkpassed, no broader typecheck claim",
+  "writeSet": [
+    "src/state/openclaw-state-db-plugin-writer-fence.test.ts"
+  ],
+  "exitCode": 1,
+  "endUtc": "2026-11-03T00:12:57.493494+00:00",
+  "seconds": 1140.9479822980065,
+  "sourceHashChanges": []
+}

@@ -1,0 +1,364 @@
+┌  OpenClaw doctor
+Saved pre-migration SQLite backup: ${DISPOSABLE_RUNTIME}/openclaw.sqlite.pre-startup-migration-3e7a724a-1dcc-83d2-8848-a3adfa3b84c1.bak
+Reused pre-migration SQLite backup: ${DISPOSABLE_RUNTIME}/openclaw.sqlite.pre-startup-migration-3e7a724a-1dcc-83d2-8848-a3adfa3b84c1.bak
+│
+◇  Doctor changes ─────────────────────────────────────────────────────────╮
+│                                                                          │
+│  - Fenced older plugin-state writers at the retired SQL relation (local  │
+│    staging v40)                                                          │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+[state-migrations] Auto-migrated legacy state:
+- Migrated plugins.bundledDiscovery → shared SQLite state
+│
+◇  Doctor changes ────────────────────────────────────────────╮
+│                                                             │
+│  - Migrated plugins.bundledDiscovery → shared SQLite state  │
+│                                                             │
+├─────────────────────────────────────────────────────────────╯
+│
+◇  Doctor warnings ────────────────────────────────────────────────────────╮
+│                                                                          │
+│  - GitHub link previews and the reader are now provided by the bundled   │
+│    "github" plugin. Your plugins.allow list excludes "github", so these  │
+│    features remain unavailable. To restore them, append "github" to the  │
+│    existing allowlist and enable it in Plugins. To keep them disabled    │
+│    without this notice, set plugins.entries.github.enabled=false.        │
+│    Doctor does not change either choice.                                 │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+│
+◇  Doctor warnings ──────────────────────────────────────────────────────╮
+│                                                                        │
+│  - Codex runtime is selected, but the Codex plugin is disabled.-       │
+│    agents.defaults.model: openai/gpt-6-astra resolves to               │
+│    openai/gpt-6-astra with Codex runtime while the Codex plugin is     │
+│    disabled by config.- Enable plugins.entries.codex and plugin        │
+│    loading, and remove `codex` from plugins.deny; or set the affected  │
+│    OpenAI models to an OpenClaw runtime policy.                        │
+│                                                                        │
+├────────────────────────────────────────────────────────────────────────╯
+│
+◇  Doctor changes ─────────────────────────────╮
+│                                              │
+│  Prepared the agent roster for persistence.  │
+│                                              │
+├──────────────────────────────────────────────╯
+│
+◇  Doctor changes ────────────────────────────────────────────────╮
+│                                                                 │
+│  Recorded webhook listener decisions; removed pins will not be  │
+│  recreated.                                                     │
+│                                                                 │
+├─────────────────────────────────────────────────────────────────╯
+Updated config: ${DISPOSABLE_RUNTIME}/openclaw.json
+  Backup: ${DISPOSABLE_RUNTIME}/openclaw.json.bak
+│
+◇  Runtime capabilities (Doctor process) ──────────────────────────────────╮
+│                                                                          │
+│  Runtime: node 26.13.0; flavor=jit; linux/x64                            │
+│  Execution profile: dynamic-execution; dynamic code=runtime-default      │
+│  executableMemory: unknown. No generated-native-code probe was run;      │
+│  such a probe can terminate a hardened process. External children have   │
+│  their own policy; self-reexec workers use this image again.             │
+│  codeGenerationFromStrings: available. Ordinary runtime default; no      │
+│  disabling flag was observed.                                            │
+│  interpreter: available. Ordinary Node/Bun runtime includes an           │
+│  interpreter; embedding or sandbox restrictions may limit dynamic        │
+│  execution.                                                              │
+│  debugger: unknown. Use the runtime inspector to attach; no debugger     │
+│  port was opened by diagnostics.                                         │
+│  cpuProfiling: unknown. Local CPU profiling is independent of debugger   │
+│  breakpoints. Not yet requested in this process; use                     │
+│  diagnostics.cpuProfile.                                                 │
+│  heapSampling: unknown. Requires HeapProfiler sampling methods. Not yet  │
+│  requested in this process; use diagnostics.heapProfile.                 │
+│  heapSnapshot: unknown. Native snapshots and allocation sampling are     │
+│  separate capabilities. Not yet requested in this process; use           │
+│  diagnostics.heapSnapshot explicitly.                                    │
+│  Executable-memory policy: JIT may require executable memory; host       │
+│  signing and sandbox policy still apply.                                 │
+│  Packaged native binaries are a target inventory, not workload           │
+│  qualification. Verify the selected backend, libc, signature and native  │
+│  operations on this exact artifact. Installed plugins and external       │
+│  child runtimes require their own evidence.                              │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+│
+◇  Database engines ─────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                        │
+│  Shared state: default=sqlite, override=inherit, effective=sqlite                                                      │
+│  (configured); observed=sqlite                                                                                         │
+│  Agent data: default=sqlite, override=inherit, effective=sqlite                                                        │
+│  (configured)                                                                                                          │
+│  Workboard: default=sqlite, override=inherit, effective=sqlite                                                         │
+│  (configured)                                                                                                          │
+│  Logbook: default=sqlite, override=inherit, effective=sqlite                                                           │
+│  (configured)                                                                                                          │
+│  Team Reports: default=sqlite, override=inherit, effective=sqlite                                                      │
+│  (configured)                                                                                                          │
+│  Database quarantine: default=sqlite, override=fixed local,                                                            │
+│  effective=sqlite (configured)                                                                                         │
+│  Managed update handoffs: default=sqlite, override=fixed local,                                                        │
+│  effective=sqlite (configured)                                                                                         │
+│  Package activation journal: default=sqlite, override=fixed local,                                                     │
+│  effective=sqlite (configured)                                                                                         │
+│  Shared state root:                                                                                                    │
+│  ${DISPOSABLE_RUNTIME}/openclaw.sqlite                                                    │
+│  (physical=sqlite)                                                                                                     │
+│  state                                                                                                                 │
+│  (${DISPOSABLE_RUNTIME}/openclaw.sqlite);                                                 │
+│  default=sqlite, override=inherit, effective=sqlite; observed=sqlite;                                                  │
+│  schema=40, expected=40, pending=0; connectivity=local; namespace=not                                                  │
+│  applicable; storeId=not applicable; database=local file;                                                              │
+│  extensions=none; admittedExtensions=unknown; degraded=unknown;                                                        │
+│  custody=unverifiable, lease=none; backup=unknown; legacy=none; Next:                                                  │
+│  Inspect the recorded store owner's custody before offline maintenance.                                                │
+│  state                                                                                                                 │
+│  (${DISPOSABLE_RUNTIME}/openclaw.sqlite);                                     │
+│  default=sqlite, override=inherit, effective=sqlite; observed=unknown                                                  │
+│  (mismatch unknown); schema=unknown, expected=40, pending=unknown;                                                     │
+│  connectivity=unknown; namespace=unknown; storeId=unknown;                                                             │
+│  database=unknown; extensions=unknown; admittedExtensions=unknown;                                                     │
+│  degraded=unknown; custody=unverifiable, lease=unverifiable;                                                           │
+│  backup=unknown; legacy=none; Next: Store is not present. Initialize it                                                │
+│  through its owning feature, then rerun openclaw doctor.                                                               │
+│  agent                                                                                                                 │
+│  (${DISPOSABLE_RUNTIME}/openclaw-agent.sqlite);                               │
+│  default=sqlite, override=inherit, effective=sqlite; observed=unknown                                                  │
+│  (mismatch unknown); schema=unknown, expected=unknown, pending=unknown;                                                │
+│  connectivity=unknown; namespace=unknown; storeId=unknown;                                                             │
+│  database=unknown; extensions=unknown; admittedExtensions=unknown;                                                     │
+│  degraded=unknown; custody=unverifiable, lease=unverifiable;                                                           │
+│  backup=unknown; legacy=none; Next: Store is not present. Initialize it                                                │
+│  through its owning feature, then rerun openclaw doctor.                                                               │
+│  workboard                                                                                                             │
+│  (${DISPOSABLE_RUNTIME}/workboard.sqlite);                                    │
+│  default=sqlite, override=inherit, effective=sqlite; observed=unknown                                                  │
+│  (mismatch unknown); schema=unknown, expected=unknown, pending=unknown;                                                │
+│  connectivity=unknown; namespace=unknown; storeId=unknown;                                                             │
+│  database=unknown; extensions=unknown; admittedExtensions=unknown;                                                     │
+│  degraded=unknown; custody=unverifiable, lease=unverifiable;                                                           │
+│  backup=unknown; legacy=none; Next: Store is not present. Initialize it                                                │
+│  through its owning feature, then rerun openclaw doctor.                                                               │
+│  logbook                                                                                                               │
+│  (${DISPOSABLE_RUNTIME}/logbook.sqlite);                                                │
+│  default=sqlite, override=inherit, effective=sqlite; observed=unknown                                                  │
+│  (mismatch unknown); schema=unknown, expected=unknown, pending=unknown;                                                │
+│  connectivity=unknown; namespace=unknown; storeId=unknown;                                                             │
+│  database=unknown; extensions=unknown; admittedExtensions=unknown;                                                     │
+│  degraded=unknown; custody=unverifiable, lease=unverifiable;                                                           │
+│  backup=unknown; legacy=none; Next: Store is not present. Initialize it                                                │
+│  through its owning feature, then rerun openclaw doctor.                                                               │
+│  team-reports; default=sqlite, override=inherit, effective=sqlite;                                                     │
+│  observed=unknown (mismatch unknown); schema=unknown, expected=unknown,                                                │
+│  pending=unknown; connectivity=unknown; namespace=unknown;                                                             │
+│  storeId=unknown; database=unknown; extensions=unknown;                                                                │
+│  admittedExtensions=unknown; degraded=unknown; custody=unverifiable,                                                   │
+│  lease=unverifiable; backup=unknown; legacy=none; Next: Store is not                                                   │
+│  present. Initialize it through its owning feature, then rerun openclaw                                                │
+│  doctor.                                                                                                               │
+│  quarantine                                                                                                            │
+│  (${DISPOSABLE_RUNTIME}/openclaw-quarantine.sqlite);                                      │
+│  default=sqlite, override=fixed local (local by design),                                                               │
+│  effective=sqlite; observed=unknown (mismatch unknown); schema=unknown,                                                │
+│  expected=2, pending=unknown; connectivity=unknown; namespace=unknown;                                                 │
+│  storeId=unknown; database=unknown; extensions=unknown;                                                                │
+│  admittedExtensions=unknown; degraded=unknown; custody=unverifiable,                                                   │
+│  lease=unverifiable; backup=unknown; legacy=none; Next: Store is not                                                   │
+│  present. Initialize it through its owning feature, then rerun openclaw                                                │
+│  doctor.                                                                                                               │
+│  managed-update                                                                                                        │
+│  (${DISPOSABLE_RUNTIME}/managed-update-handoffs.sqlite);                            │
+│  default=sqlite, override=fixed local (local by design),                                                               │
+│  effective=sqlite; observed=unknown (mismatch unknown);                                                                │
+│  schema=unversioned, expected=not applicable, pending=unknown;                                                         │
+│  connectivity=unknown; namespace=unknown; storeId=unknown;                                                             │
+│  database=unknown; extensions=unknown; admittedExtensions=unknown;                                                     │
+│  degraded=unknown; custody=unverifiable, lease=unverifiable;                                                           │
+│  backup=unknown; legacy=none; Next: Store is not present. Initialize it                                                │
+│  through its owning feature, then rerun openclaw doctor.                                                               │
+│  package-activation                                                                                                    │
+│  (${DISPOSABLE_RUNTIME}/operation.sqlite);  │
+│  default=sqlite, override=fixed local (local by design),                                                               │
+│  effective=sqlite; observed=unknown (mismatch unknown);                                                                │
+│  schema=unversioned, expected=not applicable, pending=unknown;                                                         │
+│  connectivity=unknown; namespace=unknown; storeId=unknown;                                                             │
+│  database=unknown; extensions=unknown; admittedExtensions=unknown;                                                     │
+│  degraded=unknown; custody=unverifiable, lease=unverifiable;                                                           │
+│  backup=unknown; legacy=none; Next: Store is not present. Initialize it                                                │
+│  through its owning feature, then rerun openclaw doctor.                                                               │
+│  credentials                                                                                                           │
+│  (${DISPOSABLE_RUNTIME}/credentials.sqlite);                                             │
+│  default=sqlite, override=fixed local (local by design),                                                               │
+│  effective=sqlite; observed=sqlite; schema=1, expected=1, pending=0;                                                   │
+│  connectivity=local; namespace=not applicable; storeId=not applicable;                                                 │
+│  database=local file; extensions=none; admittedExtensions=unknown;                                                     │
+│  degraded=unknown; custody=unverifiable, lease=unverifiable;                                                           │
+│  backup=unknown; legacy=none                                                                                           │
+│                                                                                                                        │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+│
+◇  Command owner ──────────────────────────────────────────────────────────╮
+│                                                                          │
+│  No channel command owner is configured.                                 │
+│  A command owner is your trusted human operator account, allowed to      │
+│  update OpenClaw with /update, restart the Gateway, change               │
+│  configuration, and approve commands. Chat allowlists do not grant this  │
+│  authority.                                                              │
+│  Local Control UI/WebChat clients with operator.admin already have       │
+│  owner authority; no channel is required. Run openclaw dashboard on the  │
+│  Gateway host and open its link in your browser (use openclaw dashboard  │
+│  --json on a headless host).                                             │
+│  If the Control UI shows limited access, open Inbox > System > Limited   │
+│  access > Request admin, then run its displayed openclaw devices         │
+│  approve <requestId> command on the Gateway host.                        │
+│  For external channels, run openclaw channels add and complete a         │
+│  channel's setup to choose your operator account, including servers and  │
+│  groups without DM pairing.                                              │
+│  CLI channel pairing approval records the first command owner. Control   │
+│  UI channel-sender approval has a separate owner checkbox.               │
+│  For an existing channel sender, set commands.ownerAllowFrom to your     │
+│  channel user id, for example openclaw config set                        │
+│  commands.ownerAllowFrom '["telegram:123456789"]'                        │
+│  Restart the Gateway after changing commands.ownerAllowFrom if it is     │
+│  already running.                                                        │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+│
+◇  Plugin registry ─────────────────────────────────────────╮
+│                                                           │
+│  Plugin registry rebuilt: 34/79 enabled plugins indexed.  │
+│                                                           │
+├───────────────────────────────────────────────────────────╯
+│
+◇  State integrity ────────────────────────────────────────────────────────╮
+│                                                                          │
+│  - OAuth dir not present                                                 │
+│    (${DISPOSABLE_RUNTIME}/credentials). Skipping  │
+│    create because no WhatsApp/pairing channel config is active.          │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+│
+◇  Backups ─────────────────────────────────────────────────────────────╮
+│                                                                       │
+│  No successful backup is recorded.                                    │
+│  Create one now with openclaw backup create.                          │
+│  Schedule versioned backups with openclaw backup enable --repository  │
+│  <dir>.                                                               │
+│                                                                       │
+├───────────────────────────────────────────────────────────────────────╯
+│
+◇  Gateway ──────────────────────────────────────────────────────────╮
+│                                                                    │
+│  service management skipped: non-default state dir or config path  │
+│                                                                    │
+├────────────────────────────────────────────────────────────────────╯
+│
+◇  Host desktop ────────────────────────────────────────────────────╮
+│                                                                   │
+│  disabled; enable the Desktop lab with desktop.host.enabled=true  │
+│                                                                   │
+├───────────────────────────────────────────────────────────────────╯
+│
+◇  Security ─────────────────────────────────────────────────────────────╮
+│                                                                        │
+│  - WARNING: openclaw.json contains plaintext secret-bearing config     │
+│    fields.                                                             │
+│    Migrate them to SecretRefs with openclaw secrets configure or       │
+│    openclaw secrets apply, then verify with openclaw secrets audit     │
+│    --check.                                                            │
+│    Paths: gateway.auth.token                                           │
+│    Agents or workspace tools that can read config files may see these  │
+│    API keys/tokens.                                                    │
+│  - Run: openclaw security audit --deep                                 │
+│                                                                        │
+├────────────────────────────────────────────────────────────────────────╯
+│
+◇  GitHub projects ───────────────────────────────────────────────────────╮
+│                                                                         │
+│  Set gateway.controlUi.github.token with gateway.controlUi.github.host  │
+│  matching gateway.github.host for private project access. Public        │
+│  github.com can also use GH_TOKEN/GITHUB_TOKEN; otherwise search is     │
+│  public-only.                                                           │
+│                                                                         │
+├─────────────────────────────────────────────────────────────────────────╯
+│
+◇  Skills ─────────────────────────────────────────────────────────────────╮
+│                                                                          │
+│  28 allowed skills are not usable in this environment (missing           │
+│  binaries, env vars, or config).                                         │
+│  - 1password, blogwatcher, blucli, camsnap, coding-agent, eightctl,      │
+│    gemini, gifgrep, gog, goplaces, himalaya, mcporter, model-usage,      │
+│    nano-pdf, obsidian, openai-whisper, openai-whisper-api, openhue,      │
+│    oracle, ordercli, sag, sherpa-onnx-tts, songsee, sonoscli,            │
+│    spotify-player, summarize, trello, xurl                               │
+│  Missing local binaries may exist on paired nodes; these skills remain   │
+│  enabled.                                                                │
+│  Inspect details: openclaw skills check --agent <id> or openclaw skills  │
+│  info <name> --agent <id>                                                │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+│
+◇  Doctor changes ────────────────╮
+│                                 │
+│  - Disabled openai-whisper-api  │
+│  - Disabled sherpa-onnx-tts     │
+│  - Disabled trello              │
+│                                 │
+├─────────────────────────────────╯
+│
+◇  Gateway ─────────────────────────────────────────────╮
+│                                                       │
+│  Gateway health will be checked after Doctor repair.  │
+│                                                       │
+├───────────────────────────────────────────────────────╯
+│
+◇  Memory search ──────────────────────────────────────────────────────────╮
+│                                                                          │
+│  Remember across conversations is effectively enabled for agent "main",  │
+│  but the Active Memory plugin is disabled. Enable the plugin or set      │
+│  memory.search.rememberAcrossConversations to false.                     │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+│
+◇  Memory search ──────────────────────────────────────────────────────────╮
+│                                                                          │
+│  Memory search provider is set to "openai" but no API key was found.     │
+│  Without working primary or fallback embeddings, memory sync stops for   │
+│  explicitly configured providers or existing vector indexes; new and     │
+│  changed memory files are not indexed.                                   │
+│                                                                          │
+│                                                                          │
+│  Fix (pick one):                                                         │
+│  - Set OPENAI_API_KEY in your environment                                │
+│  - Configure credentials: openclaw configure --section model             │
+│  - For keyword-only recall without a key, set memory.search.provider to  │
+│    "none" for this agent (including any agent override), then run        │
+│    openclaw memory index --force --agent main                            │
+│                                                                          │
+│  Then rerun: openclaw doctor                                             │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────╯
+│
+◇  Memory search ──────────────────────────────╮
+│                                              │
+│  Dreaming: enabled (cadence 0 3 * * *).      │
+│  Last recorded dreaming run: none recorded.  │
+│  Next scheduled run: none scheduled.         │
+│                                              │
+├──────────────────────────────────────────────╯
+Updated config: ${DISPOSABLE_RUNTIME}/openclaw.json
+  Backup: ${DISPOSABLE_RUNTIME}/openclaw.json.bak
+Fix now:
+- Agent main runtime tool schema inspection could not prepare its selected model context.
+  Location: agents.main.model
+  Next step: Resolve the provider/model loading problem, then rerun doctor to validate model-specific tool schemas.
+  Docs: https://docs.openclaw.ai/cli/doctor/running#understanding-findings
+- Skill Workshop is on, but plugins.allow keeps the skill-workshop plugin off, so learned skills are not loaded.
+  Location: plugins.allow
+  Next step: Add "skill-workshop" to plugins.allow.
+  Docs: https://docs.openclaw.ai/tools/skill-workshop
+│
+└  Doctor complete.
+

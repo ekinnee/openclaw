@@ -1,0 +1,12 @@
+{
+  "archive": "${ARTIFACTS}/f2-index-correction/completion-envelope/resume-disk-tmp-20261103/package/openclaw-writer-fence-9a1a7541-C3.tgz",
+  "sha256": "dd835bdab74c3df35346c1ab8d10dbcf521b3dc35cceb6f52d91a065c4ce8203",
+  "bytes": 113194006,
+  "sourceChecksum": "c12149b1de17ebcd9abf571a11e46c1ddd53719cbff100ba97980575b76978e9",
+  "sourceChecksumKind": "accepted121-pathmanifest, not Git commit",
+  "packageRoot": "${DISPOSABLE_RUNTIME}/package",
+  "stagingIdentitySha256": "cb90bde5fcf482770ad37f46b1f7af3c92d8c1831c8133ee09d352d5e1fc5178",
+  "dependencyFingerprint": "3847feb5d188894364a92c70fc4469ac75d69e6e1c48a796f24b4e1dc6f9629b",
+  "requiredGraph": 523,
+  "olderArchiveUsed": false
+}

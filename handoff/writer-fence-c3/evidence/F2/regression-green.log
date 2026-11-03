@@ -1,0 +1,106 @@
+[test] starting test/vitest/vitest.unit.config.ts
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.5 [39m[90m${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence[39m
+
+[vitest] still running with no output for 30000ms.
+[vitest] still running with no output for 60000ms.
+[vitest] still running with no output for 90000ms.
+node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js (48:0) [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/resolve-evaluate-options.js:48:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m48 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js (11:0) [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/estree-util-is-declaration.js:11:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m11 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/estree-util-create.js (6:0) [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/estree-util-create.js" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/.pnpm/@mdx-js+mdx@3.1.1_supports-color@10.2.2/node_modules/@mdx-js/mdx/lib/util/estree-util-create.js:6:1 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m6 │[0m ''
+ [38;5;240m  │[0m ─┬  
+ [38;5;240m  │[0m  ╰── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+node_modules/.pnpm/hast-util-to-estree@3.1.3_supports-color@10.2.2/node_modules/hast-util-to-estree/lib/handlers/comment.js (12:0) [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/.pnpm/hast-util-to-estree@3.1.3_supports-color@10.2.2/node_modules/hast-util-to-estree/lib/handlers/comment.js" may not be preserved when bundling.
+    [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/.pnpm/hast-util-to-estree@3.1.3_supports-color@10.2.2/node_modules/hast-util-to-estree/lib/handlers/comment.js:12:1 [38;5;246m][0m
+    [38;5;246m│[0m
+ [38;5;246m12 │[0m ''
+ [38;5;240m   │[0m ─┬  
+ [38;5;240m   │[0m  ╰── module level directive may not be preserved
+ [38;5;240m   │[0m 
+ [38;5;240m   │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m────╯[0m
+
+node_modules/.pnpm/hast-util-to-estree@3.1.3_supports-color@10.2.2/node_modules/hast-util-to-estree/lib/handlers/text.js (9:0) [33m[MODULE_LEVEL_DIRECTIVE] [0mThe semantics of the module level directive "" in "node_modules/.pnpm/hast-util-to-estree@3.1.3_supports-color@10.2.2/node_modules/hast-util-to-estree/lib/handlers/text.js" may not be preserved when bundling.
+   [38;5;246m╭[0m[38;5;246m─[0m[38;5;246m[[0m node_modules/.pnpm/hast-util-to-estree@3.1.3_supports-color@10.2.2/node_modules/hast-util-to-estree/lib/handlers/text.js:9:1 [38;5;246m][0m
+   [38;5;246m│[0m
+ [38;5;246m9 │[0m ''
+ [38;5;240m  │[0m ─┬  
+ [38;5;240m  │[0m  ╰── module level directive may not be preserved
+ [38;5;240m  │[0m 
+ [38;5;240m  │[0m [38;5;115mHelp[0m: For more information, see https://rolldown.rs/in-depth/directives#other-directives
+[38;5;246m───╯[0m
+
+[vitest] still running with no output for 120000ms.
+[vitest] still running with no output for 150000ms.
+[vitest] still running with no output for 180000ms.
+[vitest] still running with no output for 210000ms.
+[vitest] still running with no output for 240000ms.
+[vitest] still running with no output for 270000ms.
+[vitest] still running with no output for 300000ms.
+[vitest-workers] prepared 6cfb6355c157 in 316754ms (14819 inputs, 23306 outputs)
+[vitest] still running with no output for 330000ms.
+[vitest] still running with no output for 360000ms.
+[vitest] still running with no output for 390000ms.
+[vitest] still running with no output for 420000ms.
+[vitest] still running with no output for 450000ms.
+[vitest] still running with no output for 480000ms.
+[vitest] still running with no output for 510000ms.
+[vitest] still running with no output for 540000ms.
+[vitest] still running with no output for 570000ms.
+[vitest] still running with no output for 600000ms.
+[vitest] still running with no output for 630000ms.
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mupgrades official39 without changing retained rows, and reopens the ordinary API[33m 1254[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses missing guard before serving or changing stored bytes[33m 2346[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses mixed anchor and payload before serving or changing stored bytes[33m 2368[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses changed constant before serving or changing stored bytes[33m 2295[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses forwarding guard before serving or changing stored bytes[33m 2292[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses extra column before serving or changing stored bytes[33m 2329[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses write trigger before serving or changing stored bytes[33m 3076[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses two data relations before serving or changing stored bytes[33m 3056[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses lowered floors before serving or changing stored bytes[33m 3215[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mpreserves and refuses experimental protection at numeric version37[33m 3395[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mpreserves and refuses experimental protection at numeric version38[33m 3126[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mpreserves and refuses experimental protection at numeric version39[33m 3044[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mpreserves and refuses experimental protection at numeric version40[33m 2698[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrolls the rename, guard and floors back when the native commit refuses[32m 64[2mms[22m[39m
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses future content41 under deferred header39 through runtime[33m 2945[2mms[22m[39m
+[90mstderr[2m | unknown test
+[22m[39m[sqlite-test-lifecycle] src/state/openclaw-state-db-plugin-writer-fence.test.ts: retiring openclaw.agentDatabaseReaders
+[sqlite-test-lifecycle] src/state/openclaw-state-db-plugin-writer-fence.test.ts: retiring openclaw.sqliteWalCheckpointListeners
+[sqlite-test-lifecycle] src/state/openclaw-state-db-plugin-writer-fence.test.ts: retiring openclaw.stateDatabaseLifecycle
+[sqlite-test-lifecycle] src/state/openclaw-state-db-plugin-writer-fence.test.ts: retiring openclaw.stateSnapshotOwners
+
+ [32m✓[39m [30m[42m unit [49m[39m src/state/openclaw-state-db-plugin-writer-fence.test.ts[2m > [22mrefuses future content41 under deferred header39 through selector[33m 2991[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m16 passed[39m[22m[90m (16)[39m
+[2m   Start at [22m 18:17:04
+[2m   Duration [22m 739.18s[2m (transform 94%, tests 6%)[22m
+
+[vitest-workers] verifying completed generation before cleanup
+[test] passed 1 Vitest shard in 787.50s

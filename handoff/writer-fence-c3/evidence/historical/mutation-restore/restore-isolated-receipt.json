@@ -1,0 +1,55 @@
+{
+  "head": "9a1a7541d53f6e5f26e26b44a5806e0d09c81903",
+  "runtime": "v26.13.0",
+  "startedSource": "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence",
+  "runRoot": "${DISPOSABLE_RUNTIME}/writer-fence-restore-7CILDw",
+  "taskTmp": "${DISPOSABLE_RUNTIME}/tmp",
+  "resolvedTemp": "${DISPOSABLE_RUNTIME}/openclaw-1001",
+  "boundary": "canonical official current-schema DDL fixture, actual production restore/STRICT/Doctor functions; cutover is experimental fixture DDL, not candidate implementation",
+  "hashes": {
+    "src/infra/sqlite-migration-scoped-snapshot.ts": "6ec3330b5bfa43b17507ba714bf1bd72a54f1280548f6e59c5181d74275c6aa5",
+    "src/commands/doctor-migration-backup-restore.ts": "dbb1d01422f472dafdbc9fb0dca93e037e98f16d3b5a0a726d9012c10346e1e4",
+    "src/infra/sqlite-strict.ts": "699dca05a1247ece7d8b7410ab29cfba38ee3a7f27088c3ce02d9a6b79fa3ccd",
+    "src/state/openclaw-state-schema.sql": "1afe9a93ab5ff5ecdd8a5ef89f60ed9cf1246b4ffb6dd3b31bd782ca5e44ab9d"
+  },
+  "results": [
+    {
+      "name": "production-raw-scoped-table-restore-refuses-before-drops",
+      "status": "passed",
+      "started": "2026-11-02T17:51:22.719Z",
+      "ended": "2026-11-02T17:51:22.910Z"
+    },
+    {
+      "name": "production-raw-metadata-restore-lowers-floor-but-preserves-guard-data",
+      "status": "passed",
+      "started": "2026-11-02T17:51:22.910Z",
+      "ended": "2026-11-02T17:51:22.990Z"
+    },
+    {
+      "name": "production-old-full-strict-attempt-rolls-back-guard",
+      "status": "passed",
+      "started": "2026-11-02T17:51:22.990Z",
+      "ended": "2026-11-02T17:51:23.055Z"
+    },
+    {
+      "name": "production-unrelated-strict-rebuild-recreates-exact-guard",
+      "status": "passed",
+      "started": "2026-11-02T17:51:23.055Z",
+      "ended": "2026-11-02T17:51:23.123Z"
+    },
+    {
+      "name": "production-supported-Doctor-scoped-restore-refuses-before-drops",
+      "status": "passed",
+      "started": "2026-11-02T17:51:23.123Z",
+      "ended": "2026-11-02T17:51:31.576Z"
+    }
+  ],
+  "runRootMode": "0700",
+  "taskTmpMode": "0700",
+  "resolvedTempMode": "0700",
+  "joinedUtc": "2026-11-02T17:52:15.560499+00:00",
+  "exitCode": 0,
+  "harnessSha256": "612458ccc4936022ba7e394d407d469fc6372c9e9d0ccf6dba4478a59334a5f2",
+  "logSha256": "dc9ef30796ec188e841da0633eae77b26bba24e55aab33fb7da351f988525dbc",
+  "tempFallbackWarningPresent": false
+}

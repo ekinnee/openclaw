@@ -1,0 +1,840 @@
+{
+  "sourceRoot": "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-review-build",
+  "workspaceManifestSourceRoot": "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence",
+  "sourceSnapshotSha256": "c12149b1de17ebcd9abf571a11e46c1ddd53719cbff100ba97980575b76978e9",
+  "lockSha256": "101b4a2ffbf9dcd0ddaf00412655406de24ec219cb3595a80426f9c3cdf14f16",
+  "workspaceOwners": {
+    "openclaw": {
+      "relativeRoot": ".",
+      "manifestSha256": "440c85b3a8b1ad5665a11a33c9d514ae14b130f9b7ae250cfde0385334c09cfe"
+    },
+    "openclaw-control-ui": {
+      "relativeRoot": "ui",
+      "manifestSha256": "67d936e1aaa930a42b53318e9a21a313bb5a6580297a22efb1da2aa803692c87"
+    },
+    "@openclaw/solid-lint": {
+      "relativeRoot": "tools/solid-lint",
+      "manifestSha256": "5f37f8662257baae2213a5fa609ef477971d17608ab9115a9696a17ab402cdb8"
+    },
+    "@openclaw/gateway-client": {
+      "relativeRoot": "packages/gateway-client",
+      "manifestSha256": "26f265a35187707a70cd6baf5ecefdd42567012ad988212ea8b379f32bef8d45"
+    },
+    "@openclaw/terminal-core": {
+      "relativeRoot": "packages/terminal-core",
+      "manifestSha256": "0a57208be50b8b44c7905df8a7583b711df57295a31d67aedbca9fe94e1f4607"
+    },
+    "@openclaw/media-generation-core": {
+      "relativeRoot": "packages/media-generation-core",
+      "manifestSha256": "2434de44ce79d0811ce5537547519c76f4837ca8c59c76a2bbc8817ebd635090"
+    },
+    "@openclaw/plugin-sdk": {
+      "relativeRoot": "packages/plugin-sdk",
+      "manifestSha256": "09c5c3c24f93a9ec2cb227e3b74aa7565b4a6358ea788c9d7f75e774fac610b4"
+    },
+    "@openclaw/session-url-contract": {
+      "relativeRoot": "packages/session-url-contract",
+      "manifestSha256": "ce05f27abdafc0ff033aadf0d0944f8c48681d5eebcd5dec7485e64215abe827"
+    },
+    "@openclaw/media-core": {
+      "relativeRoot": "packages/media-core",
+      "manifestSha256": "523cd0b4f87ee54797535e74506bded7952db3fc68ecd21867f06065c8418690"
+    },
+    "@openclaw/worker-runtime": {
+      "relativeRoot": "packages/worker-runtime",
+      "manifestSha256": "aedb3fc0c1ab7fda27d998f6d9507c3e8039ce0a5490d1f14f4a48e13181c638"
+    },
+    "@openclaw/net-policy": {
+      "relativeRoot": "packages/net-policy",
+      "manifestSha256": "1f0c202bb8ed57150221911d0723b9510fedff60f1a8b52441f155f8dd0f2831"
+    },
+    "@openclaw/agent-core": {
+      "relativeRoot": "packages/agent-core",
+      "manifestSha256": "d6636006847c2422ef8fc8217087ad43ed7de0c7ca544de58c76f9b9b13349e5"
+    },
+    "@openclaw/markdown-core": {
+      "relativeRoot": "packages/markdown-core",
+      "manifestSha256": "b6ca33b873dc24b6ad41fbfb4d0442d7cf42fe210151aa8627591e0abb7a3105"
+    },
+    "@openclaw/sdk": {
+      "relativeRoot": "packages/sdk",
+      "manifestSha256": "8baab58e47cd55862feaf5f756da9323dc7d67d9da53170c48dc2f6a6733add2"
+    },
+    "@openclaw/ai": {
+      "relativeRoot": "packages/ai",
+      "manifestSha256": "113fda099a85656dbaac6dcdd0f969f9015170ce962b0eb5e2ad160b42ceae94"
+    },
+    "@openclaw/gateway-protocol": {
+      "relativeRoot": "packages/gateway-protocol",
+      "manifestSha256": "0bde4cf30bf8f3d7b435ea66dd2eec2d7f09b39c5389d29af1687d3fa66547a5"
+    },
+    "@openclaw/retry": {
+      "relativeRoot": "packages/retry",
+      "manifestSha256": "ff699ca8cbcb53b1e343b60be905a44ee48e23b783e311bae20ea36381fcca71"
+    },
+    "@openclaw/media-understanding-common": {
+      "relativeRoot": "packages/media-understanding-common",
+      "manifestSha256": "bb6622be543eddd9c804d0e987b2428f8e6db8ca6af1fa6bb386caee50cf27ab"
+    },
+    "@openclaw/acp-core": {
+      "relativeRoot": "packages/acp-core",
+      "manifestSha256": "f21cbf16bb74c4a17cee922e3eb078a6e36b3984c65f9cefe3d08c6561830ba8"
+    },
+    "@openclaw/llm-core": {
+      "relativeRoot": "packages/llm-core",
+      "manifestSha256": "6ad10947a46f2987cf84d4e8949d403449a2bce3857c545f13df99002b30e045"
+    },
+    "@openclaw/plugin-package-contract": {
+      "relativeRoot": "packages/plugin-package-contract",
+      "manifestSha256": "da7d88919ae0c5892b7d5b7662215ad3ef3d20a811d8c100df6ea4fdff4d0391"
+    },
+    "@openclaw/workboard-contract": {
+      "relativeRoot": "packages/workboard-contract",
+      "manifestSha256": "b2749127d87f294ebf114c2268fcc31db2c57b4e7cab3ca0f553826cf189b815"
+    },
+    "@openclaw/tool-call-repair": {
+      "relativeRoot": "packages/tool-call-repair",
+      "manifestSha256": "2769fa3189027a75b293b748e0b472dcfc99b87275b0dcab7aa11bfc86700013"
+    },
+    "@openclaw/model-catalog-core": {
+      "relativeRoot": "packages/model-catalog-core",
+      "manifestSha256": "22937efd348bbba2e64480bebea962fe48987b8387a1f688586e33dd02b57c48"
+    },
+    "@openclaw/mermaid-renderer": {
+      "relativeRoot": "packages/mermaid-renderer",
+      "manifestSha256": "d708ac6312ade44a6ba1c611185ee14921a3c73006ee1aa78332d6a3fdd037b3"
+    },
+    "@openclaw/normalization-core": {
+      "relativeRoot": "packages/normalization-core",
+      "manifestSha256": "216a73b201fea33366583d5da2be3da49a73132aad36840922d2f0993ff9f028"
+    },
+    "@openclaw/memory-host-sdk": {
+      "relativeRoot": "packages/memory-host-sdk",
+      "manifestSha256": "ff09b45629d2887dd9d1f81313b34845f043d0a849ef8ea766edc351a7688a17"
+    },
+    "@openclaw/cloudflare-ai-gateway-provider": {
+      "relativeRoot": "extensions/cloudflare-ai-gateway",
+      "manifestSha256": "1f46591903fe4c26465b231240d4ff1b972d3edf80edfbee201b8683b2cbf39a"
+    },
+    "@openclaw/telegram": {
+      "relativeRoot": "extensions/telegram",
+      "manifestSha256": "3f1a8bf77646a8a6de5443b1adc50b754e5d5baed0b72b48395dbfe42e293659"
+    },
+    "@openclaw/advisor": {
+      "relativeRoot": "extensions/advisor",
+      "manifestSha256": "e16adfdc69803d6bff28321e919d07746458339c8c0ecf2fa0150c93e6de8ad9"
+    },
+    "@openclaw/tlon": {
+      "relativeRoot": "extensions/tlon",
+      "manifestSha256": "62337a23ee47649422263ccb6a166c0af252c753f82fb51050b6ae651a20bca8"
+    },
+    "@openclaw/stepfun-provider": {
+      "relativeRoot": "extensions/stepfun",
+      "manifestSha256": "f4a7898255e4a7ea012cc83bfbb0165a35f8d0b8c9627accccdceffcbc8001cf"
+    },
+    "@openclaw/voice-call": {
+      "relativeRoot": "extensions/voice-call",
+      "manifestSha256": "296b21355631b4a418898495b6472b83af3acae0a28a18db057047d5e5f61af0"
+    },
+    "@openclaw/cohere-provider": {
+      "relativeRoot": "extensions/cohere",
+      "manifestSha256": "684ad8d87df1fd9ca1fc2a9d243702ebc3da02c7b0044f877021572046db4c89"
+    },
+    "@openclaw/pixverse-provider": {
+      "relativeRoot": "extensions/pixverse",
+      "manifestSha256": "cf1fa49d387de7efcc23c7a47649444e62f2c5fa5d5635690f3770f15f0e755b"
+    },
+    "@openclaw/alibaba-provider": {
+      "relativeRoot": "extensions/alibaba",
+      "manifestSha256": "9c8b1d2d4d7aa41c582dc59922a7d19837e36f14ca0a4ba3f1b7dd12daff3fbe"
+    },
+    "@openclaw/kilocode-provider": {
+      "relativeRoot": "extensions/kilocode",
+      "manifestSha256": "44de3917820930778f8a6587eaf18ae342481df64eb626b863cc0c112d6f6972"
+    },
+    "@openclaw/acpx": {
+      "relativeRoot": "extensions/acpx",
+      "manifestSha256": "1dd829759877cb795035b4455712c9e6225b266e4955db1289f61ccd879dc530"
+    },
+    "@openclaw/parallel-plugin": {
+      "relativeRoot": "extensions/parallel",
+      "manifestSha256": "d1c005c8b9423a707c27d15b2721f68fc5eab9f79e84d467b580fd9c5948294f"
+    },
+    "@openclaw/signal": {
+      "relativeRoot": "extensions/signal",
+      "manifestSha256": "c1782683a37702ba542a3d9b688a26a93a15025bb3af81ffdaa5ecdceea590c0"
+    },
+    "@openclaw/huggingface-provider": {
+      "relativeRoot": "extensions/huggingface",
+      "manifestSha256": "b1f0d9b348adcf236dfadc6e1b491804448efae46fc1c03f4f366abe84a86295"
+    },
+    "@openclaw/browser-plugin": {
+      "relativeRoot": "extensions/browser",
+      "manifestSha256": "d19e5649259b577ac7cd38677213852eaf937a6a651baadb538fe9de638a3398"
+    },
+    "@openclaw/brave-plugin": {
+      "relativeRoot": "extensions/brave",
+      "manifestSha256": "f55bd7812b6f397507c345dd49721eefcc951f3b343b4763e88eea0834988203"
+    },
+    "@openclaw/apple-fm-provider": {
+      "relativeRoot": "extensions/apple-fm",
+      "manifestSha256": "f0326e71136f1ef537b984142fedc2469d47d0ed1f54cff68f2f2ce81065f920"
+    },
+    "@openclaw/litellm-provider": {
+      "relativeRoot": "extensions/litellm",
+      "manifestSha256": "80207aa9a4073c77233ed4ade329cc995e44520fa9d09bdd08ad9f37a60e1378"
+    },
+    "@openclaw/copilot": {
+      "relativeRoot": "extensions/copilot",
+      "manifestSha256": "3939c41f97f213971c65bbcde47f72a2dc44822af09c661258679b73b042e300"
+    },
+    "@openclaw/agentsapi": {
+      "relativeRoot": "extensions/agentsapi",
+      "manifestSha256": "104702fb3223f73ea15bf2dfb8ec781ed3b2403302c010c090d4570e9f3af85b"
+    },
+    "@openclaw/migrate-claude": {
+      "relativeRoot": "extensions/migrate-claude",
+      "manifestSha256": "415b994ad332db21388d2c57f51c999be65a0499d9bb98c039e05f6811e22c27"
+    },
+    "@openclaw/nostr": {
+      "relativeRoot": "extensions/nostr",
+      "manifestSha256": "9fe060a02e12794bf20b8683f8e35044e83d3d2d3c70748a5cbc0faf3e12df90"
+    },
+    "@openclaw/document-extract-plugin": {
+      "relativeRoot": "extensions/document-extract",
+      "manifestSha256": "2beece988bc8d679e007673130154024d501269acd8b19fb0f511d8d5ebf618f"
+    },
+    "@openclaw/zoom-meetings": {
+      "relativeRoot": "extensions/zoom-meetings",
+      "manifestSha256": "44c64975fa9e98b4da03ae3f485f6cd47881f8ead386798fecc91a70f2eced7f"
+    },
+    "@openclaw/duckduckgo-plugin": {
+      "relativeRoot": "extensions/duckduckgo",
+      "manifestSha256": "1ad681cea7b522571dbb9a5b351696d951517051e5abb17e3d2fef445fc317ce"
+    },
+    "@openclaw/diagnostics-prometheus": {
+      "relativeRoot": "extensions/diagnostics-prometheus",
+      "manifestSha256": "a59cb02b474adf7e326cfa9e3256e65f85a6eb63bf7d84b1d890e64c8dd9f7d2"
+    },
+    "@openclaw/ollama-provider": {
+      "relativeRoot": "extensions/ollama",
+      "manifestSha256": "e764bc4ddb2eaf56af59b19f2d6015e52d441057c59349ba091f5922fe629313"
+    },
+    "@openclaw/bifrost-provider": {
+      "relativeRoot": "extensions/bifrost",
+      "manifestSha256": "64ba9c62ef8082e783eb837112f8412920914fb8d98293bedd2ed9d9bab1455d"
+    },
+    "@openclaw/llama-cpp-provider": {
+      "relativeRoot": "extensions/llama-cpp",
+      "manifestSha256": "ba9a9e308121427e63567e998cf0faf9322ffee668975fe6ffcebe473fa0dd21"
+    },
+    "@openclaw/qwen-provider": {
+      "relativeRoot": "extensions/qwen",
+      "manifestSha256": "289a1772449ef39bead73e9505dcc2e2c25d413203ca8714663f252542011d07"
+    },
+    "@openclaw/clickclack": {
+      "relativeRoot": "extensions/clickclack",
+      "manifestSha256": "3b8eef33a4b179f7802000387e65993d1708703084f99d39b3faee9db94eb4e2"
+    },
+    "@openclaw/facetime": {
+      "relativeRoot": "extensions/facetime",
+      "manifestSha256": "efee086256dfe08cf08d25c34ddd001a89e7acab234b5c36a350ec2d8159f768"
+    },
+    "@openclaw/buzz": {
+      "relativeRoot": "extensions/buzz",
+      "manifestSha256": "17791257c97f0716af547aa6c6a6dfe485ae61644dac89961a061d8036becb62"
+    },
+    "@openclaw/mxc-sandbox": {
+      "relativeRoot": "extensions/mxc",
+      "manifestSha256": "c441e9297fee67e5a13eab25f8f286b298a3e6ee8ce7e6d332b7740ed07c3877"
+    },
+    "@openclaw/tavily-plugin": {
+      "relativeRoot": "extensions/tavily",
+      "manifestSha256": "15892a36284f678ac1f3e3d3ecb30420e70e211e4735cc9351ce189abb0c08cb"
+    },
+    "@openclaw/agent-guidance": {
+      "relativeRoot": "extensions/agent-guidance",
+      "manifestSha256": "ab25edaad47687d3d277df5660326dd9a67e903f42e7181b49af93243e885503"
+    },
+    "@openclaw/teams-meetings": {
+      "relativeRoot": "extensions/teams-meetings",
+      "manifestSha256": "49f5b558d289da65526a6f793ba927b7e87827a00d2e8416f242383f5e3c3e43"
+    },
+    "@openclaw/voyage-provider": {
+      "relativeRoot": "extensions/voyage",
+      "manifestSha256": "5d0f4f0fa92bd27e9d46ca6732b16a9aa991cfe03e39bdda26797cd4699b56f2"
+    },
+    "@openclaw/anthropic-provider": {
+      "relativeRoot": "extensions/anthropic",
+      "manifestSha256": "3bff1ff89ab752dc35c2e16529d0c6d3cd7cf4b74adc2b14035ded91f3b0aa96"
+    },
+    "@openclaw/openai-provider": {
+      "relativeRoot": "extensions/openai",
+      "manifestSha256": "c957d8f44d6d467c46b18c1ba71ad6a9f8036ee7a0061f2ecadcdedc9d7acfc9"
+    },
+    "@openclaw/x": {
+      "relativeRoot": "extensions/x",
+      "manifestSha256": "c4fca152e53dd831331e6f53b9b04ed7e3308d2bcab9e114b8df054ecaeaed99"
+    },
+    "@openclaw/github": {
+      "relativeRoot": "extensions/github",
+      "manifestSha256": "5c601dc00b7cc496af61148d9ba35b3bd4f862b1f9dcb3951bfa78cb49878a28"
+    },
+    "@openclaw/synology-chat": {
+      "relativeRoot": "extensions/synology-chat",
+      "manifestSha256": "c189eff9021ec1ee2ec2594ee45b02221be1df228626155946654cdd6912a3a7"
+    },
+    "@openclaw/feishu": {
+      "relativeRoot": "extensions/feishu",
+      "manifestSha256": "43b6442fc908f70591fdb1c9f8d858f6ca5d998bb69863aa8a6d6c4664362ca9"
+    },
+    "@openclaw/cloudflare": {
+      "relativeRoot": "extensions/cloudflare",
+      "manifestSha256": "956e8a90adf82f7cbdc6e154532bfd5e299b9a6121b0eac9ff3bf8e9811e916f"
+    },
+    "@openclaw/novita-provider": {
+      "relativeRoot": "extensions/novita",
+      "manifestSha256": "f78fdaa82ad86a202f3ca58ca40a0a3714ed91a10926508ba38c840188801cdf"
+    },
+    "@openclaw/abliteration-provider": {
+      "relativeRoot": "extensions/abliteration",
+      "manifestSha256": "c80fbce93fa55a6eada32b7391efb22696c95e14d806ae0d1e718aaefd0711b1"
+    },
+    "@openclaw/zai-provider": {
+      "relativeRoot": "extensions/zai",
+      "manifestSha256": "e4b373982d460f36b1b9ca9433eaaf178deb63ce7c51d6ffc03052e12aa409ff"
+    },
+    "@openclaw/oc-path": {
+      "relativeRoot": "extensions/oc-path",
+      "manifestSha256": "9cc6a7789b0fc84f3857757e731ccf0376c41859366f65205f9cc896f3baaef0"
+    },
+    "@openclaw/vault": {
+      "relativeRoot": "extensions/vault",
+      "manifestSha256": "f524cd146c75e6e44404b5ba2621f7bf6435b42fc7162907cad82aac76403c6a"
+    },
+    "@openclaw/xai-plugin": {
+      "relativeRoot": "extensions/xai",
+      "manifestSha256": "f189a52d2d5bda23489df1bb7d2c7589a289b86f23fc7632f4b425d31ba10b81"
+    },
+    "@openclaw/zalo": {
+      "relativeRoot": "extensions/zalo",
+      "manifestSha256": "6aab1bebc78c4aeb4f8df9f588db43f84e9df73fb1ceaef0e6c03bbfb6dd640f"
+    },
+    "@openclaw/kie-provider": {
+      "relativeRoot": "extensions/kie",
+      "manifestSha256": "ed4a509d701171928cf5b9cea4d2460cd592adfec1ec47f483df6f488bf24c76"
+    },
+    "@openclaw/crabbox-provider": {
+      "relativeRoot": "extensions/crabbox",
+      "manifestSha256": "e37faf737082ea5e6a3d88fe7371f0aa86e57ca0650871e71ee5373bfb88b623"
+    },
+    "@openclaw/team-reports": {
+      "relativeRoot": "extensions/team-reports",
+      "manifestSha256": "fe7222d192792138aa79952f781fb820c8e78522b131cdc652637f0f35fa98ef"
+    },
+    "@openclaw/azure-speech": {
+      "relativeRoot": "extensions/azure-speech",
+      "manifestSha256": "7d025e9e89640c5ea9f8e8247d34a720e07b83e8cf3d4c4658e2810184cb3a6d"
+    },
+    "@openclaw/fish-audio-speech": {
+      "relativeRoot": "extensions/fish-audio-speech",
+      "manifestSha256": "5207a93ce1593a5fdcfeac40bca2b769f68949c1dc1ef9c57eb372e30ed68e1e"
+    },
+    "@openclaw/inworld-speech": {
+      "relativeRoot": "extensions/inworld",
+      "manifestSha256": "f78ad8f0edf467155ecfbf6107e536c7b7855059771b8822fe26006c8e861e29"
+    },
+    "@openclaw/lmstudio-provider": {
+      "relativeRoot": "extensions/lmstudio",
+      "manifestSha256": "09c7b7cab6211a6eb333daaa71e40740d220cfd72efed792275a0dcd623e27bb"
+    },
+    "@openclaw/levanto": {
+      "relativeRoot": "extensions/levanto",
+      "manifestSha256": "4db0c3163deeac01b14ef9ce2e7fbcc8bf67c5b0716fd6b10031b46267a35e94"
+    },
+    "@openclaw/reef": {
+      "relativeRoot": "extensions/reef",
+      "manifestSha256": "37a9ea4005b8234de0f51a840dea20b83e2ce50ed6803ce4fb204ae50b88f864"
+    },
+    "@openclaw/amazon-bedrock-provider": {
+      "relativeRoot": "extensions/amazon-bedrock",
+      "manifestSha256": "e186510143870778d1dddcd8b9b22d3510af22565b963e715ee82c073bba9f38"
+    },
+    "@openclaw/searxng-plugin": {
+      "relativeRoot": "extensions/searxng",
+      "manifestSha256": "4524962e058011dc0931d74cb5a3dd0d6266bc8f86a7859a8b1a8d9c436432d8"
+    },
+    "@openclaw/qa-channel": {
+      "relativeRoot": "extensions/qa-channel",
+      "manifestSha256": "c9b56f5a30b848c6f0571dc5a551972653230af164f730088555fca49c9b043b"
+    },
+    "@openclaw/arcee-provider": {
+      "relativeRoot": "extensions/arcee",
+      "manifestSha256": "6dfb713cb56e525b238188c1dc3010d4a058a4726ef02f2989bc3e3863b641ae"
+    },
+    "@openclaw/onnx": {
+      "relativeRoot": "extensions/onnx",
+      "manifestSha256": "8024636a24f0b7d65544c5402a300664d8635205dc4a9f01279f983e1babfb73"
+    },
+    "@openclaw/llm-task": {
+      "relativeRoot": "extensions/llm-task",
+      "manifestSha256": "c0763fe952691ab75406bf873dd3416bb5192740ec507da450b01eb698525524"
+    },
+    "@openclaw/amazon-bedrock-mantle-provider": {
+      "relativeRoot": "extensions/amazon-bedrock-mantle",
+      "manifestSha256": "46d62e44bb701f40dc6e851a96dfad85292755e7f7cbf8ecb04d6050e94b509c"
+    },
+    "@openclaw/mistral-provider": {
+      "relativeRoot": "extensions/mistral",
+      "manifestSha256": "369eb6231b37325ed53d236d1ca79dac6e5643d6c1c2503ec6b583f5be60844c"
+    },
+    "@openclaw/nvidia-provider": {
+      "relativeRoot": "extensions/nvidia",
+      "manifestSha256": "ca0469defb8d20dbc27b1f163cc4b829e3035c4ba0bb56862487652625eb62ce"
+    },
+    "@openclaw/autoreview": {
+      "relativeRoot": "extensions/autoreview",
+      "manifestSha256": "1dbba87cf80b69b43422f076103cda8527cf3ac1a601f2798f5e5f9721c7e931"
+    },
+    "@openclaw/beam": {
+      "relativeRoot": "extensions/beam",
+      "manifestSha256": "ea5728754c622e67351caadee7a8fb11cbf49b14c28aaf4be05f06d3f0ebbc0e"
+    },
+    "@openclaw/a2a": {
+      "relativeRoot": "extensions/a2a",
+      "manifestSha256": "05bb127f9ac908b9e77a5292dfaebf428f2a28ea18ef653285330aa6c8920a98"
+    },
+    "@openclaw/google-plugin": {
+      "relativeRoot": "extensions/google",
+      "manifestSha256": "7a8786274c06174ebe90e58ad29284bc6684b766f9620f7a70910c9df91158d1"
+    },
+    "@openclaw/opencode-provider": {
+      "relativeRoot": "extensions/opencode",
+      "manifestSha256": "17c21fdc8553540e7b9256a4e003bae9879b05a2ae4c4a6cf043bc822b6e99f4"
+    },
+    "@openclaw/venice-provider": {
+      "relativeRoot": "extensions/venice",
+      "manifestSha256": "23a40a77f0cf38c07cee6e42230faf96dc66a6b47c362007f984edcf8469e2b3"
+    },
+    "@openclaw/opencode-go-provider": {
+      "relativeRoot": "extensions/opencode-go",
+      "manifestSha256": "579317488c1a0d4566aff05f7d13fb2e03219817606eae8747229686e279102f"
+    },
+    "@openclaw/irc": {
+      "relativeRoot": "extensions/irc",
+      "manifestSha256": "1e8fa5650ff17ce4c3d2ff22289a76a5f6039d8b0c33a63b015275529f8edc54"
+    },
+    "@openclaw/lobster": {
+      "relativeRoot": "extensions/lobster",
+      "manifestSha256": "a15268bf625df4df19782cce87beb7943db5ee85e807aab9e9fd21675cfebd75"
+    },
+    "@openclaw/msteams": {
+      "relativeRoot": "extensions/msteams",
+      "manifestSha256": "db88f252a1f50095d32b418e78a0540573c9d42fb466d289c892e5f9819b8635"
+    },
+    "@openclaw/openrouter-provider": {
+      "relativeRoot": "extensions/openrouter",
+      "manifestSha256": "2c1d10e58086d2c1cacb0e0d2d964758b7be8fb3af32b8c224ebed50b200627c"
+    },
+    "@openclaw/elevenlabs-speech": {
+      "relativeRoot": "extensions/elevenlabs",
+      "manifestSha256": "e52d4e51ef45eeb13b6374e0721a646261662a4d7775db30eba4e967f3229995"
+    },
+    "@openclaw/muse": {
+      "relativeRoot": "extensions/muse",
+      "manifestSha256": "bf78d9bd1b7126c00bfc1babb142f4d6c13a1e98b9c8c4ccd7705e146c1c306c"
+    },
+    "@openclaw/requesty-provider": {
+      "relativeRoot": "extensions/requesty",
+      "manifestSha256": "21eb7c6a8262206ede185555624378aa49a3c073a166275d6bace5c9aaec8c78"
+    },
+    "@openclaw/code-mode-quickjs": {
+      "relativeRoot": "extensions/code-mode-quickjs",
+      "manifestSha256": "64107d01f9535ba4f828ac6c8e811e07fd371fbdac486e9b79b31c43c94e79b5"
+    },
+    "@openclaw/volcengine-provider": {
+      "relativeRoot": "extensions/volcengine",
+      "manifestSha256": "f2aeb3860deda006d2f6d76152819f7ecd7e2133d56e2d8e008b3135cec34315"
+    },
+    "@openclaw/moonshot-provider": {
+      "relativeRoot": "extensions/moonshot",
+      "manifestSha256": "2be310bc6e9112952c7e626972e0c606053a7c1abc103907f7a6a4f0e8fa1612"
+    },
+    "@openclaw/vllm-provider": {
+      "relativeRoot": "extensions/vllm",
+      "manifestSha256": "71eef3f1c0613a43198c3753fdab7c4b8e2f044c799d2b3b33fa798d3ede9461"
+    },
+    "@openclaw/sglang-provider": {
+      "relativeRoot": "extensions/sglang",
+      "manifestSha256": "c03a18175b56fe82963a6b615036791fea07b9372ed9fe564dae72ee5505e0d1"
+    },
+    "@openclaw/line": {
+      "relativeRoot": "extensions/line",
+      "manifestSha256": "3cc37694f8dea69a8acebdfa32dac00a0521e90b7f1f758701943ba1c16b91e1"
+    },
+    "@openclaw/imap": {
+      "relativeRoot": "extensions/imap",
+      "manifestSha256": "d456e15ab5e26b95ec22c43ecdd9a4e0354f69fb03ae334fdbb1e193473c0702"
+    },
+    "@openclaw/discord": {
+      "relativeRoot": "extensions/discord",
+      "manifestSha256": "b473c4fac10095d06aa4cfe587e7de46b26fc8ff2e4312077f8f61308c3371ce"
+    },
+    "@openclaw/gradium-speech": {
+      "relativeRoot": "extensions/gradium",
+      "manifestSha256": "7c96501c1285ac177f7e1591bf3837ea6eafb945d5168626e4e2886e0230829d"
+    },
+    "@openclaw/cua-computer": {
+      "relativeRoot": "extensions/cua-computer",
+      "manifestSha256": "dcf054de17b3af5869b09345935af0ea3a089d7758eeafc07e14b3adb0c309d1"
+    },
+    "@openclaw/liquid-ai-provider": {
+      "relativeRoot": "extensions/liquid-ai",
+      "manifestSha256": "6c4e340ab4eea266ea90acc961d5c0f4848d7d04ff3bd7648fe86e1f3371069f"
+    },
+    "@openclaw/openshell-sandbox": {
+      "relativeRoot": "extensions/openshell",
+      "manifestSha256": "b6740e078d7ecd7359b2009d40bff7fa8e8dff329ae7f92722c303c3214f0235"
+    },
+    "@openclaw/microsoft-foundry": {
+      "relativeRoot": "extensions/microsoft-foundry",
+      "manifestSha256": "e4b4be6a2405cacf05365c8dbc63638fe8558c78d83e2556031334a8b2e3c258"
+    },
+    "@openclaw/gmi-provider": {
+      "relativeRoot": "extensions/gmi",
+      "manifestSha256": "fa79cf359417e73126ad7b2f4598183dd4257a1699a517a80eb8d928fb4b143b"
+    },
+    "@openclaw/tts-local-cli": {
+      "relativeRoot": "extensions/tts-local-cli",
+      "manifestSha256": "e462d1da2c12a834ee36779e8fe52b8a10a7c58e9186fd8eee0c1d797a97655a"
+    },
+    "@openclaw/anthropic-vertex-provider": {
+      "relativeRoot": "extensions/anthropic-vertex",
+      "manifestSha256": "e86fd7b43780f79bb3aa96ce9aa74203262f431dc70c6e99d9404eba505a91b1"
+    },
+    "@openclaw/together-provider": {
+      "relativeRoot": "extensions/together",
+      "manifestSha256": "67e78d12e3b5aa79867b2474de7de7ecbd6fb8ba028974663de812494956a029"
+    },
+    "@openclaw/typesafe": {
+      "relativeRoot": "extensions/typesafe",
+      "manifestSha256": "8b38a71823a47e267db50e5ae77cb1d7270b8151db99f69a394cd043bacd57a6"
+    },
+    "@openclaw/policy": {
+      "relativeRoot": "extensions/policy",
+      "manifestSha256": "96e0fa95e4f171cfbc5ef770ff582b37066b59463bf3dcb06ed04cd9e6994af6"
+    },
+    "@openclaw/deepinfra-provider": {
+      "relativeRoot": "extensions/deepinfra",
+      "manifestSha256": "b19d42a5e242448a60067acb3c5436437cbcdd1c82f22021169ae4e7a88a1073"
+    },
+    "@openclaw/mattermost": {
+      "relativeRoot": "extensions/mattermost",
+      "manifestSha256": "98789bb2b9960f7ab32dfa648ef3f021a2205317ccef03db7b52947dac1af785"
+    },
+    "@openclaw/particle-provider": {
+      "relativeRoot": "extensions/particle",
+      "manifestSha256": "91f13ac92f326ab2b193c49e1de0f8ef415fc23d71565379b743680d2942563b"
+    },
+    "@openclaw/qianfan-provider": {
+      "relativeRoot": "extensions/qianfan",
+      "manifestSha256": "35e48bd4a098427639f1dfc4d470b014e84f4e21ba57091d5446859abc8dcc89"
+    },
+    "@openclaw/memory-core": {
+      "relativeRoot": "extensions/memory-core",
+      "manifestSha256": "573d12ffb20f99a5551debd7f97c93fe654d014376c39bc01a811a0c530bd09d"
+    },
+    "@openclaw/googlechat": {
+      "relativeRoot": "extensions/googlechat",
+      "manifestSha256": "8707fc760ec541c08c0f0f6a6873e1a8ba11a042a6b3e9f824abb6cb4beb0706"
+    },
+    "@openclaw/skill-workshop": {
+      "relativeRoot": "extensions/skill-workshop",
+      "manifestSha256": "76ce8fea1ae74cd328749d80292aa61ccf161a80ba93617199b3890007e97ef3"
+    },
+    "@openclaw/diffs": {
+      "relativeRoot": "extensions/diffs",
+      "manifestSha256": "5fcfd4a93a6192ad9d111fb9e6ea55f14e55fbe728e114d92cfe55b15a85299c"
+    },
+    "@openclaw/twitch": {
+      "relativeRoot": "extensions/twitch",
+      "manifestSha256": "4015eecb2486339f40f4d78fdecc119a097401a6d3f04d029457be9ca91edea9"
+    },
+    "@openclaw/slack-huddles": {
+      "relativeRoot": "extensions/slack-huddles",
+      "manifestSha256": "a81ebf0659455e8f94e8388464246d21681b1b294540850156b320a99613b613"
+    },
+    "@openclaw/fireworks-provider": {
+      "relativeRoot": "extensions/fireworks",
+      "manifestSha256": "c9182cefdcba96ee0fdb98e1904b1a47b230aea0c9012ffb138c1b8b51c0366e"
+    },
+    "@openclaw/zalouser": {
+      "relativeRoot": "extensions/zalouser",
+      "manifestSha256": "538ca75a76780b912c75e0a501deee19001c20e05fd5243c3ffc8e7ad627168a"
+    },
+    "@openclaw/imessage": {
+      "relativeRoot": "extensions/imessage",
+      "manifestSha256": "482d79f4df6910c0ad1180aa86026a7692756f047aa2b49dc24c95766f4f6832"
+    },
+    "@openclaw/exa-plugin": {
+      "relativeRoot": "extensions/exa",
+      "manifestSha256": "10a6aee9eff0bdfe7150a6de43f6e9e1fb4d1cc263b0e74c16e4182fe9b69d7f"
+    },
+    "@openclaw/microsoft-speech": {
+      "relativeRoot": "extensions/microsoft",
+      "manifestSha256": "93a8f1a66f0172535eb824e9b3e380e247357569dbcd9b9866aec9c57013c5c8"
+    },
+    "@openclaw/synthetic-provider": {
+      "relativeRoot": "extensions/synthetic",
+      "manifestSha256": "37391bcc61a5d3a511815a37848612774f3605415c3d0687fccece8bdadc3f8c"
+    },
+    "@openclaw/runway-provider": {
+      "relativeRoot": "extensions/runway",
+      "manifestSha256": "67872775ccde25ad815a2a3c7e473157dfc5f5ec6833c7f11576b6952b9d4dbb"
+    },
+    "@openclaw/fal-provider": {
+      "relativeRoot": "extensions/fal",
+      "manifestSha256": "761581c4df2b3f7c876be731f98fc7c709eaa60436f960b20424f17017b87fa8"
+    },
+    "@openclaw/diffs-language-pack": {
+      "relativeRoot": "extensions/diffs-language-pack",
+      "manifestSha256": "130cc3656028e0f0181fd5669144ff7e1f10e38955955b294d9f696715b6dfe8"
+    },
+    "@openclaw/omlx-provider": {
+      "relativeRoot": "extensions/omlx",
+      "manifestSha256": "242ce3876176abe15ac91fdaea77c747a7e365d3db82b0285e7e64c7faf85e03"
+    },
+    "@openclaw/tokenjuice": {
+      "relativeRoot": "extensions/tokenjuice",
+      "manifestSha256": "03d1f116e4bb1e6f032304515e124c6029280e1feafdcfe55bd6024c917185d3"
+    },
+    "@openclaw/web-readability-plugin": {
+      "relativeRoot": "extensions/web-readability",
+      "manifestSha256": "1f152f11265d916dadb31eb0f82ea3dc000e24dc82b6d0504c0ced6526502f5e"
+    },
+    "@openclaw/linux-node": {
+      "relativeRoot": "extensions/linux-node",
+      "manifestSha256": "f7a2e8f4a897a807f4dfeaa1bb5e3b573ecbc8fc7c720f645c8d102ae4a43a35"
+    },
+    "@openclaw/baseten-provider": {
+      "relativeRoot": "extensions/baseten",
+      "manifestSha256": "8caa352ef1dd700631dd8000f25440b5be3e6bef36b6d9352b2d2e8bd35c4378"
+    },
+    "@openclaw/chutes-provider": {
+      "relativeRoot": "extensions/chutes",
+      "manifestSha256": "ebf775d9edd1a9e7d09214dbbb8a917d775c3dbd960a34eca677b69d9fc9955a"
+    },
+    "@openclaw/sms": {
+      "relativeRoot": "extensions/sms",
+      "manifestSha256": "481502a5cbc04c4ad0726d4943bb411052585b04c840c812bd11eb32fe5b2d2e"
+    },
+    "@openclaw/github-copilot-provider": {
+      "relativeRoot": "extensions/github-copilot",
+      "manifestSha256": "f0dfa686776c76dabda125dfe6854bb9860c60fdb187eed611d4a11d7ef2314d"
+    },
+    "@openclaw/image-generation-core": {
+      "relativeRoot": "extensions/image-generation-core",
+      "manifestSha256": "f74e907b15d1b19c0cce2ba709ff45954b415bddb7a41a15bd534df37df85163"
+    },
+    "@openclaw/slack": {
+      "relativeRoot": "extensions/slack",
+      "manifestSha256": "f807aced8722bde14d760e920d376f37e1a73601115957c0af8859aeb753e55d"
+    },
+    "@openclaw/comfy-provider": {
+      "relativeRoot": "extensions/comfy",
+      "manifestSha256": "95e9e46a174f1a20cf9e8ed4c9209739122c9bc6f13d91ae9d4b3910f57a3a0c"
+    },
+    "@openclaw/matrix": {
+      "relativeRoot": "extensions/matrix",
+      "manifestSha256": "73f4c9ace14723c9cd21b0fd421990e08f7d1374afcf5cb77f297f63a9fb5dde"
+    },
+    "@openclaw/file-transfer": {
+      "relativeRoot": "extensions/file-transfer",
+      "manifestSha256": "f8b16c6a93ce547f90d1856938e251e2c22f156f9d4e0e21ab90e4b732e41024"
+    },
+    "@openclaw/diagnostics-otel": {
+      "relativeRoot": "extensions/diagnostics-otel",
+      "manifestSha256": "d45666c8571d3b7225e72d7a1701988975745b01e7f76f47c8ad8f146f0264ff"
+    },
+    "@openclaw/senseaudio-provider": {
+      "relativeRoot": "extensions/senseaudio",
+      "manifestSha256": "ac03d36c6f11d811e878db9f983eb9705141dd2fe15cf1dac23be706764a6504"
+    },
+    "@openclaw/onepassword": {
+      "relativeRoot": "extensions/onepassword",
+      "manifestSha256": "2a0e43c038210837dc482128912c029ef0479e2d9fb91db35bd28b2285f72e06"
+    },
+    "@openclaw/codex": {
+      "relativeRoot": "extensions/codex",
+      "manifestSha256": "75f31c648ab5e4a1729d3cea879df13bae2b8c64d78961651866b8e43703851b"
+    },
+    "@openclaw/copilot-proxy": {
+      "relativeRoot": "extensions/copilot-proxy",
+      "manifestSha256": "85230c2025fc73e574858370292fadf17fe892d098a1c27635acfbb9cc9ce337"
+    },
+    "@openclaw/raft": {
+      "relativeRoot": "extensions/raft",
+      "manifestSha256": "6c73e51c2966d8511c072a45256053afa110b3078e033d1057943051ff9f6cc6"
+    },
+    "@openclaw/session-share": {
+      "relativeRoot": "extensions/session-share",
+      "manifestSha256": "870b8596b5ef8f6e6806e1f5297da5ff7a299d81c5842627da474c0ce7af7556"
+    },
+    "@openclaw/cerebras-provider": {
+      "relativeRoot": "extensions/cerebras",
+      "manifestSha256": "a9e79c6219759b5a7d13650fa5b714289fbf04477c90b47c5b34f058670b488d"
+    },
+    "@openclaw/longcat-provider": {
+      "relativeRoot": "extensions/longcat",
+      "manifestSha256": "108cd1a7d1eea51e6f8616279b907335e782702c78aa3e0d02ec93f572b5d9ce"
+    },
+    "@openclaw/subq": {
+      "relativeRoot": "extensions/subq",
+      "manifestSha256": "a88b13d0670553f6628494a31eb765665e824ca8a9a2a8f0d27063f101f72cbb"
+    },
+    "@openclaw/mcp-relay": {
+      "relativeRoot": "extensions/mcp-relay",
+      "manifestSha256": "3243feffa49a6d7a64536d08c85c31a02fff2b9e5a7ca9dfa9020a30adaa139f"
+    },
+    "@openclaw/groq-provider": {
+      "relativeRoot": "extensions/groq",
+      "manifestSha256": "ec75126b1729053585935270e95d3f28b9a3b4641d16146daf44a1e9d6588e72"
+    },
+    "@openclaw/vydra-provider": {
+      "relativeRoot": "extensions/vydra",
+      "manifestSha256": "da6c7098e3830c7e3502d8f2022b671a79867e1474767ce5df20444826095ece"
+    },
+    "@openclaw/knowledge": {
+      "relativeRoot": "extensions/knowledge",
+      "manifestSha256": "855de1d5dff1b528a87cd34380c11136fd6d26553779258f7a0735e3ac0cb384"
+    },
+    "@openclaw/whatsapp": {
+      "relativeRoot": "extensions/whatsapp",
+      "manifestSha256": "7e327e117765b571380f7d7a0ddaea8b8484e10e0b04a6b6f677a1dd6659d3d9"
+    },
+    "@openclaw/logbook": {
+      "relativeRoot": "extensions/logbook",
+      "manifestSha256": "c9e04d59aa8d99f2ba120d598b4ada93e83b33f5bb3a59298c6402de9da0f4b3"
+    },
+    "@openclaw/memory-lancedb": {
+      "relativeRoot": "extensions/memory-lancedb",
+      "manifestSha256": "6e465a60e2c46527dbc4aa63308f6c2f4e9397db64387dae3ddecba829ca44c4"
+    },
+    "@openclaw/bonjour": {
+      "relativeRoot": "extensions/bonjour",
+      "manifestSha256": "024d514aed2a982719d3d4a189a22419598769a9192de1a36d9af6fe9e63e430"
+    },
+    "@openclaw/qa-lab": {
+      "relativeRoot": "extensions/qa-lab",
+      "manifestSha256": "4ac0b5836150b0871bfac74c9a4883136f9e8d215e7bff1697f0d34fd119c459"
+    },
+    "@openclaw/deepseek-provider": {
+      "relativeRoot": "extensions/deepseek",
+      "manifestSha256": "949c897766f45076830b64eb9a337159c0ebce25c23bc56c3f7a40aa406723cb"
+    },
+    "@openclaw/migrate-hermes": {
+      "relativeRoot": "extensions/migrate-hermes",
+      "manifestSha256": "9b3a857dba33c6b0eb85e2cf9b7e9f89a3fe55d8f2e3d77714af9f77170a4ec3"
+    },
+    "@openclaw/minimax-provider": {
+      "relativeRoot": "extensions/minimax",
+      "manifestSha256": "3515b733b2e57c5291a886db1419f2d2823325adeb5614a68ed32e9b7d3c55d2"
+    },
+    "@openclaw/xiaomi-provider": {
+      "relativeRoot": "extensions/xiaomi",
+      "manifestSha256": "c77dc4ae7e78caa796d8b54f94bd7679ff099095b9abcef3a31d3e36558471c2"
+    },
+    "@openclaw/vercel-ai-gateway-provider": {
+      "relativeRoot": "extensions/vercel-ai-gateway",
+      "manifestSha256": "0820400b3f4c09fc778712c722e70fd9d0b0fa3f1e78b2265b1342a061af2ced"
+    },
+    "@openclaw/meta-provider": {
+      "relativeRoot": "extensions/meta",
+      "manifestSha256": "ea6bee224f338e658c7714b0cf48f87678e37bebf8da3ad0f1095d3162f3fa22"
+    },
+    "@openclaw/byteplus-provider": {
+      "relativeRoot": "extensions/byteplus",
+      "manifestSha256": "9426372c0d0efb8dfe5f99f4afe2c75dc5d1c74f4c4b8e229eade69448cc0191"
+    },
+    "@openclaw/tencent-provider": {
+      "relativeRoot": "extensions/tencent",
+      "manifestSha256": "199f37100dddce7d1179c5b6e69ebf8889cbb4d6f015c1d1d47f6f4334cf7fbf"
+    },
+    "@openclaw/workboard": {
+      "relativeRoot": "extensions/workboard",
+      "manifestSha256": "b634915e867b4ee707baea29a84a270b78c5629f3dc1dc19fd81aba97c5d32f1"
+    },
+    "@openclaw/memory-wiki": {
+      "relativeRoot": "extensions/memory-wiki",
+      "manifestSha256": "77277c80eb3ce25a6ff662b7583037ad38b6d0a05216f7412861d9974045705c"
+    },
+    "@openclaw/nextcloud-talk": {
+      "relativeRoot": "extensions/nextcloud-talk",
+      "manifestSha256": "4f4fb8e592d4225a4db046cc7cc7f690c46877564d7847cb563cfe4c0b3f6774"
+    },
+    "@openclaw/perplexity-plugin": {
+      "relativeRoot": "extensions/perplexity",
+      "manifestSha256": "85bf766a25e611354d2f845fc7216f464a02f1d1d476aabcd4f3fdf173f56b1f"
+    },
+    "@openclaw/canvas-plugin": {
+      "relativeRoot": "extensions/canvas",
+      "manifestSha256": "ec5a84819acb803f1be9a7776e60a4d4c400fea6626a6a3209d88803e5990db4"
+    },
+    "@openclaw/deepgram-provider": {
+      "relativeRoot": "extensions/deepgram",
+      "manifestSha256": "fc0ec2aa5edc42b4999bfc6aefdeaf81a1812746a6b028d8749388c0553ec5b9"
+    },
+    "@openclaw/clawrouter": {
+      "relativeRoot": "extensions/clawrouter",
+      "manifestSha256": "5988acc4ef2d182282355be2e5acdd47a51cfca509aaca7ae78e04274a30d28f"
+    },
+    "@openclaw/visitor-access": {
+      "relativeRoot": "extensions/visitor-access",
+      "manifestSha256": "2ee1c385fae0ac54a44c511bf03fbf3a2da060fb899568e56a8888996098620e"
+    },
+    "@openclaw/radius-provider": {
+      "relativeRoot": "extensions/radius",
+      "manifestSha256": "2ffbaefbd1b12c652888c7152d6625715d937c3a43954248c548d6a4c14d2ec5"
+    },
+    "@openclaw/admin-http-rpc": {
+      "relativeRoot": "extensions/admin-http-rpc",
+      "manifestSha256": "faf265f618680a98a3e8ca10b639d1780fe08605a3665c5b8429457c95a2589f"
+    },
+    "@openclaw/firecrawl-plugin": {
+      "relativeRoot": "extensions/firecrawl",
+      "manifestSha256": "0a53d7d5cec0aef559b945677b4459f7a0641c4a6d83f406e233c3b98eb0c3f7"
+    },
+    "@openclaw/mcp-events": {
+      "relativeRoot": "extensions/mcp-events",
+      "manifestSha256": "9a92ffa33f0a48b722f20a93356f3b640eee1a9e6dbf14a2bcb14a35f316c4e5"
+    },
+    "@openclaw/kimi-provider": {
+      "relativeRoot": "extensions/kimi-coding",
+      "manifestSha256": "d157291f9d87121d7e18a1c20eead297ecd844e2915efe0790cedef9d2b55760"
+    },
+    "@openclaw/featherless-provider": {
+      "relativeRoot": "extensions/featherless",
+      "manifestSha256": "e7f3eac091125a94d16ce6dc66dae43c82dd48eb100a61b62def745233d47d1d"
+    },
+    "@openclaw/google-meet": {
+      "relativeRoot": "extensions/google-meet",
+      "manifestSha256": "d5f53084e47d9f75786b65291115df4221e3641d3a00e4706e1e9e01bd3ffe0b"
+    },
+    "@openclaw/geolocation-plugin": {
+      "relativeRoot": "extensions/geolocation",
+      "manifestSha256": "d4ccc94f1adfcfc08a7cdd25f2bd56c8d7d937edc9c0f28e685b2f85af92116e"
+    },
+    "openclaw-inline-incident-example": {
+      "relativeRoot": "examples/inline-incident",
+      "manifestSha256": "fd2bac09b1f6d70ae16634c998e0e4fbaa83cac1d18a2f7e37145f522a8aa74d"
+    },
+    "@openclaw/example-ai-chat": {
+      "relativeRoot": "examples/ai-chat",
+      "manifestSha256": "a99b250e81a1913879526191940cec7786f2854c5ab76f44605d9f2612be4fb8"
+    }
+  },
+  "capturedUtc": "2026-11-02T21:08:17.028516+00:00",
+  "monotonic": 179017.300849747,
+  "reason": "Use frozen P manifests, never transient M prepack manifests; final M must restore exactly these bytes.",
+  "sourceChecksumKind": "accepted121-path manifest, not full raw tree hash"
+}

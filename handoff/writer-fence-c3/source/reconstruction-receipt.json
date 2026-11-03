@@ -1,0 +1,15 @@
+{
+  "base": "9a1a7541d53f6e5f26e26b44a5806e0d09c81903",
+  "checked": [
+    "all121 path bytes equal original candidate, local review commit blobs and build worktree",
+    "exact changed-path set matches base-to-review diff",
+    "complete frozen patch hash matches accepted record",
+    "all five added inputs and generated outputs included",
+    "file modes recorded",
+    "no source tree/branch/index modifications or commits performed"
+  ],
+  "qualification": "Read-only identity verification, not a fresh integration/build/runtime gate.",
+  "reviewCommit": "cd221dc61baf2acb8aa227e0630e94b3660b1957",
+  "reviewTree": "f97339497ca0623794a30da4392370711a0a46b1",
+  "sourceChecksum": "c12149b1de17ebcd9abf571a11e46c1ddd53719cbff100ba97980575b76978e9"
+}

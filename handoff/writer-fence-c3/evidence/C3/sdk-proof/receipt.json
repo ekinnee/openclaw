@@ -1,0 +1,43 @@
+{
+  "supportingBuiltSdkOnly": true,
+  "packageRoot": "${DISPOSABLE_RUNTIME}/package",
+  "sdkPath": "${DISPOSABLE_RUNTIME}/plugin-state-store-runtime.js",
+  "scratch": "${DISPOSABLE_RUNTIME}/writer-fence-built-sdk-Y27eGb",
+  "startUtc": "2026-11-03T14:09:59.711Z",
+  "managedV1Positive": true,
+  "physicalIdentity": [
+    1048615,
+    198069
+  ],
+  "attempts": [
+    {
+      "operation": "overwrite",
+      "refusedUnsupportedBinding": true,
+      "exactRowsPreserved": true
+    },
+    {
+      "operation": "delete",
+      "refusedUnsupportedBinding": true,
+      "exactRowsPreserved": true
+    },
+    {
+      "operation": "clear",
+      "refusedUnsupportedBinding": true,
+      "exactRowsPreserved": true
+    },
+    {
+      "operation": "expiry-trigger",
+      "refusedUnsupportedBinding": true,
+      "exactRowsPreserved": true
+    },
+    {
+      "operation": "consume",
+      "refusedUnsupportedBinding": true,
+      "exactRowsPreserved": true
+    }
+  ],
+  "savedRowsHash": "83cfe4a6b507db1e9eff85d7b8e177f11e5a736d694cfd86b140e2e24fee17e4",
+  "ordinaryBeforeAndAfter": true,
+  "result": "selected-public-sync-sdk-guard-assertions-reached",
+  "endUtc": "2026-11-03T14:09:59.719Z"
+}

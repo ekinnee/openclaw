@@ -1,0 +1,79 @@
+[
+  {
+    "name": "@openai/codex",
+    "pin": "0.164.0",
+    "authoritativeOwners": [
+      "codex"
+    ],
+    "sourceEdges": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-review-build/extensions/codex/node_modules/@openai/codex"
+    ],
+    "target": ".pnpm/@openai+codex@0.164.0/node_modules/@openai/codex"
+  },
+  {
+    "name": "smol-toml",
+    "pin": "1.9.1",
+    "authoritativeOwners": [
+      "codex"
+    ],
+    "sourceEdges": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-review-build/extensions/codex/node_modules/smol-toml"
+    ],
+    "target": ".pnpm/smol-toml@1.9.1/node_modules/smol-toml"
+  },
+  {
+    "name": "@matrix-org/matrix-sdk-crypto-nodejs",
+    "pin": "0.6.6",
+    "authoritativeOwners": [
+      "matrix"
+    ],
+    "sourceEdges": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-review-build/extensions/matrix/node_modules/@matrix-org/matrix-sdk-crypto-nodejs"
+    ],
+    "target": ".pnpm/@matrix-org+matrix-sdk-crypto-nodejs@0.6.6_supports-color@10.2.2/node_modules/@matrix-org/matrix-sdk-crypto-nodejs"
+  },
+  {
+    "name": "@matrix-org/matrix-sdk-crypto-wasm",
+    "pin": "18.9.0",
+    "authoritativeOwners": [
+      "matrix"
+    ],
+    "sourceEdges": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-review-build/extensions/matrix/node_modules/@matrix-org/matrix-sdk-crypto-wasm"
+    ],
+    "target": ".pnpm/@matrix-org+matrix-sdk-crypto-wasm@18.9.0/node_modules/@matrix-org/matrix-sdk-crypto-wasm"
+  },
+  {
+    "name": "fake-indexeddb",
+    "pin": "6.2.6",
+    "authoritativeOwners": [
+      "matrix"
+    ],
+    "sourceEdges": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-review-build/extensions/matrix/node_modules/fake-indexeddb"
+    ],
+    "target": ".pnpm/fake-indexeddb@6.2.6/node_modules/fake-indexeddb"
+  },
+  {
+    "name": "matrix-js-sdk",
+    "pin": "43.0.0",
+    "authoritativeOwners": [
+      "matrix"
+    ],
+    "sourceEdges": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-review-build/extensions/matrix/node_modules/matrix-js-sdk"
+    ],
+    "target": ".pnpm/matrix-js-sdk@43.0.0_patch_hash=c3ad7f3afbd9ded4643fbfa31f5862d48d4e05d198cb438efbb4fcdaa845b0cc/node_modules/matrix-js-sdk"
+  },
+  {
+    "name": "music-metadata",
+    "pin": "12.2.3",
+    "authoritativeOwners": [
+      "matrix"
+    ],
+    "sourceEdges": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-review-build/extensions/matrix/node_modules/music-metadata"
+    ],
+    "target": ".pnpm/music-metadata@12.2.3_supports-color@10.2.2/node_modules/music-metadata"
+  }
+]

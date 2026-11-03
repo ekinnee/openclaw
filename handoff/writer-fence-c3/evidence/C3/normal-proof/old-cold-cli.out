@@ -1,0 +1,1 @@
+WRITER_FENCE_PROOF {"boundary":"FAILED","code":"PLUGIN_STATE_WRITE_FAILED","causeCodes":["PLUGIN_STATE_WRITE_FAILED","ERR_SQLITE_ERROR"],"category":"retired-relation"}

@@ -1,0 +1,28 @@
+{
+  "startUTC": "2026-11-03T00:16:59.859829+00:00",
+  "command": [
+    "node",
+    "scripts/test-projects.mts",
+    "src/state/openclaw-state-db-plugin-writer-fence.test.ts",
+    "--",
+    "--maxWorkers=1"
+  ],
+  "sourceBefore": {
+    "src/state/openclaw-state-db-plugin-writer-fence.test.ts": "648cfad0f47bc8affc84de63cfdde1404e01973829f2c57b487be1bca85d4d5a",
+    "src/state/openclaw-state-db-schema-v40-plugin-state.ts": "0f571d19416aaa61031ec8515ccd05f03a3e538c39530d29a44618ce9f6bd7d0",
+    "src/state/openclaw-state-schema.sql": "20678cc2c3733f3ed2a093ff6d3758f4c39b96a5a4a559de8a59b5d7e3122c92",
+    "src/state/openclaw-state-schema.test-support.ts": "3b8ebc79698e83c8e5167b6c589f66008657b1f09588c07d69502d23230199ae"
+  },
+  "coverage": "Full16affectedfixtures inclfullDoctorwarmolderstatements, ordinaryreopen, experimentalguardpreservation andtransactionrollback; no selectionskipsrequested",
+  "runtime": "same Node/unit normalwrapper; no forksalternative launched",
+  "endUTC": "2026-11-03T00:30:08.270520+00:00",
+  "seconds": 788.4107923270203,
+  "exit": 0,
+  "sourceAfter": {
+    "src/state/openclaw-state-db-plugin-writer-fence.test.ts": "648cfad0f47bc8affc84de63cfdde1404e01973829f2c57b487be1bca85d4d5a",
+    "src/state/openclaw-state-db-schema-v40-plugin-state.ts": "0f571d19416aaa61031ec8515ccd05f03a3e538c39530d29a44618ce9f6bd7d0",
+    "src/state/openclaw-state-schema.sql": "20678cc2c3733f3ed2a093ff6d3758f4c39b96a5a4a559de8a59b5d7e3122c92",
+    "src/state/openclaw-state-schema.test-support.ts": "3b8ebc79698e83c8e5167b6c589f66008657b1f09588c07d69502d23230199ae"
+  },
+  "sourceChanges": []
+}

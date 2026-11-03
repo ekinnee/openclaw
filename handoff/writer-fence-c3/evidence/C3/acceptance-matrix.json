@@ -1,0 +1,63 @@
+{
+  "archiveSha256": "dd835bdab74c3df35346c1ab8d10dbcf521b3dc35cceb6f52d91a065c4ce8203",
+  "sourceChecksum": "c12149b1de17ebcd9abf571a11e46c1ddd53719cbff100ba97980575b76978e9",
+  "claims": [
+    {
+      "claim": "Doctor39to40 plus12originalrow/physicalfilepreservation",
+      "result": "PASS",
+      "evidence": "normal-proof/receipt.json",
+      "detail": "actual predecessor normal CLI producer then corrected archive full Doctor; row hash identical before/after; expiry delta0"
+    },
+    {
+      "claim": "all13warm sync/legacy/V2register,CAS,delete,clear,expiry,move operations",
+      "result": "PASS",
+      "evidence": "normal-proof/old-held.out",
+      "operations": [
+        "sync.register",
+        "sync.delete",
+        "sync.clear",
+        "sync.expiry-trigger",
+        "legacy.register",
+        "legacy.delete",
+        "legacy.clear",
+        "v2.register",
+        "v2.cas",
+        "v2.delete",
+        "v2.clear",
+        "v2.expiry-trigger",
+        "v2.move"
+      ]
+    },
+    {
+      "claim": "cold older CLI refused without effects",
+      "result": "PASS",
+      "evidence": "normal-proof/old-cold-cli.out",
+      "detail": "retired-relation/ERR_SQLITE_ERROR before ordinary priming; all12rows unchanged; no schema-version diagnostic claimed"
+    },
+    {
+      "claim": "cold older Gateway refuses floor40/maximum39",
+      "result": "PASS",
+      "evidence": "normal-continuation/old-cold-gateway.err",
+      "detail": "actual normal startup selected-store diagnostic, nonzeroexit; rows unchanged"
+    },
+    {
+      "claim": "authenticated new Gateway CRUD,CAS,retainedmove and restart/persistence",
+      "result": "PASS",
+      "evidence": "configured-gateway-proof/receipt.json",
+      "detail": "both actual packaged Gateway generations plus private configured-target CLI RPC; ordinary true,persisted true,cas true,retainedMove true"
+    },
+    {
+      "claim": "current archive SDK V1/ordinary positives and5unsupportedfuturebindingguards",
+      "result": "PASS",
+      "evidence": "sdk-proof/receipt.json",
+      "detail": "actual public SDK export; overwrite/delete/clear/expiry/consume refuse and exactsavedrows preserved; trusted synthetic saved-data fixture, not native-origination proof"
+    },
+    {
+      "claim": "source/archive/registrybytepreservation and owned cleanup",
+      "result": "PASS",
+      "evidence": "final-preservation-cleanup.json",
+      "detail": "only expected packaged first-run marker consumed; all deliveredcode/data and registryfixture unchanged; empty lockdirectory preserved, ownership claims released; processes absent/portclosed"
+    }
+  ],
+  "requiredUnreached": []
+}

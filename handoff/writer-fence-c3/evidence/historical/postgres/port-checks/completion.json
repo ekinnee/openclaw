@@ -1,0 +1,70 @@
+{
+  "closed_utc": "2026-11-02T18:54:30.557735+00:00",
+  "base": "9a1a7541d53f6e5f26e26b44a5806e0d09c81903",
+  "production_files": 3,
+  "selected_tests": {
+    "sqlite": 19,
+    "new_postgres": 10,
+    "ordinary_postgres": 1,
+    "failed": 0,
+    "skipped": 0
+  },
+  "source_guard": "Completed generation verified before cleanup, exit0. All3ownedproduction hashes match compiled worker inputs and post-join disk. All3test/support hashes match independent pre/post fixture manifest; they are not in the native worker compilation manifest.",
+  "worker_identity": "f53050a439a296c4aec5e628ef0f8d0a3da58a4dcb6e7c60d8a188fd05bd8d4c",
+  "worker_inputs": 14819,
+  "worker_outputs": 23306,
+  "worker_manifest_sha256": "c849fc0c5de6ae082281dbe2ffce8dd3ee50b96b1a6bfd42b99ff102c0740368",
+  "lint": "lint4.log exit0 supported wrapper skip-prepare, no generation",
+  "format": "six-file format check exit0",
+  "diff_check": "six-file diff check exit0",
+  "inputs": [
+    {
+      "path": "src/infra/database-engine/port-descriptor.ts",
+      "sha256": "80dab227250b6980b123d3812c5b3e9b9f35fea368bd97e38f3c909e6b9743cc",
+      "lines": 271,
+      "compiled_worker_input": true
+    },
+    {
+      "path": "src/infra/database-engine/port.worker.ts",
+      "sha256": "0255bd14286ea65e00d216bea0aeea815521f3567b6ec370b3391e7301fdb18e",
+      "lines": 728,
+      "compiled_worker_input": true
+    },
+    {
+      "path": "src/infra/database-engine/postgres-catalog.ts",
+      "sha256": "369a7d7a130f90410f3eaf542faa389281d4cb1eed550a5ef9ce8c8a6cfd535d",
+      "lines": 230,
+      "compiled_worker_input": true
+    },
+    {
+      "path": "src/infra/database-engine/port-provider-fixture.test-support.ts",
+      "sha256": "bde97ede7db911eb3d1ff5b9cc9c742039e207fff0786e0e283afade47da9104",
+      "lines": 107,
+      "compiled_worker_input": false
+    },
+    {
+      "path": "src/infra/database-engine/port-provider.test.ts",
+      "sha256": "22b5f67f067ce15c38d5bdcf946fa4c803c557df8963cb78ade750bfb615418b",
+      "lines": 152,
+      "compiled_worker_input": false
+    },
+    {
+      "path": "src/infra/database-engine/port-state-writer-fence.postgres.test.ts",
+      "sha256": "4f98c72545208b6e03a89c9bbc05244ed4b3a72a99eb938ee33e57db258bfa9e",
+      "lines": 119,
+      "compiled_worker_input": false
+    }
+  ],
+  "scope_limit": "Development source and actual native PostgreSQL port/export/restore evidence using handcrafted exact state guard descriptor. Not full packaged candidate admission/migration/upgrade acceptance. No canonical SQL/schema engine/plugin-state files edited by this lane; no commits/publication/version allocation.",
+  "earlier_attempt_dispositions": {
+    "baseline_redirection": "setup-only typo corrected; no runner started",
+    "initial_routing": "unit-fast selectedSQLite only, PG unselected",
+    "red_pg": "10selected/no skips; source blanket-view refusal reached; downstreamPG assertions unreached",
+    "green1": "own numeric comparison defect beforePG destination; ordinaryPG positive passed",
+    "green2": "newPG9passed plus ordinaryPG; forwarding setup42P16collation; no owning refusal verdict there",
+    "lint1": "interrupted default preparation joined; task-only Kysely artifacts accounted, no verdict",
+    "lint2": "three local diagnostics",
+    "lint3": "one max-lines diagnostic",
+    "green3": "all intended assertions reached/passed"
+  }
+}

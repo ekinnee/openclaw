@@ -1,0 +1,27 @@
+{
+  "extends": "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/tsconfig.core.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "incremental": false,
+    "rootDir": "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence",
+    "typeRoots": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/node_modules/@types"
+    ]
+  },
+  "files": [
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state-native-binding-codec.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state-store.kernel.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state-store.mutations.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state-store.retention.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state-store.sqlite.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state-store.moves.worker.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state.worker.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state-operation.kernel.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/extensions/codex/native-session-binding-api.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/plugin-state/plugin-state-store.kernel.test.ts"
+  ],
+  "include": [
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/types/**/*.d.ts"
+  ],
+  "exclude": []
+}

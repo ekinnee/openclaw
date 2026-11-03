@@ -1,0 +1,23 @@
+SOURCE c12149b1de17ebcd9abf571a11e46c1ddd53719cbff100ba97980575b76978e9 (121-path checksum, not Git commit)
+ARCHIVE dd835bdab74c3df35346c1ab8d10dbcf521b3dc35cceb6f52d91a065c4ce8203 113194006 bytes
+CANONICAL PACKAGE exit0; native declarations and tarball integrity passed; 792.410s
+DOCTOR39->40: same physical file; all12originalrows unchanged; expiry delta0
+WARM INVOKED -> REFUSED sync.register
+WARM INVOKED -> REFUSED sync.delete
+WARM INVOKED -> REFUSED sync.clear
+WARM INVOKED -> REFUSED sync.expiry-trigger
+WARM INVOKED -> REFUSED legacy.register
+WARM INVOKED -> REFUSED legacy.delete
+WARM INVOKED -> REFUSED legacy.clear
+WARM INVOKED -> REFUSED v2.register
+WARM INVOKED -> REFUSED v2.cas
+WARM INVOKED -> REFUSED v2.delete
+WARM INVOKED -> REFUSED v2.clear
+WARM INVOKED -> REFUSED v2.expiry-trigger
+WARM INVOKED -> REFUSED v2.move
+COLD CLI: PLUGIN_STATE_WRITE_FAILED/ERR_SQLITE_ERROR retired relation; no ordinary priming/no row change
+COLD GATEWAY: selected state database schema40; build supports39; startup refused
+AUTHENTICATED GATEWAY generation1: {"cas": true, "ordinary": true, "persisted": true, "phase": "prime", "proof": true, "retainedMove": true}
+AUTHENTICATED GATEWAY generation2: {"cas": true, "ordinary": true, "persisted": true, "phase": "verify", "proof": true, "retainedMove": true}
+SDK: managedV1positive; ordinarybefore/afterpositive; overwrite,delete,clear,expiry-trigger,consume refused; exactrows preserved
+CLEANUP: owned process identities absent; Gateway portclosed; build owner/child claims released; source unchanged

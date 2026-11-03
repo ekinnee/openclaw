@@ -1,0 +1,28 @@
+{
+  "extends": "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/test/tsconfig/tsconfig.core.test.shard.json",
+  "compilerOptions": {
+    "incremental": false,
+    "noEmit": true,
+    "typeRoots": [
+      "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/node_modules/@types"
+    ]
+  },
+  "files": [
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/config/sessions/session-entry.test-compat.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/infra/host-env-security-policy.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/state/openclaw-agent-db.generated.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/state/openclaw-state-db.generated.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/types/agent-sessions.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/types/node-runtime-globals.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/types/qrcode.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/ui/src/css.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/ui/src/i18n/virtual-locale.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/ui/src/markdown-it-emoji.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/ui/src/pages/solid-page-elements.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/ui/src/types/highlight-js-subpaths.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/ui/src/types/novnc.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/ui/src/types/solid-elements.d.ts",
+    "${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence/src/state/openclaw-state-db-plugin-writer-fence.test.ts"
+  ],
+  "include": []
+}

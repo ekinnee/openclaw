@@ -1,0 +1,194 @@
+{
+  "predecessor": "${DISPOSABLE_RUNTIME}/openclaw.sqlite.pre-startup-migration-4d9eea1c-c8a3-82d7-88c2-7235f6fe58d8.bak",
+  "pathname": "${DISPOSABLE_RUNTIME}/openclaw.sqlite",
+  "scope": "Actualpredecessorbackup; realfullDoctor schemamaintenance and backup/ownership. Observer wraps actualmigration only to read its realtransactioncatalog, returns unchangedoutcome. No authority/outcome mock.",
+  "before": [
+    {
+      "type": "index",
+      "name": "idx_plugin_state_expiry",
+      "tbl_name": "plugin_state_entries",
+      "sql": "CREATE INDEX idx_plugin_state_expiry\n  ON plugin_state_entries(expires_at)\n  WHERE expires_at IS NOT NULL"
+    },
+    {
+      "type": "index",
+      "name": "idx_plugin_state_listing",
+      "tbl_name": "plugin_state_entries",
+      "sql": "CREATE INDEX idx_plugin_state_listing\n  ON plugin_state_entries(plugin_id, namespace, created_at, entry_key, expires_at)"
+    }
+  ],
+  "afterMigration": [
+    {
+      "name": "idx_plugin_state_expiry",
+      "origin": "c",
+      "partial": 1,
+      "sql": "CREATE INDEX idx_plugin_state_expiry ON \"plugin_state_records\"(expires_at) WHERE expires_at IS NOT NULL",
+      "terms": [
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "expires_at",
+          "seqno": 0
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 0,
+          "kind": "rowid",
+          "name": null,
+          "seqno": 1
+        }
+      ],
+      "unique": 0
+    },
+    {
+      "name": "idx_plugin_state_listing",
+      "origin": "c",
+      "partial": 0,
+      "sql": "CREATE INDEX idx_plugin_state_listing ON \"plugin_state_records\"(plugin_id, namespace, created_at, entry_key, expires_at)",
+      "terms": [
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "plugin_id",
+          "seqno": 0
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "namespace",
+          "seqno": 1
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "created_at",
+          "seqno": 2
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "entry_key",
+          "seqno": 3
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "expires_at",
+          "seqno": 4
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 0,
+          "kind": "rowid",
+          "name": null,
+          "seqno": 5
+        }
+      ],
+      "unique": 0
+    }
+  ],
+  "expected": [
+    {
+      "name": "idx_plugin_state_expiry",
+      "origin": "c",
+      "partial": 1,
+      "sql": "CREATE INDEX idx_plugin_state_expiry ON plugin_state_records(expires_at) WHERE expires_at IS NOT NULL",
+      "terms": [
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "expires_at",
+          "seqno": 0
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 0,
+          "kind": "rowid",
+          "name": null,
+          "seqno": 1
+        }
+      ],
+      "unique": 0
+    },
+    {
+      "name": "idx_plugin_state_listing",
+      "origin": "c",
+      "partial": 0,
+      "sql": "CREATE INDEX idx_plugin_state_listing ON plugin_state_records(plugin_id, namespace, created_at, entry_key, expires_at)",
+      "terms": [
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "plugin_id",
+          "seqno": 0
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "namespace",
+          "seqno": 1
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "created_at",
+          "seqno": 2
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "entry_key",
+          "seqno": 3
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 1,
+          "kind": "column",
+          "name": "expires_at",
+          "seqno": 4
+        },
+        {
+          "coll": "BINARY",
+          "desc": 0,
+          "key": 0,
+          "kind": "rowid",
+          "name": null,
+          "seqno": 5
+        }
+      ],
+      "unique": 0
+    }
+  ],
+  "outcome": {
+    "changes": [],
+    "warnings": [
+      "Failed migrating shared state database schema: SqliteSchemaMismatchError: missing or drifted index idx_plugin_state_expiry; missing or drifted index idx_plugin_state_listing. Database: ${DISPOSABLE_RUNTIME}/openclaw.sqlite"
+    ]
+  },
+  "exactDifference": "Only SQL text differs: actual ALTER-produced ON \"plugin_state_records\" versus canonical ON plugin_state_records; all other index fingerprint fields agree"
+}

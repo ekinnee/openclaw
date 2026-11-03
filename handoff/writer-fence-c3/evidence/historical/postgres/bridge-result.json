@@ -1,0 +1,477 @@
+{
+  "kind": "supporting-pinned-production-bridge-proof",
+  "started": "2026-11-02T17:49:28.237Z",
+  "ended": "2026-11-02T17:49:28.439Z",
+  "elapsedMs": 202.01164400000002,
+  "assertions": 36,
+  "passed": true,
+  "inputReceipt": "bridge-inputs.json",
+  "events": [
+    {
+      "event": "READY",
+      "ms": 41,
+      "base": "9a1a7541d53f6e5f26e26b44a5806e0d09c81903",
+      "inputs": 46,
+      "compiled": {
+        "path": "${ARTIFACTS}/postgres/compiled/bridge.worker.cjs",
+        "sha256": "108d48178d463864164cb2a56422ef95a1752dc03789f0e966ffe2215423e590"
+      },
+      "pgClient": "8.23.1",
+      "server": {
+        "server_version": "16.15 (Debian 16.15-1.pgdg12+2)"
+      }
+    },
+    {
+      "event": "PASS",
+      "ms": 84,
+      "label": "bridge generic actual server cache populated",
+      "plans": [
+        {
+          "name": "ded4aa673596ea4d6521e28a1cd25f4690da44fc",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "bdb5fbaa4dfac5b510c01c965dff0fa0643b8760",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "3156f6ed59f051b40bf6dd1c413ed1ac9b8a07c0",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "dcdf399752f0abbf21bf993fff63e85add952157",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "194e420c5ee9d358c9829c93ee0c1e39ea78d7dc",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "3ac00fa0029709ed4f496c6f17dca162710b3190",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "8d576e827949db7b02ebea4a2a87bb7f81e80d52",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "9b792ab14022fddbcd08c29dd359c027fe8d38ce",
+          "generic_plans": 1,
+          "custom_plans": 0
+        }
+      ]
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 96,
+      "pid": 125
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 97,
+      "pid": 124
+    },
+    {
+      "event": "PASS",
+      "ms": 98,
+      "label": "bridge generic original acknowledged writer drains before rename"
+    },
+    {
+      "event": "PASS",
+      "ms": 98,
+      "label": "bridge generic queued writer held through cutover transaction"
+    },
+    {
+      "event": "PASS",
+      "ms": 101,
+      "label": "bridge generic actual queued cached writer refuses",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 102,
+      "label": "bridge generic cached read refused",
+      "sqlstate": "42703",
+      "message": "column \"value_json\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 102,
+      "label": "bridge generic cached read refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 102,
+      "label": "bridge generic cached upsert refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" of relation \"plugin_state_entries\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 102,
+      "label": "bridge generic cached upsert refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 102,
+      "label": "bridge generic cached cas refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 103,
+      "label": "bridge generic cached cas refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 103,
+      "label": "bridge generic cached delete refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 103,
+      "label": "bridge generic cached delete refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 103,
+      "label": "bridge generic cached clear refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 103,
+      "label": "bridge generic cached clear refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 104,
+      "label": "bridge generic cached expiry refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 104,
+      "label": "bridge generic cached expiry refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 104,
+      "label": "bridge generic cached move refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 104,
+      "label": "bridge generic cached move refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 106,
+      "label": "bridge generic SELECT-star with old predicate cannot read new data"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 106,
+      "label": "bridge generic old DROP TABLE refuses guard view",
+      "sqlstate": "42809",
+      "message": "\"plugin_state_entries\" is not a table"
+    },
+    {
+      "event": "PASS",
+      "ms": 106,
+      "label": "bridge generic old DROP TABLE refuses guard view",
+      "sqlstate": "42809"
+    },
+    {
+      "event": "PASS",
+      "ms": 107,
+      "label": "bridge generic no queued or denied mutation effect"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 113,
+      "label": "bridge generic new old-name connection refused",
+      "sqlstate": "42703",
+      "message": "column \"value_json\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 113,
+      "label": "bridge generic new old-name connection refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 115,
+      "label": "bridge generic current-name ordinary V1 positive"
+    },
+    {
+      "event": "PASS",
+      "ms": 115,
+      "label": "bridge generic idle transport released outside transaction"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 123,
+      "label": "bridge generic transport reconnect preserves old-format refusal",
+      "sqlstate": "42703",
+      "message": "column \"value_json\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 123,
+      "label": "bridge generic transport reconnect preserves old-format refusal",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 154,
+      "label": "bridge custom actual server cache populated",
+      "plans": [
+        {
+          "name": "ded4aa673596ea4d6521e28a1cd25f4690da44fc",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "bdb5fbaa4dfac5b510c01c965dff0fa0643b8760",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "3156f6ed59f051b40bf6dd1c413ed1ac9b8a07c0",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "dcdf399752f0abbf21bf993fff63e85add952157",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "194e420c5ee9d358c9829c93ee0c1e39ea78d7dc",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "3ac00fa0029709ed4f496c6f17dca162710b3190",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "8d576e827949db7b02ebea4a2a87bb7f81e80d52",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "9b792ab14022fddbcd08c29dd359c027fe8d38ce",
+          "generic_plans": 0,
+          "custom_plans": 1
+        }
+      ]
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 162,
+      "pid": 130
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 163,
+      "pid": 129
+    },
+    {
+      "event": "PASS",
+      "ms": 164,
+      "label": "bridge custom original acknowledged writer drains before rename"
+    },
+    {
+      "event": "PASS",
+      "ms": 165,
+      "label": "bridge custom queued writer held through cutover transaction"
+    },
+    {
+      "event": "PASS",
+      "ms": 166,
+      "label": "bridge custom actual queued cached writer refuses",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 167,
+      "label": "bridge custom cached read refused",
+      "sqlstate": "42703",
+      "message": "column \"value_json\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 167,
+      "label": "bridge custom cached read refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 168,
+      "label": "bridge custom cached upsert refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" of relation \"plugin_state_entries\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 168,
+      "label": "bridge custom cached upsert refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 169,
+      "label": "bridge custom cached cas refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 169,
+      "label": "bridge custom cached cas refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 169,
+      "label": "bridge custom cached delete refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 169,
+      "label": "bridge custom cached delete refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 170,
+      "label": "bridge custom cached clear refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 170,
+      "label": "bridge custom cached clear refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 170,
+      "label": "bridge custom cached expiry refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 170,
+      "label": "bridge custom cached expiry refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 171,
+      "label": "bridge custom cached move refused",
+      "sqlstate": "42703",
+      "message": "column \"plugin_id\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 171,
+      "label": "bridge custom cached move refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 172,
+      "label": "bridge custom SELECT-star with old predicate cannot read new data"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 172,
+      "label": "bridge custom old DROP TABLE refuses guard view",
+      "sqlstate": "42809",
+      "message": "\"plugin_state_entries\" is not a table"
+    },
+    {
+      "event": "PASS",
+      "ms": 172,
+      "label": "bridge custom old DROP TABLE refuses guard view",
+      "sqlstate": "42809"
+    },
+    {
+      "event": "PASS",
+      "ms": 173,
+      "label": "bridge custom no queued or denied mutation effect"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 180,
+      "label": "bridge custom new old-name connection refused",
+      "sqlstate": "42703",
+      "message": "column \"value_json\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 180,
+      "label": "bridge custom new old-name connection refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 181,
+      "label": "bridge custom current-name ordinary V1 positive"
+    },
+    {
+      "event": "PASS",
+      "ms": 181,
+      "label": "bridge custom idle transport released outside transaction"
+    },
+    {
+      "event": "REFUSAL_OBSERVED",
+      "ms": 186,
+      "label": "bridge custom transport reconnect preserves old-format refusal",
+      "sqlstate": "42703",
+      "message": "column \"value_json\" does not exist"
+    },
+    {
+      "event": "PASS",
+      "ms": 186,
+      "label": "bridge custom transport reconnect preserves old-format refusal",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "COMPLETE",
+      "ms": 198,
+      "assertions": 36,
+      "sourceGuard": "unchanged"
+    }
+  ]
+}

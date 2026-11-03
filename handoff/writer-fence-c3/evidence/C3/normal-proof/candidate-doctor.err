@@ -1,0 +1,162 @@
+Doctor: startup
+Doctor: archive preparation
+Doctor: maintenance begin
+Doctor: Preserve original state
+Doctor: database preflight
+Doctor: schema admission
+Doctor: state database repair
+Doctor: database migrations
+Doctor: heartbeat migration backups
+Doctor: state schema
+Doctor: Agent deletion journal
+Doctor: UI protocol
+Doctor: Source install
+Doctor: CLI launcher
+Doctor: Plugin runtime links
+Doctor: config flow
+Doctor: state write admission
+Doctor: stale update runs
+Doctor: state migrations import
+Doctor: state dir migrations
+Doctor: legacy config migration
+Doctor: config snapshot
+Doctor: file
+Doctor: hash
+Doctor: parse
+Doctor: includes
+Doctor: env
+Doctor: validate
+Doctor: materialize
+Doctor: observe
+Doctor: file
+Doctor: hash
+Doctor: parse
+Doctor: includes
+Doctor: env
+Doctor: validate
+Doctor: materialize
+Doctor: observe
+Doctor: plugin metadata completion
+Doctor: retired state repair
+Doctor: session entry state
+Doctor: plugin plan import
+Doctor: plugin plan
+Doctor: plugin convergence import
+Doctor: plugin convergence
+Doctor: config snapshot
+Doctor: file
+Doctor: hash
+Doctor: parse
+Doctor: includes
+Doctor: env
+Doctor: validate
+Doctor: materialize
+Doctor: observe
+Doctor: plugin metadata completion
+Doctor: cron repair import
+Doctor: cron repair
+Doctor: cron policy scan
+Doctor: legacy state migrations
+Doctor: config flow (10s elapsed)
+Doctor: retired a2ui widgets
+Doctor: relative session store
+Doctor: Config repairs
+Doctor: contributions
+Doctor: Write config migrations
+Doctor: Agent database admission
+Doctor: core/doctor/agent-database-admission: check
+Doctor: Native helpers and child pipes
+Doctor: core/doctor/appcontainer-spawn: check
+Doctor: core/doctor/native-status: check
+Doctor: Node runtime
+Doctor: Runtime capabilities
+Doctor: Gateway config
+Doctor: Database engines
+Doctor: Auth profile migration
+Doctor: Auth profiles
+Doctor: Claude CLI
+Doctor: Gateway auth
+Doctor: Node hosting preconditions
+Doctor: core/doctor/node-hosting-preconditions: check
+Doctor: Command owner
+Doctor: Plugin health inspection and repair
+Doctor: openai/daybreak-alias-retirement: check
+Doctor: Legacy state
+Doctor: core/doctor/removed-workspaces-state: check
+Doctor: Session transcripts
+Doctor: Agent memory schema
+Doctor: Legacy plugin manifests
+Doctor: Legacy plugin dependencies
+Doctor: Stale plugin runtime symlinks
+Doctor: Configured plugin repair
+Doctor: Plugin registry
+Doctor: Legacy plugin captures
+Doctor: Updater runtimes
+Doctor: Retained update database snapshots
+Doctor: core/doctor/update-snapshots: check
+Doctor: UI protocol freshness
+Doctor: Stale runtime build
+Doctor: core/doctor/stale-runtime-build: check
+Doctor: Disk space
+Doctor: Project clones
+Doctor: SQLite database size
+Doctor: contributions (10s elapsed)
+Doctor: Channel ingress dead letters
+Doctor: State integrity
+Doctor: Codex session routes
+Doctor: Telegram General-topic conversations
+Doctor: core/doctor/telegram-general-topic-conversations: check
+Doctor: Session transcript headers
+Doctor: Session transcript labels
+Doctor: Session snapshots
+Doctor: Config audit
+Doctor: Legacy cron
+Doctor: Sandbox
+Doctor: Codex bwrap sandbox
+Doctor: Gateway services
+Doctor: Host desktop
+Doctor: Default account routing
+Doctor: core/doctor/default-account-routing: check
+Doctor: Channel package-state capabilities
+Doctor: core/doctor/channel-package-state-capabilities: check
+Doctor: Startup channel maintenance
+Doctor: Security
+Doctor: Web fetch proxy
+Doctor: Bundle LSP environment
+Doctor: GitHub projects
+Doctor: Browser
+Doctor: OAuth TLS
+Doctor: Hooks model
+Doctor: Model references
+(node:13422) [DEP_PLUGIN_SDK] DeprecationWarning: Plugin matrix: createPluginStateSyncKeyedStore is deprecated; use createPluginStateKeyedStoreV2 and await its operations instead. The legacy contract remains supported during its deprecation period. Final compatibility day: 2026-12-31. Removal ships in the first January 2027 stable release; no SDK major is required.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:13422) [DEP_PLUGIN_SDK] DeprecationWarning: Plugin SDK: PluginStateSyncKeyedStore.entries is deprecated; use await openKeyedStoreV2().entries() instead. Synchronous operations still commit before returning; legacy callbacks retain transaction-local ordering. Final compatibility day: 2026-12-31. Removal ships in the first January 2027 stable release; no SDK major is required.
+Doctor: ACP agent model
+Doctor: Provider catalog projection
+Doctor: Local audio acceleration
+Doctor: Runtime tool schemas
+Doctor: Skill Workshop tool policy
+Doctor: systemd linger
+Doctor: Workspace status
+Doctor: Workspace alias
+Doctor: Skills
+Doctor: Model allowlist
+Doctor: Bootstrap size
+Doctor: Heartbeat cadence migration
+Doctor: Heartbeat scratch migration
+Doctor: TOOLS.md migration
+Doctor: Heartbeat task cron migration
+Doctor: Shell completion
+Doctor: Gateway health
+Doctor: WhatsApp responsiveness
+Doctor: Memory search
+Doctor: Device pairing
+Doctor: Gateway daemon
+Doctor: Write config
+Doctor: Workspace suggestions
+Doctor: Final config validation
+Doctor: external config
+Doctor: maintenance ready
+Doctor: retained runtimes
+Doctor: maintenance finish
+Doctor: maintenance release

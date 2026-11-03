@@ -1,0 +1,60 @@
+[gateway] startup phase: entry.run-main-import starting total=70.7ms
+[gateway] startup phase: entry.run-main-import 40.0ms total=110.8ms start=70.7ms rssMb=61.4 heapUsedMb=11.5 workers=0 workerHeapSamples=0/0 workerHeapMb=0.0 workerHeapSource=cached
+[gateway] startup phase: cli.main.gateway-run-select-environment starting total=831.7ms
+[gateway] startup phase: cli.main.gateway-run-select-environment-imports starting total=832.7ms
+[gateway] startup phase: cli.main.gateway-run-select-environment-imports 11.2ms total=844.0ms start=832.7ms rssMb=177.3 heapUsedMb=58.4 workers=0 workerHeapSamples=0/0 workerHeapMb=0.0 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-guard starting total=844.7ms
+[gateway] startup phase: cli.environment.imports starting total=845.0ms
+[gateway] startup phase: cli.environment.imports 2.3ms total=847.3ms start=845.0ms rssMb=177.3 heapUsedMb=60.9 workers=0 workerHeapSamples=0/0 workerHeapMb=0.0 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-import starting total=848.2ms
+[gateway] startup phase: cli.environment.config-import 121.4ms total=969.6ms start=848.2ms rssMb=180.5 heapUsedMb=81.3 workers=0 workerHeapSamples=0/0 workerHeapMb=0.0 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-read starting total=969.9ms
+[gateway] startup phase: cli.environment.config-read 21.6ms total=991.5ms start=969.9ms rssMb=186.1 heapUsedMb=68.3 workers=0 workerHeapSamples=0/0 workerHeapMb=0.0 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-recovery starting total=992.0ms
+[gateway] startup phase: cli.environment.config.recovery.health-read starting total=994.6ms
+[gateway] startup phase: cli.environment.config.recovery.health-read 220.6ms total=1215.2ms start=994.6ms rssMb=239.5 heapUsedMb=70.7 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-recovery 223.5ms total=1215.5ms start=992.0ms rssMb=239.5 heapUsedMb=70.8 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-guard 371.3ms total=1216.0ms start=844.7ms rssMb=239.5 heapUsedMb=71.1 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.environment.pin-runtime-paths starting total=1216.2ms
+[gateway] startup phase: cli.environment.pin-runtime-paths 0.2ms total=1216.4ms start=1216.2ms rssMb=239.5 heapUsedMb=70.8 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.main.gateway-run-select-environment 384.8ms total=1216.5ms start=831.7ms rssMb=239.5 heapUsedMb=71.2 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.main.gateway-run-imports starting total=1227.7ms
+[gateway] startup phase: cli.main.gateway-run-imports 2.4ms total=1230.1ms start=1227.7ms rssMb=239.8 heapUsedMb=80.2 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.main.gateway-run-pre-bootstrap starting total=1245.3ms
+[gateway] startup phase: cli.environment.imports starting total=1245.6ms
+[gateway] startup phase: cli.environment.imports 0.1ms total=1245.7ms start=1245.6ms rssMb=241.7 heapUsedMb=87.6 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-import starting total=1246.0ms
+[gateway] startup phase: cli.environment.config-import 0.0ms total=1246.1ms start=1246.0ms rssMb=241.7 heapUsedMb=87.7 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-read starting total=1246.1ms
+[gateway] startup phase: cli.environment.config-read 1.2ms total=1247.4ms start=1246.1ms rssMb=241.7 heapUsedMb=88.0 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-recovery starting total=1247.5ms
+[gateway] startup phase: cli.environment.config.recovery.health-read starting total=1250.9ms
+[gateway] startup phase: cli.environment.config.recovery.health-read 0.1ms total=1251.0ms start=1250.9ms rssMb=245.1 heapUsedMb=70.4 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.environment.config-recovery 3.6ms total=1251.1ms start=1247.5ms rssMb=245.1 heapUsedMb=70.4 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.main.gateway-run-pre-bootstrap 6.0ms total=1251.4ms start=1245.3ms rssMb=245.3 heapUsedMb=70.4 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.main.gateway-run-bootstrap starting total=1251.5ms
+[gateway] startup phase: cli.command.config-ready starting total=1252.6ms
+[gateway] startup phase: cli.command.config-guard-import starting total=1252.7ms
+[gateway] startup phase: cli.command.config-guard-import 11.2ms total=1263.9ms start=1252.7ms rssMb=245.4 heapUsedMb=77.5 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.bootstrap.admission.live-owner starting total=1274.3ms
+[gateway] startup phase: cli.bootstrap.admission.live-owner 1.4ms total=1275.7ms start=1274.3ms rssMb=247.1 heapUsedMb=87.3 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.bootstrap.admission.core-config starting total=1275.8ms
+[gateway] startup phase: cli.bootstrap.admission.core-config 1.7ms total=1277.5ms start=1275.8ms rssMb=247.1 heapUsedMb=87.6 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.bootstrap.admission.state-snapshot starting total=1277.6ms
+[gateway] startup phase: cli.bootstrap.admission.core-recovery starting total=1279.0ms
+[gateway] startup phase: cli.bootstrap.admission.core-recovery 3.5ms total=1282.5ms start=1279.0ms rssMb=247.4 heapUsedMb=87.9 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.bootstrap.admission.database-runtime-import starting total=1282.7ms
+[gateway] startup phase: cli.bootstrap.admission.plugin-config starting total=1282.8ms
+[gateway] startup phase: cli.bootstrap.admission.database-runtime-import 18.5ms total=1301.2ms start=1282.7ms rssMb=248.2 heapUsedMb=96.0 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.bootstrap.admission.database-readiness starting total=1301.5ms
+[gateway] startup phase: cli.bootstrap.admission.plugin-metadata-completion starting total=1608.9ms
+[gateway] startup phase: cli.bootstrap.admission.plugin-metadata-completion 22.8ms total=1631.7ms start=1608.9ms rssMb=269.5 heapUsedMb=94.1 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.bootstrap.admission.plugin-config 349.0ms total=1631.8ms start=1282.8ms registrySnapshotMs=266.11763800000017 manifestRegistryMs=15.993932000000086 ownerMapsMs=9.734981999999945 totalMs=292.8685600000001 indexPluginCount=181 manifestPluginCount=181 rssMb=269.5 heapUsedMb=94.1 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.bootstrap.admission.database-readiness 586.9ms total=1888.4ms start=1301.5ms agentCount=1 rssMb=269.5 heapUsedMb=94.1 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.bootstrap.admission.state-snapshot 611.4ms total=1889.0ms start=1277.6ms rssMb=269.5 heapUsedMb=94.2 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+Gateway refused startup because 1 OpenClaw database schema(s) are newer than this build. state database ${DISPOSABLE_RUNTIME}/openclaw.sqlite uses schema 40; this build supports 39; writer build 2026.10.9. Refused by OpenClaw 2026.10.9 (9a1a754) installed at ${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-baseline. Run a build at least as new as the writer that supports these schemas, or stop the service and restore your pre-upgrade backup created with openclaw backup create. See https://docs.openclaw.ai/reference/database-schemas.
+[gateway] failed to park the managed LaunchAgent: Native Gateway service membership could not be verified. From an interactive external shell not started by the service, run openclaw gateway stop && openclaw update --yes && openclaw gateway start. If the update fails, follow its recovery guidance before starting the Gateway. No service teardown was attempted. With native helper support (systemd-run on Linux), use openclaw gateway call update.run --params '{}' for a managed handoff.
+[gateway] refused startup because 1 OpenClaw database schema(s) are newer than this build. state database ${DISPOSABLE_RUNTIME}/openclaw.sqlite uses schema 40; this build supports 39; writer build 2026.10.9. Refused by OpenClaw 2026.10.9 (9a1a754) installed at ${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-baseline. Run a build at least as new as the writer that supports these schemas, or stop the service and restore your pre-upgrade backup created with openclaw backup create. See https://docs.openclaw.ai/reference/database-schemas.
+Gateway failed to start: Gateway refused startup because 1 OpenClaw database schema(s) are newer than this build. state database ${DISPOSABLE_RUNTIME}/openclaw.sqlite uses schema 40; this build supports 39; writer build 2026.10.9. Refused by OpenClaw 2026.10.9 (9a1a754) installed at ${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence-baseline. Run a build at least as new as the writer that supports these schemas, or stop the service and restore your pre-upgrade backup created with openclaw backup create. See https://docs.openclaw.ai/reference/database-schemas.
+[gateway] startup phase: cli.command.config-ready 668.4ms total=1920.9ms start=1252.6ms rssMb=272.4 heapUsedMb=107.0 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached
+[gateway] startup phase: cli.main.gateway-run-bootstrap 669.6ms total=1921.1ms start=1251.5ms failed rssMb=272.4 heapUsedMb=107.0 workers=2 workerHeapSamples=2/2 workerHeapMb=41.6 workerHeapSource=cached

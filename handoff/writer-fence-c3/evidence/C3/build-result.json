@@ -1,0 +1,15 @@
+{
+  "utc": "2026-11-03T14:07:41.487674+00:00",
+  "seconds": 792.4100503921509,
+  "exitCode": 0,
+  "reason": null,
+  "artifacts": [
+    {
+      "path": "${ARTIFACTS}/f2-index-correction/completion-envelope/resume-disk-tmp-20261103/package/openclaw-writer-fence-9a1a7541-C3.tgz",
+      "sha256": "dd835bdab74c3df35346c1ab8d10dbcf521b3dc35cceb6f52d91a065c4ce8203",
+      "bytes": 113194006
+    }
+  ],
+  "cleanupSignaled": [],
+  "forceSignaled": []
+}

@@ -1,0 +1,15 @@
+import {createRequire} from 'node:module';
+import {mkdirSync,readFileSync,writeFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import path from 'node:path';
+import {fileURLToPath} from 'node:url';
+const root='${OPENCLAW_CHECKOUT}/.worktrees/retained-binding-writer-fence';
+const require=createRequire(root+'/package.json');
+const esbuild=require('esbuild');
+const out=fileURLToPath(new URL('./compiled/',import.meta.url));
+mkdirSync(out,{recursive:true});
+const result=await esbuild.build({absWorkingDir:root,entryPoints:['src/infra/postgres-sync/bridge.worker.ts'],bundle:true,platform:'node',format:'cjs',target:'node26',outfile:path.join(out,'bridge.worker.cjs'),external:['pg-native'],metafile:true,logLevel:'warning'});
+const inputs=Object.keys(result.metafile.inputs).map(name=>({path:path.resolve(root,name),sha256:createHash('sha256').update(readFileSync(path.resolve(root,name))).digest('hex')}));
+const receipt={base:'9a1a7541d53f6e5f26e26b44a5806e0d09c81903',entry:'src/infra/postgres-sync/bridge.worker.ts',esbuild:esbuild.version,node:process.version,bundledAt:new Date().toISOString(),inputs,output:{path:path.join(out,'bridge.worker.cjs'),sha256:createHash('sha256').update(readFileSync(path.join(out,'bridge.worker.cjs'))).digest('hex')}};
+writeFileSync(new URL('./bridge-inputs.json',import.meta.url),JSON.stringify(receipt,null,2)+'\n');
+console.log(JSON.stringify({inputs:inputs.length,output:receipt.output,esbuild:receipt.esbuild}));

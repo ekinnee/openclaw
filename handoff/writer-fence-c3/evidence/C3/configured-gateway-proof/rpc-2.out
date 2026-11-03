@@ -1,0 +1,8 @@
+{
+  "proof": true,
+  "phase": "verify",
+  "ordinary": true,
+  "persisted": true,
+  "cas": true,
+  "retainedMove": true
+}

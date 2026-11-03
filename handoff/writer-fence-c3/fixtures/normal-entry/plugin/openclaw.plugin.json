@@ -1,0 +1,21 @@
+{
+  "id": "writer-fence-proof",
+  "name": "Writer fence proof",
+  "categories": [
+    "developer-tools"
+  ],
+  "activation": {
+    "onStartup": true
+  },
+  "cliCommands": [
+    {
+      "name": "writer-fence-proof",
+      "description": "Disposable writer-fence proof",
+      "hasSubcommands": false
+    }
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false
+  }
+}

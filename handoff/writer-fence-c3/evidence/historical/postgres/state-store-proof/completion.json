@@ -1,0 +1,46 @@
+{
+  "status": "supporting-source-API-proof-complete",
+  "closed_utc": "2026-11-02T19:45:34.744064+00:00",
+  "scope_start_utc": "2026-11-02T18:55:10Z",
+  "scope_elapsed_seconds_conservative": 3024.756722,
+  "cap_seconds": 3600,
+  "same_stage_prior_charge_minutes": 30,
+  "checkpoint_charge_seconds_separate": 500,
+  "components_checked": 19,
+  "positive_receipts": {
+    "fresh40": "actual production state owner, full97-table exact backup/restore via actual current descriptor: run2 passed",
+    "historical39": "exact9a native catalog equivalence, historical descriptor admission and136-table full backup/restore: run2 passed",
+    "migration": "normalDoctor known39to40ACK with matching fullbackup and no warnings: source-api-receipts.json; nativecanonicalPK/floors40 confirmed",
+    "postcommit": "actual40descriptor admission\u2192normalstateowner reopen\u2192real V2ordinary lookup/register/lookup; nativeguard oldDELETEdenied55000; all2priorrows match genuine prebackup and originalanchor bytes identical",
+    "native_authorization": "not claimed; priorversion4row is an opaque byte-preservation fixture"
+  },
+  "negative_receipts": {
+    "experimental37_38_39": "catalog owner refuses before version hook, exact row/catalog/header/anchor preservation: run2 passed",
+    "experimental40_mixed": "writer-fence owner refuses before effects with exact preservation: run2 passed"
+  },
+  "qualified_development_reds": {
+    "constraint": "realDoctor reached migration then destination nativeDDL exact comparison refused oldPK/indexname; only2facts mismatch, fixed by root atomicconstraint rename",
+    "anchor": "knownDoctor commit followed by normalreopen misclassifying rawanchor with cachedPGfloor40; corrected by root exact physicalanchor classification"
+  },
+  "nonproduct_attempts": {
+    "run1": "artifact ancestry FsSafe and wrongly ordered referenceDDL fixture setup; interrupted/joined130, no format verdict",
+    "run3": "disposable512MiB peer OOM SIG9 duringcatalogread;1failed6filtered; reconciled39 intact before raising2GiB, no migration outcome",
+    "run4": "standardcache signaturemiss, aborted/joined130 before compilation; no backend operation or product verdict"
+  },
+  "source_receipt_limits": "run2 full native manifest not retained; completed generation verification37e95e695c8b logged. Ownercomponentpreconstraint hash2ab8fd... matches reconstructed bytes and preserved green3 manifest. Run3 manifest9eae5c...retained but resource-only. SourceAPI checked19selected components, not complete build graph.",
+  "remaining_root_gates": "Normal built packagedCLI PostgreSQL proof, matchedrollback/uncertain cases, finalintegration/review. SourceAPI is supporting evidence.",
+  "custody": "Task-owned PostgreSQL peer remains live for coordinator final built proof; same pinned image and loopback,2GiB limit, exactoriginal40 store and private/tmp runtimes retained. No sourceAPI runners active.",
+  "pending_named_refresh": "completed positive; no further work reserved",
+  "postbatch_refresh": {
+    "status": "passed",
+    "started_utc": "2026-11-02T19:56:46.888493+00:00",
+    "closed_utc": "2026-11-02T19:58:49.738792+00:00",
+    "refresh_elapsed_seconds_conservative": 122.850299,
+    "harness_sha256": "8e6115dc022d364e8b8a8e4eb19e7a03f39e6737252e1bd8057d597cfb1dca18",
+    "scope": "Current40 normalowner/current ordinaryV2lookup+register+lookup, exact originalnamespace/identity/floors/guard, priorbackuprows+previousordinaryrow preserved, originalanchor bytes unchanged. No Doctor/migration/backup replay. Actual source API and source workers, not final normal built CLI."
+  },
+  "postbatch_components_verified": 21,
+  "scope_active_seconds_conservative": 3147.6070210000003,
+  "scope_remaining_seconds_closed_unused": 452.39297899999974,
+  "final_closeout_utc": "2026-11-02T19:58:49.738792+00:00"
+}

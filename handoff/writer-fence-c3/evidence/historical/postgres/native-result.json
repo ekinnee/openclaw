@@ -1,0 +1,475 @@
+{
+  "kind": "supporting-native-engine-proof",
+  "started": "2026-11-02T17:46:13.793Z",
+  "ended": "2026-11-02T17:46:13.987Z",
+  "elapsedMs": 193.653712,
+  "assertions": 59,
+  "passed": true,
+  "scriptSha256": "ef69b1b45ddd5e47464b441e361dc060f2cbb186dc2290550f0505dc49949847",
+  "events": [
+    {
+      "event": "VERSIONS",
+      "ms": 17,
+      "base": "9a1a7541d53f6e5f26e26b44a5806e0d09c81903",
+      "node": "v26.13.0",
+      "pgClient": "8.23.1",
+      "pgPackage": "${OPENCLAW_CHECKOUT}/.worktrees/n1-physical-origin/node_modules/.pnpm/pg@8.23.1/node_modules/pg/package.json",
+      "server": {
+        "version": "PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit",
+        "server_version_num": "160015"
+      },
+      "container": "openclaw-writer-fence-pg-20261102-1743",
+      "port": 32772
+    },
+    {
+      "event": "PASS",
+      "ms": 47,
+      "label": "generic native cached generic plans reached",
+      "plans": [
+        {
+          "name": "generic_cas",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "generic_clear",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "generic_delete",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "generic_expiry",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "generic_move",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "generic_read",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "generic_update",
+          "generic_plans": 1,
+          "custom_plans": 0
+        },
+        {
+          "name": "generic_upsert",
+          "generic_plans": 1,
+          "custom_plans": 0
+        }
+      ]
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 52,
+      "pid": 93,
+      "wait": "relation"
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 53,
+      "pid": 92,
+      "wait": "relation"
+    },
+    {
+      "event": "PASS",
+      "ms": 53,
+      "label": "generic active writer and queued writer boundary held"
+    },
+    {
+      "event": "PASS",
+      "ms": 54,
+      "label": "generic migration joins pre-cutover writer"
+    },
+    {
+      "event": "PASS",
+      "ms": 54,
+      "label": "generic queued writer stays blocked during rename transaction"
+    },
+    {
+      "event": "PASS",
+      "ms": 56,
+      "label": "generic publication marker invisible before commit"
+    },
+    {
+      "event": "PASS",
+      "ms": 59,
+      "label": "generic queued pre-cutover prepared writer refuses after commit",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 59,
+      "label": "generic only acknowledged original writer effect retained"
+    },
+    {
+      "event": "PASS",
+      "ms": 60,
+      "label": "generic warm prepared read refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 60,
+      "label": "generic warm prepared upsert refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 61,
+      "label": "generic warm prepared update refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 61,
+      "label": "generic warm prepared cas refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 61,
+      "label": "generic warm prepared delete refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 61,
+      "label": "generic warm prepared clear refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 61,
+      "label": "generic warm prepared expiry refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 61,
+      "label": "generic warm prepared move refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 63,
+      "label": "generic old truncate refused",
+      "sqlstate": "42809"
+    },
+    {
+      "event": "PASS",
+      "ms": 63,
+      "label": "generic old scoped DROP TABLE refuses view",
+      "sqlstate": "42809"
+    },
+    {
+      "event": "PASS",
+      "ms": 64,
+      "label": "generic tombstone exposes constant only"
+    },
+    {
+      "event": "PASS",
+      "ms": 65,
+      "label": "generic unrelated old-table writes remain available"
+    },
+    {
+      "event": "PASS",
+      "ms": 68,
+      "label": "generic reconnected old SQL refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 69,
+      "label": "generic old-name table recreation refused",
+      "sqlstate": "42P07"
+    },
+    {
+      "event": "PASS",
+      "ms": 74,
+      "label": "generic current-name ordinary V1 positive"
+    },
+    {
+      "event": "PASS",
+      "ms": 74,
+      "label": "generic marker and canonical relation committed"
+    },
+    {
+      "event": "PASS",
+      "ms": 76,
+      "label": "generic one canonical table plus constant guard view"
+    },
+    {
+      "event": "PASS",
+      "ms": 78,
+      "label": "generic ordinary DROP TABLE control succeeds"
+    },
+    {
+      "event": "PASS",
+      "ms": 110,
+      "label": "custom native cached custom plans reached",
+      "plans": [
+        {
+          "name": "custom_cas",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "custom_clear",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "custom_delete",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "custom_expiry",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "custom_move",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "custom_read",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "custom_update",
+          "generic_plans": 0,
+          "custom_plans": 1
+        },
+        {
+          "name": "custom_upsert",
+          "generic_plans": 0,
+          "custom_plans": 1
+        }
+      ]
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 111,
+      "pid": 98,
+      "wait": "relation"
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 112,
+      "pid": 97,
+      "wait": "relation"
+    },
+    {
+      "event": "PASS",
+      "ms": 112,
+      "label": "custom active writer and queued writer boundary held"
+    },
+    {
+      "event": "PASS",
+      "ms": 112,
+      "label": "custom migration joins pre-cutover writer"
+    },
+    {
+      "event": "PASS",
+      "ms": 112,
+      "label": "custom queued writer stays blocked during rename transaction"
+    },
+    {
+      "event": "PASS",
+      "ms": 114,
+      "label": "custom publication marker invisible before commit"
+    },
+    {
+      "event": "PASS",
+      "ms": 115,
+      "label": "custom queued pre-cutover prepared writer refuses after commit",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 116,
+      "label": "custom only acknowledged original writer effect retained"
+    },
+    {
+      "event": "PASS",
+      "ms": 116,
+      "label": "custom warm prepared read refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 117,
+      "label": "custom warm prepared upsert refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 117,
+      "label": "custom warm prepared update refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 117,
+      "label": "custom warm prepared cas refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 117,
+      "label": "custom warm prepared delete refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 117,
+      "label": "custom warm prepared clear refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 118,
+      "label": "custom warm prepared expiry refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 118,
+      "label": "custom warm prepared move refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 118,
+      "label": "custom old truncate refused",
+      "sqlstate": "42809"
+    },
+    {
+      "event": "PASS",
+      "ms": 118,
+      "label": "custom old scoped DROP TABLE refuses view",
+      "sqlstate": "42809"
+    },
+    {
+      "event": "PASS",
+      "ms": 118,
+      "label": "custom tombstone exposes constant only"
+    },
+    {
+      "event": "PASS",
+      "ms": 118,
+      "label": "custom unrelated old-table writes remain available"
+    },
+    {
+      "event": "PASS",
+      "ms": 123,
+      "label": "custom reconnected old SQL refused",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 123,
+      "label": "custom old-name table recreation refused",
+      "sqlstate": "42P07"
+    },
+    {
+      "event": "PASS",
+      "ms": 128,
+      "label": "custom current-name ordinary V1 positive"
+    },
+    {
+      "event": "PASS",
+      "ms": 129,
+      "label": "custom marker and canonical relation committed"
+    },
+    {
+      "event": "PASS",
+      "ms": 130,
+      "label": "custom one canonical table plus constant guard view"
+    },
+    {
+      "event": "PASS",
+      "ms": 131,
+      "label": "custom ordinary DROP TABLE control succeeds"
+    },
+    {
+      "event": "PASS",
+      "ms": 153,
+      "label": "rollback restores warm old prepared access and original data"
+    },
+    {
+      "event": "PASS",
+      "ms": 154,
+      "label": "rollback restores publication marker"
+    },
+    {
+      "event": "PASS",
+      "ms": 155,
+      "label": "rollback restores original relation and removes guard"
+    },
+    {
+      "event": "LOCK_REACHED",
+      "ms": 167,
+      "pid": 104,
+      "wait": "relation"
+    },
+    {
+      "event": "PASS",
+      "ms": 167,
+      "label": "read-only old transaction retains relation lock and delays cutover"
+    },
+    {
+      "event": "PASS",
+      "ms": 168,
+      "label": "cutover joins read-only transaction before publication"
+    },
+    {
+      "event": "PASS",
+      "ms": 169,
+      "label": "released old snapshot cannot start old-name read",
+      "sqlstate": "42703"
+    },
+    {
+      "event": "PASS",
+      "ms": 183,
+      "label": "interrupted false leaves coherent physical publication"
+    },
+    {
+      "event": "PASS",
+      "ms": 183,
+      "label": "pre-COMMIT connection loss rolls back"
+    },
+    {
+      "event": "PASS",
+      "ms": 192,
+      "label": "interrupted true leaves coherent physical publication"
+    },
+    {
+      "event": "UNCERTAIN_COMMIT_RECONCILED",
+      "ms": 192,
+      "phase": "after",
+      "reply": {
+        "ok": false
+      },
+      "replayed": false
+    },
+    {
+      "event": "COMPLETE",
+      "ms": 192,
+      "assertions": 59
+    }
+  ]
+}

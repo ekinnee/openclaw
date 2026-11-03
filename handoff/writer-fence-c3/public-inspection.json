@@ -1,0 +1,20 @@
+{
+  "observedUTC": "2026-11-03T15:49:45.732874+00:00",
+  "writer": "ekinnee",
+  "repository": "ekinnee/openclaw",
+  "branch": "ekinnee/writer-fence-c3-handoff",
+  "sourceCommit": "9a9eab182c87e2d2fc29b00f04ad9e10d80383f2",
+  "sourceTree": "f97339497ca0623794a30da4392370711a0a46b1",
+  "sourcePaths": 121,
+  "handoffFilesInspected": 68,
+  "method": [
+    "full outgoing source blobs compared to accepted manifest and exact Git tree",
+    "every handoff member selected and read through disclosure-pattern inspection",
+    "only synthetic loopback fixture connection strings and explicit negative-control literals allowed",
+    "raw runtime state, credential files, native homes and reviewer transcripts excluded",
+    "historical code/commands retain source identities and current/integrated evidence distinction"
+  ],
+  "findings": [],
+  "notANewReviewBuildOrRuntimeGate": true,
+  "noUpstreamPR": true
+}

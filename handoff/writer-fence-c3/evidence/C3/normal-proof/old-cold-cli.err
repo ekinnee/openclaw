@@ -1,0 +1,4 @@
+(node:13993) [DEP_PLUGIN_SDK] DeprecationWarning: Plugin writer-fence-proof: api.runtime.state.openSyncKeyedStore is deprecated; use api.runtime.state.openKeyedStoreV2 and await its operations instead. The legacy contract remains supported during its deprecation period. Final compatibility day: 2026-12-31. Removal ships in the first January 2027 stable release; no SDK major is required.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+(node:13993) [DEP_PLUGIN_SDK] DeprecationWarning: Plugin writer-fence-proof: PluginStateSyncKeyedStore.register is deprecated; use await openKeyedStoreV2().register() instead. Synchronous operations still commit before returning; legacy callbacks retain transaction-local ordering. Final compatibility day: 2026-12-31. Removal ships in the first January 2027 stable release; no SDK major is required.
+writer-fence-proof-failed
