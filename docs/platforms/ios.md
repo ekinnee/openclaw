@@ -40,6 +40,17 @@ The app requires iOS 26.2 or iPadOS 26.2 or later.
 - **Settings** opens the Dashboard settings pages when connected with `operator.admin`; the native Gateway screen remains available for connection and pairing.
 - Speaks assistant messages on demand: long-press a message in Chat and choose **Listen**. The app plays supported Gateway `tts.speak` clips with the configured TTS provider and falls back to on-device speech when Gateway audio is unavailable or unplayable. Playback stops on session switch or backgrounding.
 
+## Share Extension retries
+
+Retrying an unchanged share reuses its request identity. The Gateway suppresses
+repeat dispatches for up to five minutes in its existing in-memory cache, scoped
+to the paired device. Editing the transmitted message or starting a new share
+creates a new identity.
+
+This is not durable exactly-once delivery: cache expiry, Gateway restart, or
+re-pairing can allow the request to run again. If a send timed out and you are
+unsure whether it was accepted, check the destination conversation before retrying.
+
 ## Chat text size
 
 Chat uses a 13.5-point base text size for a denser transcript. It still follows

@@ -39,6 +39,7 @@ import {
   parseMessageWithAttachments,
   persistInboundImagesForTranscript,
 } from "./chat-attachments.js";
+import { DEDUPE_TTL_MS } from "./server-constants.js";
 import { normalizeRpcAttachmentsToChatAttachments } from "./server-methods/attachment-normalize.js";
 import {
   pruneBoundedTimestampMap,
@@ -433,6 +434,10 @@ async function handlePreparedNodeEvent(
         return undefined;
       }
 
+      const requestKey = normalizeOptionalString(link?.key);
+      const requestDedupeKey = requestKey
+        ? `node-agent:${JSON.stringify([nodeId, opts?.deviceId ?? null, opts?.pairingGeneration?.key ?? null, requestKey])}`
+        : undefined;
       const sessionKeyRaw = (link?.sessionKey ?? "").trim();
       const sessionKey = sessionKeyRaw.length > 0 ? sessionKeyRaw : `node-${nodeId}`;
       const cfg = getRuntimeConfig();
@@ -582,51 +587,6 @@ async function handlePreparedNodeEvent(
       }
       const transcriptMedia = persistedTranscriptMedia.entries.map((media) => media.fact);
 
-      if (wantsReceipt && deliveryChannel && deliveryTo) {
-        // Delivery stays detached from agent startup, but remains part of the
-        // accepted node request until the durable send settles.
-        const receipt = runWithGatewayIndependentRootWorkContinuation(async () => {
-          if (!(await isNodeEventConnectionCurrent(opts))) {
-            return;
-          }
-          const receiptDeps = ctx.deps;
-          const resolved = await resolveOutboundTarget({
-            channel: deliveryChannel,
-            to: deliveryTo,
-            cfg,
-            mode: "explicit",
-          });
-          if (!resolved.ok) {
-            throw new Error(String(resolved.error));
-          }
-          const session = buildOutboundSessionContext({
-            cfg,
-            sessionKey: canonicalKey,
-          });
-          const send = await sendDurableMessageBatchCore({
-            cfg,
-            channel: deliveryChannel,
-            to: resolved.to,
-            payloads: [{ text: receiptText }],
-            session,
-            bestEffort: true,
-            durability: "best_effort",
-            deps: createOutboundSendDeps(receiptDeps),
-          });
-          if (send.status === "failed") {
-            throw send.error;
-          }
-        }, "node-events:delivery").catch((err: unknown) => {
-          ctx.logGateway.warn(`agent receipt failed node=${nodeId}: ${formatForLog(err)}`);
-        });
-        source?.pending.push(receipt);
-      } else if (wantsReceipt) {
-        ctx.logGateway.warn(
-          `agent receipt skipped node=${nodeId}: missing delivery route (channel=${deliveryChannel ?? "-"} to=${deliveryTo ?? "-"})`,
-        );
-      }
-
-      source?.assertCurrent();
       const nodeAgentInput: NodeAgentCommandInput = {
         runId: sessionId,
         message,
@@ -658,6 +618,63 @@ async function handlePreparedNodeEvent(
           await onNodeAdmissionRejected();
           return;
         }
+        source?.assertCurrent();
+        if (requestDedupeKey) {
+          const now = Date.now();
+          const previous = ctx.dedupe.get(requestDedupeKey);
+          if (previous && now - previous.ts < DEDUPE_TTL_MS) {
+            await onNodeAdmissionRejected();
+            return;
+          }
+          // Reuse the existing process-local window; expiry or restart permits replay.
+          // Admission failures above do not consume the key; later failures must not repeat effects.
+          ctx.dedupe.set(requestDedupeKey, { ts: now, ok: true, effectAccepted: true });
+        }
+
+        if (wantsReceipt && deliveryChannel && deliveryTo) {
+          // Delivery stays detached from agent startup, but remains part of the
+          // accepted node request until the durable send settles.
+          const receipt = runWithGatewayIndependentRootWorkContinuation(async () => {
+            if (!(await isNodeEventConnectionCurrent(opts))) {
+              return;
+            }
+            const receiptDeps = ctx.deps;
+            const resolved = await resolveOutboundTarget({
+              channel: deliveryChannel,
+              to: deliveryTo,
+              cfg,
+              mode: "explicit",
+            });
+            if (!resolved.ok) {
+              throw new Error(String(resolved.error));
+            }
+            const session = buildOutboundSessionContext({
+              cfg,
+              sessionKey: canonicalKey,
+            });
+            const send = await sendDurableMessageBatchCore({
+              cfg,
+              channel: deliveryChannel,
+              to: resolved.to,
+              payloads: [{ text: receiptText }],
+              session,
+              bestEffort: true,
+              durability: "best_effort",
+              deps: createOutboundSendDeps(receiptDeps),
+            });
+            if (send.status === "failed") {
+              throw send.error;
+            }
+          }, "node-events:delivery").catch((err: unknown) => {
+            ctx.logGateway.warn(`agent receipt failed node=${nodeId}: ${formatForLog(err)}`);
+          });
+          source?.pending.push(receipt);
+        } else if (wantsReceipt) {
+          ctx.logGateway.warn(
+            `agent receipt skipped node=${nodeId}: missing delivery route (channel=${deliveryChannel ?? "-"} to=${deliveryTo ?? "-"})`,
+          );
+        }
+
         await agentCommandFromIngress(nodeAgentInput, defaultRuntime, ctx.deps);
       }, "node-events:agent-turn").catch((err: unknown) => {
         ctx.logGateway.warn(`agent failed node=${nodeId}: ${formatForLog(err)}`);

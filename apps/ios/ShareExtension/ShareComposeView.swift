@@ -22,6 +22,11 @@ final class ShareComposeView: UIView, UITextViewDelegate {
     var onSend: (() -> Void)?
     var onCancel: (() -> Void)?
 
+    // The compose card owns the editable message; attachments are fixed during preparation.
+    // Keep identity across failed sends, but not across changes to the transmitted message.
+    private(set) var requestKey = UUID().uuidString
+    private var requestMessage = ""
+
     var draftText: String {
         self.textView.text ?? ""
     }
@@ -114,6 +119,11 @@ final class ShareComposeView: UIView, UITextViewDelegate {
     }
 
     private func draftDidChange() {
+        let message = self.draftText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if message != self.requestMessage {
+            self.requestMessage = message
+            self.requestKey = UUID().uuidString
+        }
         if case .failed = self.status {
             // Stale failure feedback confuses fresh edits; clear it once typing resumes.
             self.apply(.ready)

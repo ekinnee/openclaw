@@ -102,7 +102,10 @@ final class ShareViewController: UIViewController {
         self.composeView.apply(.sending)
         ShareGatewayRelaySettings.saveLastEvent("Sending to gateway…")
         do {
-            try await self.sendMessageToGateway(trimmed, attachments: self.pendingAttachments)
+            try await self.sendMessageToGateway(
+                trimmed,
+                attachments: self.pendingAttachments,
+                requestKey: self.composeView.requestKey)
             ShareGatewayRelaySettings.saveLastEvent(
                 "Sent to gateway (\(trimmed.count) chars, \(self.pendingAttachments.count) attachment(s)).")
             self.composeView.apply(.sent)
@@ -120,7 +123,11 @@ final class ShareViewController: UIViewController {
         }
     }
 
-    private func sendMessageToGateway(_ message: String, attachments: [ShareAttachment]) async throws {
+    private func sendMessageToGateway(
+        _ message: String,
+        attachments: [ShareAttachment],
+        requestKey: String) async throws
+    {
         guard let config = ShareGatewayRelaySettings.loadConfigDiscardingUnscopedDeviceAuth() else {
             throw Self.gatewayError(10, message: NSLocalizedString(
                 "OpenClaw is not connected to a gateway yet.",
@@ -203,7 +210,7 @@ final class ShareViewController: UIViewController {
             to: canDeliverToRoute ? deliveryTo : nil,
             channel: canDeliverToRoute ? deliveryChannel : nil,
             timeoutSeconds: nil,
-            key: UUID().uuidString)
+            key: requestKey)
         let data = try JSONEncoder().encode(params)
         let json = String(bytes: data, encoding: .utf8)!
         let eventData = try JSONEncoder().encode(NodeEventParams(event: "agent.request", payloadjson: json))

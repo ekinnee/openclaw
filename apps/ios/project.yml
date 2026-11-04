@@ -495,6 +495,8 @@ targets:
         group: ShareExtension
       - path: ShareExtension/ShareComposeState.swift
         group: ShareExtension
+      - path: ShareExtension/ShareComposeView.swift
+        group: ShareExtension
       - path: ShareExtension/ShareAttachmentSummary.swift
         group: ShareExtension
       - path: WatchApp/Sources/WatchVoiceTurnTracker.swift
