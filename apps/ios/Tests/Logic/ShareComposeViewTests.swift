@@ -4,7 +4,7 @@ import UIKit
 
 @MainActor
 struct ShareComposeViewTests {
-    @Test func retryAfterFailureKeepsRequestKey() {
+    @Test func `retry after failure keeps request key`() {
         let view = ShareComposeView(frame: .zero)
         view.setDraft("Summarize this share")
         let key = view.requestKey
@@ -17,7 +17,7 @@ struct ShareComposeViewTests {
         #expect(view.requestKey == key)
     }
 
-    @Test func editedMessageGetsNewRequestKey() {
+    @Test func `edited message gets new request key`() {
         let view = ShareComposeView(frame: .zero)
         view.setDraft("Original request")
         let originalKey = view.requestKey
@@ -33,7 +33,7 @@ struct ShareComposeViewTests {
         #expect(view.requestKey != editedKey)
     }
 
-    @Test func unchangedTransmittedMessageKeepsRequestKey() {
+    @Test func `unchanged transmitted message keeps request key`() {
         let view = ShareComposeView(frame: .zero)
         view.setDraft("Summarize this share")
         let key = view.requestKey
@@ -44,7 +44,7 @@ struct ShareComposeViewTests {
         #expect(view.requestKey == key)
     }
 
-    @Test func separateSharesHaveDistinctRequestKeys() {
+    @Test func `separate shares have distinct request keys`() {
         let first = ShareComposeView(frame: .zero)
         let second = ShareComposeView(frame: .zero)
         first.setDraft("Same content")
@@ -52,7 +52,7 @@ struct ShareComposeViewTests {
         #expect(first.requestKey != second.requestKey)
     }
 
-    @Test func textViewEditsRotateRequestKey() throws {
+    @Test func `text view edits rotate request key`() throws {
         let view = ShareComposeView(frame: .zero)
         view.setDraft("Original request")
         let originalKey = view.requestKey

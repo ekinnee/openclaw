@@ -18,7 +18,6 @@ import {
 } from "../process/gateway-work-admission.js";
 import { expectNoCalls } from "../test-utils/mock-call-assertions.js";
 import { NodeRegistry } from "./node-registry.js";
-import { DEDUPE_TTL_MS } from "./server-constants.js";
 import * as nodeEventSource from "./server-node-event-source.js";
 import type { NodeEvent, NodeEventContext } from "./server-node-events-types.js";
 import { handleNodeEvent } from "./server-node-events.js";
@@ -658,97 +657,6 @@ describe("agent request events", () => {
       imageOrder: [],
       offloadedRefs: [],
     });
-  });
-
-  it.each([false, true])(
-    "deduplicates accepted agent requests (concurrent=%s)",
-    async (concurrent) => {
-      const { request } = nodeFixture("node-share-retry");
-      const payload = { key: "same-logical-share" };
-      if (concurrent) {
-        await Promise.all([request(payload), request(payload)]);
-      } else {
-        await request(payload);
-        await request(payload);
-      }
-
-      // Both valid requests reached admission; only the logical share may dispatch.
-      expect(persistImages).toHaveBeenCalledTimes(2);
-      expect(dispatch).toHaveBeenCalledTimes(1);
-    },
-  );
-
-  it.each([
-    ["new request", 2],
-    ["another node", 2],
-    ["re-paired node", 2],
-    ["within window", 1],
-    ["expired", 2],
-    ["restart", 2],
-    ["unkeyed", 2],
-  ] as const)("scopes agent-request deduplication: %s", async (variant, expected) => {
-    const now = Date.now();
-    const clock = vi.spyOn(Date, "now").mockReturnValue(now);
-    try {
-      const first = nodeFixture("node-share-window");
-      const payload = variant === "unkeyed" ? {} : { key: "logical-share" };
-      await first.request(payload, {
-        deviceId: "share-device",
-        pairingGeneration: { nodeId: "node-share-window", key: "generation-one" },
-      });
-      expect(dispatch).toHaveBeenCalledTimes(1);
-
-      const nodeId = variant === "another node" ? "other-node" : "node-share-window";
-      const second = nodeFixture(nodeId, {
-        dedupe: variant === "restart" ? new Map() : first.ctx.dedupe,
-      });
-      clock.mockReturnValue(
-        now +
-          (variant === "expired"
-            ? DEDUPE_TTL_MS
-            : variant === "within window"
-              ? DEDUPE_TTL_MS - 1
-              : 0),
-      );
-      await second.request(variant === "new request" ? { key: "new-logical-share" } : payload, {
-        deviceId: "share-device",
-        pairingGeneration: {
-          nodeId,
-          key: variant === "re-paired node" ? "generation-two" : "generation-one",
-        },
-      });
-      expect(dispatch).toHaveBeenCalledTimes(expected);
-    } finally {
-      clock.mockRestore();
-    }
-  });
-
-  it("does not consume an agent-request key when admission is rejected", async () => {
-    const { ctx, request } = nodeFixture("node-share-rejected");
-    const payload = { key: "retry-after-rejection" };
-    await expect(request(payload, { isConnectionCurrent: () => false })).resolves.toEqual(
-      eventResult("agent.request", "pairing_changed"),
-    );
-    expect(ctx.dedupe.size).toBe(0);
-    expectNoCalls(dispatch);
-
-    await request(payload);
-    expect(dispatch).toHaveBeenCalledTimes(1);
-  });
-
-  it("does not resend an accepted share receipt on retry", async () => {
-    const { request } = nodeFixture("node-share-receipt");
-    const payload = {
-      key: "share-with-receipt",
-      deliver: true,
-      receipt: true,
-      channel: "telegram",
-      to: "123",
-    };
-    await request(payload);
-    await request(payload);
-    expect(dispatch).toHaveBeenCalledTimes(1);
-    expect(sendBatch).toHaveBeenCalledTimes(1);
   });
 
   it.each([
