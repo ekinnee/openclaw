@@ -1,6 +1,11 @@
 import Foundation
 
 extension DashboardManager {
+    func snapshot(for target: DashboardGatewayTarget) -> DashboardGatewaySnapshot? {
+        guard !self.gatewayEntries.isEmpty else { return nil }
+        return DashboardGatewaySnapshot(gateways: self.gatewayEntries, currentId: target.bridgeID)
+    }
+
     var hasVisibleWindows: Bool {
         self.dashboardControllers().contains { $0.controller.isWindowOpen }
     }

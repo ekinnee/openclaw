@@ -3,6 +3,16 @@ import Foundation
 import OpenClawKit
 
 extension DashboardManager {
+    func openWindowCount(for target: DashboardGatewayTarget) -> Int {
+        self.dashboardControllers().count(where: { $0.target == target })
+    }
+
+    func controller(in window: NSWindow, for target: DashboardGatewayTarget) -> DashboardWindowController? {
+        guard let controller = window.windowController as? DashboardWindowController,
+              self.target(for: controller) == target else { return nil }
+        return controller
+    }
+
     static func websocketURLString(for dashboardURL: URL) -> String {
         guard var components = URLComponents(url: dashboardURL, resolvingAgainstBaseURL: false) else {
             return dashboardURL.absoluteString

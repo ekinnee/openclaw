@@ -85,6 +85,10 @@ extension DashboardManager {
 
 #if DEBUG
 extension DashboardManager {
+    func _testWindowTLSParams(for target: DashboardGatewayTarget) async throws -> GatewayTLSParams? {
+        try await self.windowConfiguration(for: target).configuration.tlsParams
+    }
+
     /// Test instances skip `observeEndpointChanges()` so the shared endpoint
     /// store cannot race test-driven `handleEndpointState` calls.
     static func _testMake(

@@ -719,11 +719,6 @@ final class DashboardManager {
         }
     }
 
-    private func snapshot(for target: DashboardGatewayTarget) -> DashboardGatewaySnapshot? {
-        guard !self.gatewayEntries.isEmpty else { return nil }
-        return DashboardGatewaySnapshot(gateways: self.gatewayEntries, currentId: target.bridgeID)
-    }
-
     func refreshGatewaySnapshots() async {
         let state = AppStateStore.shared
         if state.connectionMode != .remote || !state.hostsLocalGatewayWithRemotePrimary {
@@ -834,12 +829,6 @@ final class DashboardManager {
             return self.mainTarget
         }
         return self.auxiliaryWindows.values.first { $0.controller === source }?.target
-    }
-
-    private func controller(in window: NSWindow, for target: DashboardGatewayTarget) -> DashboardWindowController? {
-        guard let controller = window.windowController as? DashboardWindowController,
-              self.target(for: controller) == target else { return nil }
-        return controller
     }
 }
 
@@ -1575,10 +1564,6 @@ extension DashboardManager {
         return result
     }
 
-    func openWindowCount(for target: DashboardGatewayTarget) -> Int {
-        self.dashboardControllers().count(where: { $0.target == target })
-    }
-
     private func updateFrontmostDashboardTarget() {
         self.synchronizeProfileObservations()
         let frontmost = self.frontmostDashboard()
@@ -1630,10 +1615,6 @@ extension DashboardManager {
 
     func _testHandleControlChannelStateChange(_ state: ControlChannel.ConnectionState) async {
         await self.handleControlChannelStateChange(state)
-    }
-
-    func _testWindowTLSParams(for target: DashboardGatewayTarget) async throws -> GatewayTLSParams? {
-        try await self.windowConfiguration(for: target).configuration.tlsParams
     }
 
     func _testAuxiliaryWindows() -> [(target: DashboardGatewayTarget, controller: DashboardWindowController)] {

@@ -1034,35 +1034,7 @@ private actor LocalFixtureChatStore {
                 transcriptMessageID: "fixture-external-user")]
         }
         if ProcessInfo.processInfo.arguments.contains("--openclaw-system-notices-fixture") {
-            return [
-                OpenClawChatMessage(
-                    role: "user",
-                    content: [OpenClawChatMessageContent(type: "text", text: """
-                    CONTEXT_START: A synthetic continuation summary.
-                    The earlier question asked for a release checklist.
-                    The changelog is ready; screenshot review remains open.
-                    No private session or Gateway is used by this fixture.
-                    CONTEXT_END: Keep the full summary available on request.
-                    """)],
-                    timestamp: now,
-                    provenance: OpenClawChatInputProvenance(
-                        kind: "internal_system", sourceTool: "cli_harness_context")),
-                OpenClawChatMessage(
-                    role: "user",
-                    content: [OpenClawChatMessageContent(type: "text", text: """
-                    TASK_START: A synthetic background task finished.
-                    The screenshot checklist was checked without changing files.
-                    TASK_END: The complete task result remains available.
-                    """)],
-                    timestamp: now + 1,
-                    provenance: OpenClawChatInputProvenance(
-                        kind: "internal_system", sourceTool: "claude_cli_task_notification")),
-                self.message(
-                    role: "assistant",
-                    text: "Notice fixture ready.",
-                    timestamp: now + 2,
-                    transcriptMessageID: "fixture-notice-answer"),
-            ]
+            return self.systemNoticeMessages(now: now)
         }
         if ProcessInfo.processInfo.arguments.contains("--openclaw-voice-consult-rows-fixture") {
             // Persisted realtime-voice renditions beside consult answers, in both arrival orders.
@@ -1095,60 +1067,7 @@ private actor LocalFixtureChatStore {
             ]
         }
         if ProcessInfo.processInfo.arguments.contains("--openclaw-anthropic-work-chunks-fixture") {
-            // Synthetic Anthropic-style envelopes: narration and tool_use share each
-            // assistant message; tool results separate the two narration boundaries.
-            return [
-                self.message(
-                    role: "user",
-                    text: "Check the sample project.",
-                    timestamp: now,
-                    transcriptMessageID: "work-chunks-user"),
-                OpenClawChatMessage(
-                    role: "assistant",
-                    content: [
-                        .init(type: "text", text: "I will read the sample file."),
-                        .init(
-                            type: "tool_use",
-                            id: "work-chunks-read",
-                            name: "read",
-                            arguments: AnyCodable(["path": "sample.txt"])),
-                    ],
-                    timestamp: now + 1,
-                    transcriptMessageID: "work-chunks-first",
-                    stopReason: "tool_use"),
-                OpenClawChatMessage(
-                    role: "toolResult",
-                    content: [.init(type: "text", text: "Sample configuration is valid.")],
-                    timestamp: now + 2,
-                    transcriptMessageID: "work-chunks-read-result",
-                    toolCallId: "work-chunks-read",
-                    toolName: "read"),
-                OpenClawChatMessage(
-                    role: "assistant",
-                    content: [
-                        .init(type: "text", text: "The file looks good. I will run the check."),
-                        .init(
-                            type: "tool_use",
-                            id: "work-chunks-exec",
-                            name: "exec",
-                            arguments: AnyCodable(["command": "printf checked"])),
-                    ],
-                    timestamp: now + 3,
-                    transcriptMessageID: "work-chunks-second",
-                    stopReason: "tool_use"),
-                OpenClawChatMessage(
-                    role: "toolResult",
-                    content: [.init(type: "text", text: "checked")],
-                    timestamp: now + 4,
-                    transcriptMessageID: "work-chunks-exec-result",
-                    toolCallId: "work-chunks-exec",
-                    toolName: "exec"),
-                self.message(
-                    role: "assistant",
-                    text: "All checks passed.",
-                    timestamp: now + 5,
-                    transcriptMessageID: "work-chunks-final"),
-            ]
+            return self.anthropicWorkChunkMessages(now: now)
         }
         if ProcessInfo.processInfo.arguments.contains("--openclaw-step-labels-fixture") {
             return [
@@ -1238,6 +1157,95 @@ private actor LocalFixtureChatStore {
                 timestamp: now + Double(index),
                 transcriptMessageID: "\(fixture.sessionIDPrefix)-seed-\(index)")
         }
+    }
+
+    private static func systemNoticeMessages(now: Double) -> [OpenClawChatMessage] {
+        [
+            OpenClawChatMessage(
+                role: "user",
+                content: [OpenClawChatMessageContent(type: "text", text: """
+                CONTEXT_START: A synthetic continuation summary.
+                The earlier question asked for a release checklist.
+                The changelog is ready; screenshot review remains open.
+                No private session or Gateway is used by this fixture.
+                CONTEXT_END: Keep the full summary available on request.
+                """)],
+                timestamp: now,
+                provenance: OpenClawChatInputProvenance(
+                    kind: "internal_system", sourceTool: "cli_harness_context")),
+            OpenClawChatMessage(
+                role: "user",
+                content: [OpenClawChatMessageContent(type: "text", text: """
+                TASK_START: A synthetic background task finished.
+                The screenshot checklist was checked without changing files.
+                TASK_END: The complete task result remains available.
+                """)],
+                timestamp: now + 1,
+                provenance: OpenClawChatInputProvenance(
+                    kind: "internal_system", sourceTool: "claude_cli_task_notification")),
+            self.message(
+                role: "assistant",
+                text: "Notice fixture ready.",
+                timestamp: now + 2,
+                transcriptMessageID: "fixture-notice-answer"),
+        ]
+    }
+
+    private static func anthropicWorkChunkMessages(now: Double) -> [OpenClawChatMessage] {
+        // Synthetic Anthropic-style envelopes: narration and tool_use share each
+        // assistant message; tool results separate the two narration boundaries.
+        [
+            self.message(
+                role: "user",
+                text: "Check the sample project.",
+                timestamp: now,
+                transcriptMessageID: "work-chunks-user"),
+            OpenClawChatMessage(
+                role: "assistant",
+                content: [
+                    .init(type: "text", text: "I will read the sample file."),
+                    .init(
+                        type: "tool_use",
+                        id: "work-chunks-read",
+                        name: "read",
+                        arguments: AnyCodable(["path": "sample.txt"])),
+                ],
+                timestamp: now + 1,
+                transcriptMessageID: "work-chunks-first",
+                stopReason: "tool_use"),
+            OpenClawChatMessage(
+                role: "toolResult",
+                content: [.init(type: "text", text: "Sample configuration is valid.")],
+                timestamp: now + 2,
+                transcriptMessageID: "work-chunks-read-result",
+                toolCallId: "work-chunks-read",
+                toolName: "read"),
+            OpenClawChatMessage(
+                role: "assistant",
+                content: [
+                    .init(type: "text", text: "The file looks good. I will run the check."),
+                    .init(
+                        type: "tool_use",
+                        id: "work-chunks-exec",
+                        name: "exec",
+                        arguments: AnyCodable(["command": "printf checked"])),
+                ],
+                timestamp: now + 3,
+                transcriptMessageID: "work-chunks-second",
+                stopReason: "tool_use"),
+            OpenClawChatMessage(
+                role: "toolResult",
+                content: [.init(type: "text", text: "checked")],
+                timestamp: now + 4,
+                transcriptMessageID: "work-chunks-exec-result",
+                toolCallId: "work-chunks-exec",
+                toolName: "exec"),
+            self.message(
+                role: "assistant",
+                text: "All checks passed.",
+                timestamp: now + 5,
+                transcriptMessageID: "work-chunks-final"),
+        ]
     }
 
     private static func message(
