@@ -1,0 +1,6 @@
+Candidate 579aa20dc9d9d2167c875de325d2c49435cfea79
+Type-aware lint: 14 PR source/test files; all default rules retained.
+[plugin-sdk boundary dts] emitted 13993 files
+Found 0 warnings and 0 errors.
+
+Exit code: 0

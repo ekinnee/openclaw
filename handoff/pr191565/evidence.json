@@ -1,0 +1,150 @@
+{
+  "candidate": {
+    "commit": "579aa20dc9d9d2167c875de325d2c49435cfea79",
+    "tree": "c73d8fc06bd5f1f458e0aa58fed3d49d1ea3243e",
+    "branch": "fix/ios-push-191565-native-cleanup",
+    "sourcePRHead": "613212b1e5d0f0bb8aa351e021fe2c8764ae0642",
+    "pinnedMain": "c9d9baced1f1d7b3ef05f1cea5100e9db5ab7bd1",
+    "mergeCommit": "ec086b1edf3ddb7b2da19ef978cfa18b380eb9fe",
+    "githubPR": "https://github.com/openclaw/openclaw/pull/191565",
+    "published": true,
+    "publication": {
+      "repository": "ekinnee/openclaw",
+      "branch": "handoff/pr191565-579aa20d",
+      "verifiedHead": "579aa20dc9d9d2167c875de325d2c49435cfea79",
+      "branchURL": "https://github.com/ekinnee/openclaw/tree/handoff/pr191565-579aa20d",
+      "verifiedBy": "public git ls-remote after user push",
+      "upstreamPRUpdated": false
+    }
+  },
+  "proof": {
+    "linuxTests": {
+      "passed": 326,
+      "files": 8,
+      "testedCommit": "ec086b1edf3ddb7b2da19ef978cfa18b380eb9fe",
+      "reuse": "Candidate changes Swift only; the tested Gateway/schema sources are unchanged. Not a new-head test execution."
+    },
+    "canonicalSchemaVerify": {
+      "result": "passed",
+      "testedCommit": "ec086b1edf3ddb7b2da19ef978cfa18b380eb9fe"
+    },
+    "staticReviews": [
+      {
+        "scope": "cross-layer source review",
+        "revision": "613212b1e5d0f0bb8aa351e021fe2c8764ae0642",
+        "result": "no confirmed P0/P1 regressions; native proof gaps documented"
+      },
+      {
+        "scope": "main-refresh integration review",
+        "tree": "66ba0daf9420da15479ef3a5da4fcbea7dbb8cd6",
+        "result": "no high-confidence integration regressions; independently reconstructed exact tree"
+      },
+      {
+        "scope": "native cleanup review",
+        "tree": "c73d8fc06bd5f1f458e0aa58fed3d49d1ea3243e",
+        "result": "no actionable high-confidence regressions; exact nine imported blobs verified"
+      }
+    ],
+    "native": {
+      "evidenceSource": "Mac-supplied logs, source patch, verification JSON; not rerun independently in Linux",
+      "sourceCommit": "579aa20dc9d9d2167c875de325d2c49435cfea79",
+      "sourceTree": "c73d8fc06bd5f1f458e0aa58fed3d49d1ea3243e",
+      "trackedContentMatched": true,
+      "manifestBlobs": 9,
+      "iosSimulatorBuild": "passed",
+      "iosTests": {
+        "passed": 28,
+        "failed": 0,
+        "skipped": 0,
+        "suites": [
+          "PushRegistrationRecoveryTests",
+          "SettingsNetworkingHelpersTests",
+          "OpenClawTypographyTests"
+        ]
+      },
+      "swiftLint": "zero violations",
+      "swiftFormat": "zero files require formatting",
+      "macOSCompile": {
+        "command": "swift build --package-path apps/macos",
+        "result": "passed",
+        "exitCode": 0,
+        "seconds": 70.24,
+        "swiftVersion": "Apple Swift 6.4.2",
+        "affectedFiles": 6,
+        "warnings": true,
+        "logSha256Reported": "cb18ff9ecb476da433f1d6f4e9be813577902b5a509a72765d24363d807e4a72"
+      }
+    },
+    "screenshots": {
+      "candidateCommit": "579aa20dc9d9d2167c875de325d2c49435cfea79",
+      "beforeUIOwnerCommit": "c9d9baced1f1d7b3ef05f1cea5100e9db5ab7bd1",
+      "beforeScope": "Exact pinned-main Diagnostics UI owner compiled in candidate shell; not full pinned-main runtime build",
+      "images": [
+        {
+          "file": "01-before-pinned-main-diagnostics.png",
+          "state": "pinned-main UI owner, no registration row",
+          "sha256": "3c30fa85494920a17337c640c3127170a92f8055596c4cd5820dba1bd88311fb",
+          "width": 1320,
+          "height": 2868,
+          "hashIndependentlyVerified": true,
+          "visualInspectedHere": true
+        },
+        {
+          "file": "02-after-retry-needed.png",
+          "state": "needsRetry",
+          "sha256": "520541c935bc4c19fee8cdfcb863a0a1fb2153adc578e97d69b3e400b9d82be6",
+          "width": 1320,
+          "height": 2868,
+          "hashIndependentlyVerified": true,
+          "visualInspectedHere": true
+        },
+        {
+          "file": "03-after-recovering.png",
+          "state": "recovering",
+          "sha256": "e058bb1cd2c3cff25f9d39090aabfd58978411cac979141d1fb50272c515d614",
+          "width": 1320,
+          "height": 2868,
+          "hashIndependentlyVerified": true,
+          "visualInspectedHere": true
+        },
+        {
+          "file": "04-after-published-delivery-unverified.png",
+          "state": "publishedUnverified",
+          "sha256": "6ae6e2558feb35e2f7ede50d06a78ab77d8864ceb7b057e18002f5dfae0722b3",
+          "width": 1320,
+          "height": 2868,
+          "hashIndependentlyVerified": true,
+          "visualInspectedHere": true
+        }
+      ],
+      "inspectedHere": true,
+      "hashesVerified": true,
+      "syntheticUIOnly": true,
+      "recoveryActionsExercised": false,
+      "noSensitiveContentObserved": true
+    },
+    "focusedTypeAwareLint": {
+      "commit": "579aa20dc9d9d2167c875de325d2c49435cfea79",
+      "changedTypeScriptFiles": 14,
+      "exitCode": 0,
+      "result": "passed",
+      "warnings": 0,
+      "errors": 0,
+      "scope": "supported repository wrapper and all default rules; isolated credentials-free environment",
+      "log": "linux-focused-lint.txt"
+    }
+  },
+  "remaining": {
+    "maintainerContractAcceptance": "pending",
+    "officialSignedDeviceRecoveryAndDelivery": "blocked: Personal Team signing available, no official-relay-capable candidate build supplied",
+    "ci": "Focused type-aware lint now passes on exact candidate. Full hosted CI remains unrun on the unpublished candidate. Earlier full check:changed was not green: Doctor unused export reproduced on pinned main; broad wrapper timed out. No exception/ignore added.",
+    "publication": "Code candidate published and independently verified on user's fork. Proof-only follow-up commit prepared locally for normal fast-forward to the same fork branch; original upstream PR still unchanged.",
+    "baselineUnusedExport": {
+      "revision": "c9d9baced1f1d7b3ef05f1cea5100e9db5ab7bd1",
+      "path": "src/commands/doctor-memory-provenance.ts",
+      "symbol": "MEMORY_PROVENANCE_CHECK_ID",
+      "reproducedOnCleanTarget": true,
+      "noExceptionsAdded": true
+    }
+  }
+}

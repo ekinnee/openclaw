@@ -1,0 +1,52 @@
+{
+  "base": "ec086b1edf3ddb7b2da19ef978cfa18b380eb9fe",
+  "candidateTree": "c73d8fc06bd5f1f458e0aa58fed3d49d1ea3243e",
+  "patchSha256": "ef6ca9b9961f457bfa58fdd4fa495b2c1697cd4972905678c5f012997bd9aaee",
+  "files": [
+    {
+      "path": "apps/ios/Sources/Chat/AppleReviewDemoChatTransport.swift",
+      "baseBlob": "00c636f6058d6972bc6bcc2bda2e62cdb35505b3",
+      "importedBlob": "522bb68b6b9562bead6f53533d4f2861205951ac"
+    },
+    {
+      "path": "apps/ios/Sources/Model/NodeAppModel.swift",
+      "baseBlob": "fd31ebb3302db2087914fb03052cd5e93f562fa7",
+      "importedBlob": "db7d7185bb01757e706a92dc95febf309de52e6c"
+    },
+    {
+      "path": "apps/ios/Sources/Push/PushRegistrationManager.swift",
+      "baseBlob": "a29d14d798bcdd4d8e344cb63c80308905a76e92",
+      "importedBlob": "2bdff9028ec12126a486b9fa03a5d5eaf5f6364f"
+    },
+    {
+      "path": "apps/macos/Sources/OpenClaw/DashboardManager+Construction.swift",
+      "baseBlob": "f54534463bc6604ea3d7156fbd7ae1fe7e2501e5",
+      "importedBlob": "e405a08bcb0fd21f808997e3f2dd8f2a8c6e0ebc"
+    },
+    {
+      "path": "apps/macos/Sources/OpenClaw/DashboardManager+GatewayHealth.swift",
+      "baseBlob": "94a327a0c49278e3e572b13aa2279bbc0f71589b",
+      "importedBlob": "a6fb95bacf355590d8278c376376cd865f4a917b"
+    },
+    {
+      "path": "apps/macos/Sources/OpenClaw/DashboardManager+Routes.swift",
+      "baseBlob": "ee2803daed0e89fc60e426a45edf2c505de3f0c4",
+      "importedBlob": "0a5e24c7c4a4b2f59f96f65d277cfe81f534b24b"
+    },
+    {
+      "path": "apps/macos/Sources/OpenClaw/DashboardManager.swift",
+      "baseBlob": "0771a8f624a8f47b060adf2e29776233160dd118",
+      "importedBlob": "1ed0c4e3f576131a1f3903d1e7f20027ef9c6c67"
+    },
+    {
+      "path": "apps/macos/Sources/OpenClaw/GatewayConnection+Requests.swift",
+      "baseBlob": "9d1c154a577cf96b3edfa6b3d9ef049a9977f512",
+      "importedBlob": "47519e63f6f23112063ea4098761a3ba749a9b58"
+    },
+    {
+      "path": "apps/macos/Sources/OpenClaw/GatewayConnection.swift",
+      "baseBlob": "babe6813ab294c971a5dbfbe374c7b8be3cd649f",
+      "importedBlob": "827b9f7502e31c95dfa26ab2b6e6aae6d4960042"
+    }
+  ]
+}
